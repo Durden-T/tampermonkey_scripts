@@ -1,0 +1,64 @@
+import { useState, useRef } from 'react';
+import { ThreadIcon } from './Icons';
+import { useDraggable } from '../hooks/useDraggable';
+
+interface ToggleButtonProps {
+  unseenCount: number;
+  onClick: () => void;
+}
+
+const BUTTON_SIZE = 44;
+const DRAG_THRESHOLD = 3;
+
+export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
+
+  const { position, isDragging, handleMouseDown } = useDraggable({
+    storageKey: 'thread-monitor-toggle-position',
+    defaultPosition: { x: window.innerWidth - BUTTON_SIZE - 16, y: 16 },
+    bounds: { width: BUTTON_SIZE, height: BUTTON_SIZE },
+    excludeSelector: '.toggle-badge',
+  });
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (mouseDownPos.current) {
+      const deltaX = Math.abs(e.clientX - mouseDownPos.current.x);
+      const deltaY = Math.abs(e.clientY - mouseDownPos.current.y);
+      if (deltaX < DRAG_THRESHOLD && deltaY < DRAG_THRESHOLD) {
+        onClick();
+      }
+    }
+    mouseDownPos.current = null;
+  };
+
+  const handleMouseDownWrapper = (e: React.MouseEvent) => {
+    mouseDownPos.current = { x: e.clientX, y: e.clientY };
+    handleMouseDown(e);
+  };
+
+  return (
+    <button
+      className="thread-monitor-toggle"
+      style={{
+        opacity: unseenCount > 0 || isHovered ? 1 : 0.8,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        cursor: isDragging ? 'grabbing' : 'grab',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onMouseDown={handleMouseDownWrapper}
+      onClick={handleClick}
+    >
+      <span className="toggle-icon">
+        <ThreadIcon />
+      </span>
+      {unseenCount > 0 && (
+        <span className="toggle-badge pulse">
+          {unseenCount > 99 ? '99+' : unseenCount}
+        </span>
+      )}
+    </button>
+  );
+}
