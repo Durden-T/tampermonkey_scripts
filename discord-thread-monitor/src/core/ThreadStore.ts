@@ -1,5 +1,12 @@
 import pako from 'pako';
-import type { MonitoredThread, TitleChange, StoredData, ThreadChangeGroup, StorageInfo } from '../types';
+import type {
+  MonitoredThread,
+  TitleChange,
+  StoredData,
+  ThreadChangeGroup,
+  StorageInfo,
+} from '../types';
+// eslint-disable-next-line no-duplicate-imports
 import { DEFAULT_RETENTION_DAYS, COMPRESSION_THRESHOLD_BYTES } from '../types';
 
 const STORAGE_KEY = 'discord-thread-monitor-data';
@@ -44,25 +51,48 @@ export class ThreadStore {
     for (let i = 0; i < binary.length; i++) {
       uint8[i] = binary.charCodeAt(i);
     }
-    return pako.inflate(uint8, { to: 'string' });
+    try {
+      return pako.inflate(uint8, { to: 'string' });
+    } catch (error) {
+      console.error('Failed to decompress data:', error);
+      throw error; // Re-throw to be caught by outer try-catch
+    }
   }
 
   private loadData(): StoredData {
     try {
       const stored = GM_getValue(STORAGE_KEY, null);
       if (stored === null || stored === undefined || stored === 'undefined') {
-        return { ...defaultData };
+        // Create a deep copy to avoid sharing arrays between instances
+        return {
+          threads: { ...defaultData.threads },
+          changes: [...defaultData.changes],
+          blacklist: [...defaultData.blacklist],
+          retentionDays: defaultData.retentionDays,
+        };
       }
 
       let jsonStr: string;
       if (typeof stored === 'string') {
         try {
           const wrapper = JSON.parse(stored) as StorageWrapper;
-          if (wrapper.compressed) {
-            jsonStr = this.decompress(wrapper.data);
-            this.isCompressed = true;
+          // Check if this is actually a wrapper object with expected structure
+          if (
+            wrapper &&
+            typeof wrapper === 'object' &&
+            'compressed' in wrapper &&
+            'data' in wrapper
+          ) {
+            if (wrapper.compressed) {
+              jsonStr = this.decompress(wrapper.data);
+              this.isCompressed = true;
+            } else {
+              jsonStr = wrapper.data;
+              this.isCompressed = false;
+            }
           } else {
-            jsonStr = wrapper.data;
+            // This is old format - just the raw JSON string
+            jsonStr = stored;
             this.isCompressed = false;
           }
         } catch {
@@ -79,7 +109,13 @@ export class ThreadStore {
       return this.migrateData(parsed);
     } catch (error) {
       console.error('Failed to load data from storage:', error);
-      return { ...defaultData };
+      // Create a deep copy to avoid sharing arrays between instances
+      return {
+        threads: { ...defaultData.threads },
+        changes: [...defaultData.changes],
+        blacklist: [...defaultData.blacklist],
+        retentionDays: defaultData.retentionDays,
+      };
     }
   }
 
@@ -318,9 +354,7 @@ export class ThreadStore {
     const cutoffTime = Date.now() - retentionMs;
 
     const originalLength = this.data.changes.length;
-    this.data.changes = this.data.changes.filter(
-      (change) => change.changedAt >= cutoffTime
-    );
+    this.data.changes = this.data.changes.filter((change) => change.changedAt >= cutoffTime);
 
     if (this.data.changes.length !== originalLength) {
       this.scheduleSave(true);

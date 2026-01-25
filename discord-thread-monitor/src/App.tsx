@@ -12,7 +12,7 @@ interface AppProps {
   performScan: () => { currentThreads: MonitoredThread[]; changes: TitleChange[] };
 }
 
-const SCAN_INTERVAL_MS = 30000;
+const SCAN_INTERVAL_MS = 60000;
 
 const defaultStorageInfo: StorageInfo = {
   rawSize: 0,
@@ -95,23 +95,19 @@ function App({ store, notifier, performScan }: AppProps) {
   };
 
   const handleToastDismiss = (threadId: string) => {
-    setPendingToasts((prev) =>
-      prev.filter((toast) => toast.threadId !== threadId)
-    );
+    setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
   };
 
   const handleToastNavigate = (url: string, threadId: string) => {
     store.markChangeSeen(threadId);
-    setPendingToasts((prev) =>
-      prev.filter((toast) => toast.threadId !== threadId)
-    );
+    setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
     refreshData();
     window.location.href = url;
   };
 
   const handleSimulateTitleChange = useCallback(() => {
     if (import.meta.env.DEV) {
-      import('./debug/simulateTitleChange').then(({ simulateTitleChange }) => {
+      void import('./debug/simulateTitleChange').then(({ simulateTitleChange }) => {
         simulateTitleChange(store, notifier, refreshData);
       });
     }
@@ -119,10 +115,7 @@ function App({ store, notifier, performScan }: AppProps) {
 
   return (
     <>
-      <ToggleButton
-        unseenCount={unseenCount}
-        onClick={() => setIsPanelOpen(!isPanelOpen)}
-      />
+      <ToggleButton unseenCount={unseenCount} onClick={() => setIsPanelOpen(!isPanelOpen)} />
 
       <ManagerPanel
         isOpen={isPanelOpen}

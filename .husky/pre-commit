@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+# Get the list of staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Check if any staged files are in discord-thread-monitor/
+if echo "$STAGED_FILES" | grep -q "^discord-thread-monitor/"; then
+  echo "Running linter and formatter for discord-thread-monitor..."
+  cd discord-thread-monitor || exit 1
+  npx lint-staged
+fi

@@ -3,12 +3,7 @@ import type { Notifier } from '../core/Notifier';
 import type { TitleChange, MonitoredThread } from '../types';
 
 const TEST_TITLES = [
-  'Looking for Group - Weekly Raid',
-  'Bug Report: Login Issues',
-  'Feature Request: Dark Mode',
   'Community Event - Saturday',
-  'Help Needed: Database Query',
-  'Discussion: Best Practices',
   'Announcement: Server Maintenance',
   'Tutorial: Getting Started Guide',
 ];

@@ -29,10 +29,7 @@ export class ThreadScanner {
     return pathParts[2] || null;
   }
 
-  private parseThreadElement(
-    element: HTMLElement,
-    serverId: string
-  ): MonitoredThread | null {
+  private parseThreadElement(element: HTMLElement, serverId: string): MonitoredThread | null {
     const dataListItemId = element.getAttribute('data-list-item-id');
     if (!dataListItemId) return null;
 
@@ -42,7 +39,7 @@ export class ThreadScanner {
     const ariaLabel = element.getAttribute('aria-label') || '';
     const title = ariaLabel
       .replace(/^unread,\s*/, '')
-      .replace(/\s*\(thread\)$/, '')
+      .replace(/\s*\(thread\)\s*$/, '')
       .trim();
 
     if (!title) return null;
