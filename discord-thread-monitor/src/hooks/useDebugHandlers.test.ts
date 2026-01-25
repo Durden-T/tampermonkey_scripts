@@ -29,8 +29,7 @@ describe('useDebugHandlers', () => {
   });
 
   describe('handleSimulateTitleChange', () => {
-    it('should not do anything when not in development mode', async () => {
-      // Set development mode to false
+    it('should work in production mode', async () => {
       (import.meta.env as any).DEV = false;
 
       const { result } = renderHook(() =>
@@ -41,18 +40,15 @@ describe('useDebugHandlers', () => {
         })
       );
 
-      // Call the handler - should return early due to !import.meta.env.DEV check
-      act(() => {
+      await act(async () => {
         result.current.handleSimulateTitleChange();
+        await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
-      // Since we're not in dev mode, nothing should happen
-      // The function should return immediately without calling dynamic import
-      expect(true).toBe(true); // Test passes if no errors occur
+      expect(true).toBe(true);
     });
 
-    it('should attempt to load and call simulateTitleChange when in development mode', async () => {
-      // Set development mode to true
+    it('should work in development mode', async () => {
       (import.meta.env as any).DEV = true;
 
       const { result } = renderHook(() =>
@@ -65,13 +61,9 @@ describe('useDebugHandlers', () => {
 
       await act(async () => {
         result.current.handleSimulateTitleChange();
-        // Wait for any dynamic import to complete
         await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
-      // The function should have attempted to load the module
-      // Since the actual module exists and will be loaded, we can't easily verify the call
-      // But the test should complete without unhandled errors
       expect(true).toBe(true);
     });
 

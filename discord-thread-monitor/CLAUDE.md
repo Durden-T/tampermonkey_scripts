@@ -28,25 +28,44 @@ npm run format:check  # Check formatting without fixing
 
 ### Core Layer (`src/core/`)
 
-- **ThreadStore** - Persistence via `GM_getValue`/`GM_setValue` with pako gzip compression at 50KB threshold. Debounced saves (300ms). Falls back to localStorage when GM APIs unavailable (testing).
+- **ThreadStore** - Facade implementing `IThreadRepository`, orchestrates `StorageEngine`, `ChangeTracker`, `BlacklistManager`. Maintains caches (`cachedThreads`, `cachedDashboardData`) invalidated on mutations.
+- **StorageEngine** - Persistence via `GM_getValue`/`GM_setValue` with pako gzip compression at 50KB threshold. Debounced saves (300ms). Falls back to localStorage when GM APIs unavailable (testing).
+- **ChangeTracker** - Manages change history with unseenCount tracking, cleanup by retention days, grouping logic via `ChangeGroupBuilder`
+- **BlacklistManager** - Set-based O(1) lookup for blocked thread IDs
 - **ThreadScanner** - DOM scraper parsing Discord's `aria-label` and `data-list-item-id` attributes
-- **ChangeDetector** - Compares scans against stored data, generates `TitleChange` records
+- **ChangeDetector** - Compares scans against stored data via `IThreadRepository` interface
 - **Notifier** - Pub/sub for propagating changes to UI
 
 ### Data Flow
 
 ```
 ThreadScanner.scanVisibleThreads()
-    -> ChangeDetector.detectChanges()
-    -> ThreadStore.recordTitleChange() + Notifier.notifyAll()
-    -> React UI updates via callbacks
+    -> ChangeDetector.detectAndPersistChanges(threads)
+    -> ThreadStore.recordTitleChange() + cache invalidation
+    -> Notifier.notifyAll(changes)
+    -> React UI updates via useNotificationListener hook
 ```
+
+### Hooks Layer (`src/hooks/`)
+
+Follows single-responsibility pattern:
+- **useAppData** - Aggregates dashboard state, notifications, scan interval
+- **useAppHandlers** - Composes handler hooks into unified interface
+- **useDashboardData** - Retrieves cached dashboard data from store
+- **useThreadHandlers/useToastHandlers/useSettingsHandlers** - Domain-specific actions
+- **useDraggable** - Position persistence for panel/toggle with drag threshold
+- **useNotificationListener** - Subscribes to Notifier for real-time updates
 
 ### UI Layer (`src/components/`)
 
-- **ManagerPanel** - Main panel with tabs (changes/monitoring/blacklist), draggable via `useDraggable` hook
+- **ManagerPanel** - Main panel with tabs (changes/monitoring/blacklist/debug), draggable via `useDraggable` hook. Sub-components in `ManagerPanel/` directory.
 - **ToggleButton** - Floating button showing unseen count
 - **ToastContainer** - Pop-up notifications with auto-dismiss (5s)
+
+### Constants & Types
+
+- `src/constants.ts` - All magic numbers centralized: `TIME_MS`, `BYTES`, `STORAGE`, `UI`, `TIMING`
+- `src/types/index.ts` - Core interfaces: `MonitoredThread`, `TitleChange`, `ThreadChangeGroup`, `StoredData`, `StorageInfo`
 
 ### Entry Point
 
@@ -64,6 +83,7 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 - Title: `aria-label` with `"unread, "` prefix and `" (thread)"` suffix stripped
 - Parent channel: closest `ul[role="group"][aria-label*="threads"]`
 - Server ID: `window.location.pathname.split('/')[2]`
+- **Shadow DOM Support**: Uses `querySelectorAllDeep` and `closestDeep` from `src/utils/shadowDomQuery.ts` to pierce shadow DOM boundaries, ensuring compatibility if Discord uses Web Components
 
 ### Storage
 - Storage key: `discord-thread-monitor-data` (changing this breaks existing user data)

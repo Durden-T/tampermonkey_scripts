@@ -1,0 +1,105 @@
+:host {
+  /* Typography - Discord-Native with Character */
+  --tm-font-display: 'gg sans', 'Noto Sans', 'Helvetica Neue', helvetica, arial, sans-serif;
+  --tm-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+
+  /* Surface Colors - Deeper, Richer Darks */
+  --tm-bg-void: #020204;
+  --tm-bg-deep: #050508;
+  --tm-bg-base: #08080c;
+  --tm-bg-elevated: #0e0e14;
+  --tm-bg-surface: #14141c;
+  --tm-bg-hover: #1a1a24;
+  --tm-bg-active: #22222e;
+  --tm-bg-highlight: #2a2a3a;
+
+  /* Glass & Transparency */
+  --tm-glass: rgb(8 8 12 / 96%);
+  --tm-glass-border: rgb(255 255 255 / 5%);
+  --tm-glass-border-hover: rgb(255 255 255 / 8%);
+  --tm-glass-highlight: rgb(255 255 255 / 4%);
+  --tm-glass-shine: linear-gradient(135deg, rgb(255 255 255 / 5%) 0%, transparent 50%);
+
+  /* Overlays */
+  --tm-overlay-medium: rgb(0 0 0 / 65%);
+  --tm-overlay-strong: rgb(0 0 0 / 80%);
+
+  /* Text Hierarchy */
+  --tm-text-primary: #f4f4f8;
+  --tm-text-secondary: #a0a0b0;
+  --tm-text-muted: #686878;
+  --tm-text-dim: #484858;
+  --tm-text-ghost: #323240;
+
+  /* Accent - Warm Amber */
+  --tm-accent: #e0a028;
+  --tm-accent-bright: #f0b840;
+  --tm-accent-muted: #c08818;
+  --tm-accent-glow: rgb(224 160 40 / 28%);
+  --tm-accent-subtle: rgb(224 160 40 / 8%);
+  --tm-accent-border-light: rgb(224 160 40 / 12%);
+  --tm-accent-border-strong: rgb(224 160 40 / 16%);
+  --tm-accent-border-hover: rgb(224 160 40 / 22%);
+  --tm-accent-surface: rgb(224 160 40 / 12%);
+  --tm-accent-surface-hover: rgb(224 160 40 / 14%);
+  --tm-accent-gradient: linear-gradient(135deg, #f0b840 0%, #e0a028 50%, #c08818 100%);
+
+  /* Semantic Colors */
+  --tm-success: #40d070;
+  --tm-success-muted: rgb(64 208 112 / 14%);
+  --tm-danger: #e85858;
+  --tm-danger-muted: rgb(232 88 88 / 14%);
+  --tm-danger-border: rgb(232 88 88 / 16%);
+  --tm-danger-surface: rgb(232 88 88 / 20%);
+  --tm-danger-border-hover: rgb(232 88 88 / 28%);
+  --tm-info: #5090e8;
+  --tm-info-muted: rgb(80 144 232 / 14%);
+  --tm-info-surface: rgb(80 144 232 / 20%);
+
+  /* Change Diff Colors */
+  --tm-old-title: #e06060;
+  --tm-old-title-decoration: rgb(224 96 96 / 50%);
+  --tm-new-title: #50c880;
+
+  /* Border Radius */
+  --tm-radius-xs: 3px;
+  --tm-radius-sm: 5px;
+  --tm-radius-md: 8px;
+  --tm-radius-lg: 12px;
+  --tm-radius-xl: 16px;
+  --tm-radius-full: 9999px;
+
+  /* Shadows */
+  --tm-shadow-xs: 0 1px 2px rgb(0 0 0 / 30%);
+  --tm-shadow-sm: 0 2px 8px rgb(0 0 0 / 35%), 0 1px 2px rgb(0 0 0 / 25%);
+  --tm-shadow-md: 0 8px 24px rgb(0 0 0 / 45%), 0 2px 8px rgb(0 0 0 / 30%);
+  --tm-shadow-lg: 0 16px 48px rgb(0 0 0 / 55%), 0 4px 16px rgb(0 0 0 / 35%);
+  --tm-shadow-xl: 0 24px 64px rgb(0 0 0 / 65%), 0 8px 28px rgb(0 0 0 / 40%);
+  --tm-shadow-glow: 0 0 36px var(--tm-accent-glow);
+  --tm-shadow-inset: inset 0 1px 0 var(--tm-glass-highlight);
+  --tm-shadow-border: 0 0 0 1px var(--tm-glass-border);
+  --tm-shadow-ring: 0 0 0 2px var(--tm-accent-subtle), 0 0 0 4px rgb(224 160 40 / 10%);
+
+  /* Blur */
+  --tm-blur-sm: 10px;
+  --tm-blur-md: 20px;
+  --tm-blur-lg: 28px;
+
+  /* Timing Functions */
+  --tm-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --tm-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --tm-ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Transitions */
+  --tm-transition-fast: 100ms var(--tm-ease-out);
+  --tm-transition-base: 180ms var(--tm-ease-out);
+  --tm-transition-spring: 280ms var(--tm-ease-spring);
+  --tm-transition-slow: 360ms var(--tm-ease-smooth);
+
+  /* Z-Index Layers */
+  --tm-z-toggle: 99998;
+  --tm-z-panel: 99997;
+  --tm-z-toast: 99999;
+  --tm-z-modal: 100000;
+  --tm-z-error: 100001;
+}

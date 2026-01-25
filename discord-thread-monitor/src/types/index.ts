@@ -1,3 +1,5 @@
+import { STORAGE } from '../constants';
+
 export interface MonitoredThread {
   id: string;
   currentTitle: string;
@@ -38,5 +40,5 @@ export interface StorageInfo {
 }
 
 export const DEFAULT_RETENTION_DAYS = 0;
-export const COMPRESSION_THRESHOLD_BYTES = 50 * 1024;
-export const STORAGE_WARNING_BYTES = 200 * 1024;
+export const COMPRESSION_THRESHOLD_BYTES = STORAGE.COMPRESSION_THRESHOLD;
+export const STORAGE_WARNING_BYTES = STORAGE.WARNING_THRESHOLD;

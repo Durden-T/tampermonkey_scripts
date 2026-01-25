@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import type { ThreadStore } from '../core/ThreadStore';
 import type { TitleChange } from '../types';
+import { useNavigateWithMark } from './useNavigateWithMark';
 
 interface UseToastHandlersProps {
   store: ThreadStore;
@@ -13,21 +14,28 @@ export const useToastHandlers = ({
   refreshData,
   setPendingToasts,
 }: UseToastHandlersProps) => {
-  const handleToastDismiss = useCallback(
+  const navigateAndMark = useNavigateWithMark({ store, refreshData });
+
+  const dismissToast = useCallback(
     (threadId: string) => {
       setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
     },
     [setPendingToasts]
   );
 
+  const handleToastDismiss = useCallback(
+    (threadId: string) => {
+      dismissToast(threadId);
+    },
+    [dismissToast]
+  );
+
   const handleToastNavigate = useCallback(
     (url: string, threadId: string) => {
-      store.markChangeSeen(threadId);
-      setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
-      refreshData();
-      window.location.href = url;
+      dismissToast(threadId);
+      navigateAndMark(url, threadId);
     },
-    [store, setPendingToasts, refreshData]
+    [dismissToast, navigateAndMark]
   );
 
   return {

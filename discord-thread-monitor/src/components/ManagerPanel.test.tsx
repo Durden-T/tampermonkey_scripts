@@ -60,7 +60,7 @@ vi.mock('../i18n', () => ({
       noBlacklist: 'No Blacklist',
     },
     settings: {
-      retentionPeriod: 'Retention Period',
+      retentionPeriod: 'Retention',
       permanent: 'Permanent',
       days: 'days',
       storageUsage: 'Storage Usage',
@@ -377,7 +377,7 @@ describe('ManagerPanel', () => {
       const debugTab = screen.getByRole('button', { name: /Debug/i });
       await user.click(debugTab);
 
-      expect(screen.getByPlaceholderText('Permanent')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('0')).toBeInTheDocument();
     });
 
     it('should display storage usage information', async () => {
@@ -426,13 +426,13 @@ describe('ManagerPanel', () => {
       const debugTab = screen.getByRole('button', { name: /Debug/i });
       await user.click(debugTab);
 
-      const input = screen.getByPlaceholderText('Permanent');
+      const input = screen.getByPlaceholderText('0') as HTMLInputElement;
       await waitFor(() => {
         expect(input.value).toBe('30');
       });
     });
 
-    it('should display permanent text when retention is 0', async () => {
+    it('should display 0 when retention is permanent', async () => {
       const user = userEvent.setup();
 
       render(<ManagerPanel {...defaultProps} retentionDays={0} />);
@@ -440,9 +440,9 @@ describe('ManagerPanel', () => {
       const debugTab = screen.getByRole('button', { name: /Debug/i });
       await user.click(debugTab);
 
-      const input = screen.getByPlaceholderText('Permanent');
+      const input = screen.getByPlaceholderText('0') as HTMLInputElement;
       await waitFor(() => {
-        expect(input.value).toBe('Permanent');
+        expect(input.value).toBe('0');
       });
     });
 

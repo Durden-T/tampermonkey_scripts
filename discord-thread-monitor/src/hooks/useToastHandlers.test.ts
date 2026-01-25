@@ -81,18 +81,14 @@ describe('useToastHandlers', () => {
   });
 
   describe('handleToastNavigate', () => {
-    const originalLocation = window.location;
+    let pushStateSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-      // Mock window.location
-      delete (window as any).location;
-      window.location = {
-        href: '',
-      } as Location;
+      pushStateSpy = vi.spyOn(history, 'pushState');
     });
 
     afterEach(() => {
-      window.location = originalLocation;
+      pushStateSpy.mockRestore();
     });
 
     it('should mark change as seen when navigating', () => {
@@ -153,7 +149,7 @@ describe('useToastHandlers', () => {
       expect(resultToasts[0].threadId).toBe('thread-456');
     });
 
-    it('should navigate to the provided URL', () => {
+    it('should navigate to the provided URL using history.pushState', () => {
       const { result } = renderHook(() =>
         useToastHandlers({
           store: mockStore as ThreadStore,
@@ -162,13 +158,13 @@ describe('useToastHandlers', () => {
         })
       );
 
-      const testUrl = 'https://discord.com/thread/123';
+      const testUrl = 'https://discord.com/channels/123/456';
 
       act(() => {
         result.current.handleToastNavigate(testUrl, 'thread-123');
       });
 
-      expect(window.location.href).toBe(testUrl);
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/channels/123/456');
     });
 
     it('should maintain stable callback reference', () => {

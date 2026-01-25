@@ -146,7 +146,7 @@ describe('ToastContainer', () => {
   });
 
   describe('Toast behavior', () => {
-    it('should automatically dismiss toast after duration', () => {
+    it('should persist toast until manually dismissed', () => {
       const { container } = render(
         <ToastContainer
           changes={[mockChange]}
@@ -159,14 +159,12 @@ describe('ToastContainer', () => {
       expect(screen.getByText('Original Thread Title')).toBeInTheDocument();
       expect(container.querySelector('.toast')).toBeInTheDocument();
 
-      // Fast-forward through the 5 second duration
       act(() => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(10000);
       });
 
-      // Toast should be dismissed and removed
-      expect(mockOnDismiss).toHaveBeenCalledWith('thread-1');
-      expect(container.querySelector('.toast')).not.toBeInTheDocument();
+      expect(mockOnDismiss).not.toHaveBeenCalled();
+      expect(container.querySelector('.toast')).toBeInTheDocument();
     });
 
     it('should not add duplicate toasts for the same change', () => {
@@ -343,8 +341,8 @@ describe('ToastContainer', () => {
     });
   });
 
-  describe('Timer cleanup', () => {
-    it('should clear timers on unmount', () => {
+  describe('Component lifecycle', () => {
+    it('should not call onDismiss after unmount', () => {
       const { unmount } = render(
         <ToastContainer
           changes={[mockChange]}
@@ -356,12 +354,6 @@ describe('ToastContainer', () => {
 
       unmount();
 
-      // Fast-forward time
-      act(() => {
-        vi.advanceTimersByTime(5000);
-      });
-
-      // onDismiss should not be called since component unmounted
       expect(mockOnDismiss).not.toHaveBeenCalled();
     });
   });

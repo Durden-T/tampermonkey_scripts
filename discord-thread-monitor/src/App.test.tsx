@@ -30,21 +30,18 @@ describe('App', () => {
   let performScan: ReturnType<typeof vi.fn>;
 
   const mockThread: MonitoredThread = {
-    threadId: 'thread-1',
-    title: 'Test Thread',
+    id: 'thread-1',
+    currentTitle: 'Test Thread',
     url: 'https://discord.com/channels/123/456',
-    firstSeen: Date.now(),
-    lastSeen: Date.now(),
-    parentChannelId: 'channel-1',
-    parentChannelName: 'Test Channel',
+    firstSeenAt: Date.now(),
+    parentChannel: 'Test Channel',
   };
 
   const mockChange: TitleChange = {
     threadId: 'thread-1',
     oldTitle: 'Old Title',
     newTitle: 'New Title',
-    timestamp: Date.now(),
-    url: 'https://discord.com/channels/123/456',
+    changedAt: Date.now(),
     seen: false,
   };
 

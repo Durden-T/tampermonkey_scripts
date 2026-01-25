@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { ThreadStore } from '../core/ThreadStore';
+import { useNavigateWithMark } from './useNavigateWithMark';
 
 interface UseThreadHandlersProps {
   store: ThreadStore;
@@ -7,13 +8,13 @@ interface UseThreadHandlersProps {
 }
 
 export const useThreadHandlers = ({ store, refreshData }: UseThreadHandlersProps) => {
+  const navigateAndMark = useNavigateWithMark({ store, refreshData });
+
   const handleOpen = useCallback(
     (url: string, threadId: string) => {
-      store.markChangeSeen(threadId);
-      refreshData();
-      window.location.href = url;
+      navigateAndMark(url, threadId);
     },
-    [store, refreshData]
+    [navigateAndMark]
   );
 
   const handleBlock = useCallback(

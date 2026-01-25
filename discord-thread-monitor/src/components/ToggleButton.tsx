@@ -1,14 +1,12 @@
 import { useState, useRef } from 'react';
 import { ThreadIcon } from './Icons';
 import { useDraggable } from '../hooks/useDraggable';
+import { UI, STORAGE } from '../constants';
 
 interface ToggleButtonProps {
   unseenCount: number;
   onClick: () => void;
 }
-
-const BUTTON_SIZE = 44;
-const DRAG_THRESHOLD = 3;
 
 const useButtonInteraction = (onClick: () => void) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -23,7 +21,7 @@ const useButtonInteraction = (onClick: () => void) => {
     if (pos) {
       const deltaX = Math.abs(e.clientX - pos.x);
       const deltaY = Math.abs(e.clientY - pos.y);
-      if (deltaX < DRAG_THRESHOLD && deltaY < DRAG_THRESHOLD) {
+      if (deltaX < UI.DRAG_THRESHOLD_PX && deltaY < UI.DRAG_THRESHOLD_PX) {
         onClick();
       }
       mouseDownPos.current = null;
@@ -43,12 +41,12 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
     useButtonInteraction(onClick);
 
   const { position, isDragging, handleMouseDown } = useDraggable({
-    storageKey: 'thread-monitor-toggle-position',
+    storageKey: STORAGE.TOGGLE_POSITION_KEY,
     defaultPosition: {
-      x: window.innerWidth - BUTTON_SIZE - 16,
-      y: 16,
+      x: window.innerWidth - UI.TOGGLE_BUTTON_SIZE - UI.TOGGLE_BUTTON_OFFSET,
+      y: UI.TOGGLE_BUTTON_OFFSET,
     },
-    bounds: { width: BUTTON_SIZE, height: BUTTON_SIZE },
+    bounds: { width: UI.TOGGLE_BUTTON_SIZE, height: UI.TOGGLE_BUTTON_SIZE },
     excludeSelector: '.toggle-badge',
   });
 
@@ -57,11 +55,14 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
     handleMouseDown(e);
   };
 
+  const displayCount =
+    unseenCount > UI.TOGGLE_BADGE_MAX_DISPLAY ? `${UI.TOGGLE_BADGE_MAX_DISPLAY}+` : unseenCount;
+
   return (
     <button
       className="thread-monitor-toggle"
       style={{
-        opacity: unseenCount > 0 || isHovered ? 1 : 0.8,
+        opacity: unseenCount > 0 || isHovered ? 1 : UI.TOGGLE_BUTTON_DEFAULT_OPACITY,
         left: `${position.x}px`,
         top: `${position.y}px`,
         cursor: isDragging ? 'grabbing' : 'grab',
@@ -74,9 +75,7 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
       <span className="toggle-icon">
         <ThreadIcon />
       </span>
-      {unseenCount > 0 && (
-        <span className="toggle-badge pulse">{unseenCount > 99 ? '99+' : unseenCount}</span>
-      )}
+      {unseenCount > 0 && <span className="toggle-badge pulse">{displayCount}</span>}
     </button>
   );
 }

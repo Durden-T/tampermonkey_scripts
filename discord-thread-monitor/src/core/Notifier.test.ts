@@ -53,7 +53,7 @@ describe('Notifier', () => {
       expect(callback3).toHaveBeenCalledWith(change);
     });
 
-    it('should allow registering the same callback multiple times', () => {
+    it('should prevent duplicate callback registrations', () => {
       const callback = vi.fn();
 
       notifier.onNotify(callback);
@@ -69,8 +69,8 @@ describe('Notifier', () => {
 
       notifier.notify(change);
 
-      // Callback should be called twice (once for each registration)
-      expect(callback).toHaveBeenCalledTimes(2);
+      // Callback should be called only once (Set prevents duplicates)
+      expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(change);
     });
   });
@@ -95,14 +95,14 @@ describe('Notifier', () => {
       expect(callback).not.toHaveBeenCalled();
     });
 
-    it('should only remove the first occurrence of a callback', () => {
+    it('should remove callback even if registered multiple times', () => {
       const callback = vi.fn();
 
-      // Register same callback twice
+      // Register same callback twice (but Set only stores once)
       notifier.onNotify(callback);
       notifier.onNotify(callback);
 
-      // Remove one occurrence
+      // Remove the callback
       notifier.offNotify(callback);
 
       const change: TitleChange = {
@@ -115,8 +115,8 @@ describe('Notifier', () => {
 
       notifier.notify(change);
 
-      // Should still be called once (the second registration)
-      expect(callback).toHaveBeenCalledTimes(1);
+      // Should not be called (Set removed the only instance)
+      expect(callback).not.toHaveBeenCalled();
     });
 
     it('should handle removing non-existent callback', () => {
@@ -374,11 +374,11 @@ describe('Notifier', () => {
 
       notifier.notifyAll(changes);
 
-      // Note: When callback1 runs and removes itself during the first change,
-      // it affects the array that forEach is iterating over
-      // So callback1 gets called once, and callback2 also gets called once
+      // With Set, forEach is safe from modification during iteration
+      // callback1 removes itself during first change, so it's only called once
+      // callback2 is called for both changes
       expect(callback1).toHaveBeenCalledTimes(1);
-      expect(callback2).toHaveBeenCalledTimes(1);
+      expect(callback2).toHaveBeenCalledTimes(2);
     });
 
     it('should handle large number of changes', () => {

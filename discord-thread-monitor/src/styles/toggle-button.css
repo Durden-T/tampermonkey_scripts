@@ -1,0 +1,105 @@
+.thread-monitor-toggle {
+  position: fixed;
+  z-index: var(--tm-z-toggle);
+  width: 46px;
+  height: 46px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass);
+  backdrop-filter: blur(var(--tm-blur-md)) saturate(1.3);
+  box-shadow:
+    var(--tm-shadow-md),
+    var(--tm-shadow-border),
+    inset 0 1px 0 var(--tm-glass-highlight);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--tm-transition-spring),
+    opacity var(--tm-transition-base),
+    box-shadow var(--tm-transition-base);
+  user-select: none;
+}
+
+.thread-monitor-toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--tm-glass-shine);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.thread-monitor-toggle:hover {
+  transform: scale(1.08);
+  box-shadow:
+    var(--tm-shadow-lg),
+    0 0 0 1px var(--tm-glass-border-hover),
+    inset 0 1px 0 var(--tm-glass-highlight);
+}
+
+.thread-monitor-toggle:active {
+  transform: scale(0.94);
+  transition-duration: 50ms;
+}
+
+.thread-monitor-toggle:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--tm-shadow-md),
+    var(--tm-shadow-ring),
+    inset 0 1px 0 var(--tm-glass-highlight);
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tm-text-muted);
+  transition: color var(--tm-transition-fast);
+}
+
+.thread-monitor-toggle:hover .toggle-icon {
+  color: var(--tm-text-primary);
+}
+
+.toggle-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--tm-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: var(--tm-bg-void);
+  background: var(--tm-accent-gradient);
+  border-radius: var(--tm-radius-full);
+  box-shadow:
+    var(--tm-shadow-sm),
+    0 0 0 2px var(--tm-bg-void);
+  transform-origin: center;
+}
+
+.toggle-badge.pulse {
+  animation: badge-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%,
+  100% {
+    box-shadow:
+      var(--tm-shadow-sm),
+      0 0 0 2px var(--tm-bg-void),
+      0 0 0 0 var(--tm-accent-glow);
+  }
+
+  50% {
+    box-shadow:
+      var(--tm-shadow-sm),
+      0 0 0 2px var(--tm-bg-void),
+      0 0 20px 6px var(--tm-accent-glow);
+  }
+}

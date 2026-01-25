@@ -3,20 +3,11 @@ import { renderHook, act } from '@testing-library/react';
 
 describe('useRetentionInput', () => {
   let mockOnRetentionChange: (days: number) => void;
-  let getTexts: ReturnType<(typeof import('../../i18n'))['getTexts']>;
-  let useRetentionInput: ReturnType<(typeof import('./useRetentionInput'))['useRetentionInput']>;
-  let t: ReturnType<(typeof import('../../i18n'))['getTexts']>;
+  let useRetentionInput: (typeof import('./useRetentionInput'))['useRetentionInput'];
 
   beforeEach(async () => {
     mockOnRetentionChange = vi.fn();
-
-    // Clear any cached modules first
     vi.resetModules();
-
-    // Import modules dynamically after setting up mocks
-    const i18nModule = await import('../../i18n');
-    getTexts = i18nModule.getTexts;
-    t = getTexts('en');
 
     const retentionModule = await import('./useRetentionInput');
     useRetentionInput = retentionModule.useRetentionInput;
@@ -24,13 +15,13 @@ describe('useRetentionInput', () => {
 
   describe('Initialization', () => {
     it('should initialize with empty input when retention days is 0', () => {
-      const { result } = renderHook(() => useRetentionInput(0, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(0, mockOnRetentionChange));
 
-      expect(result.current.inputDisplayValue).toBe(t.settings.permanent);
+      expect(result.current.inputDisplayValue).toBe('0');
     });
 
     it('should initialize with empty input when retention days is positive', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       expect(result.current.inputDisplayValue).toBe('30');
     });
@@ -38,7 +29,7 @@ describe('useRetentionInput', () => {
 
   describe('setRetentionInput', () => {
     it('should update input value', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('45');
@@ -49,38 +40,8 @@ describe('useRetentionInput', () => {
   });
 
   describe('handleRetentionBlur', () => {
-    it('should handle permanent keyword (English)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
-
-      act(() => {
-        result.current.setRetentionInput('permanent');
-      });
-
-      act(() => {
-        result.current.handleRetentionBlur();
-      });
-
-      expect(mockOnRetentionChange).toHaveBeenCalledWith(0);
-      expect(result.current.inputDisplayValue).toBe(t.settings.permanent);
-    });
-
-    it('should handle permanent keyword (Chinese)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
-
-      act(() => {
-        result.current.setRetentionInput('永久');
-      });
-
-      act(() => {
-        result.current.handleRetentionBlur();
-      });
-
-      expect(mockOnRetentionChange).toHaveBeenCalledWith(0);
-      expect(result.current.inputDisplayValue).toBe(t.settings.permanent);
-    });
-
     it('should handle valid retention days', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('60');
@@ -95,7 +56,7 @@ describe('useRetentionInput', () => {
     });
 
     it('should handle minimum retention days (0)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('0');
@@ -108,22 +69,22 @@ describe('useRetentionInput', () => {
       expect(mockOnRetentionChange).toHaveBeenCalledWith(0);
     });
 
-    it('should handle maximum retention days (365)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+    it('should handle large retention days (no upper limit)', () => {
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
-        result.current.setRetentionInput('365');
+        result.current.setRetentionInput('1000');
       });
 
       act(() => {
         result.current.handleRetentionBlur();
       });
 
-      expect(mockOnRetentionChange).toHaveBeenCalledWith(365);
+      expect(mockOnRetentionChange).toHaveBeenCalledWith(1000);
     });
 
     it('should reject invalid retention days (negative)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       const initialDisplayValue = result.current.inputDisplayValue;
 
@@ -139,25 +100,8 @@ describe('useRetentionInput', () => {
       expect(result.current.inputDisplayValue).toBe(initialDisplayValue);
     });
 
-    it('should reject invalid retention days (above maximum)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
-
-      const initialDisplayValue = result.current.inputDisplayValue;
-
-      act(() => {
-        result.current.setRetentionInput('366');
-      });
-
-      act(() => {
-        result.current.handleRetentionBlur();
-      });
-
-      expect(mockOnRetentionChange).not.toHaveBeenCalled();
-      expect(result.current.inputDisplayValue).toBe(initialDisplayValue);
-    });
-
     it('should reject invalid input (non-numeric)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       const initialDisplayValue = result.current.inputDisplayValue;
 
@@ -174,7 +118,7 @@ describe('useRetentionInput', () => {
     });
 
     it('should handle empty input (restore previous value)', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('');
@@ -189,7 +133,7 @@ describe('useRetentionInput', () => {
     });
 
     it('should handle whitespace-only input', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('  ');
@@ -204,7 +148,7 @@ describe('useRetentionInput', () => {
     });
 
     it('should trim whitespace from valid input', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput(' 60 ');
@@ -221,7 +165,7 @@ describe('useRetentionInput', () => {
 
   describe('handleRetentionKeyDown', () => {
     it('should trigger handleRetentionBlur on Enter key', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('60');
@@ -239,7 +183,7 @@ describe('useRetentionInput', () => {
     });
 
     it('should not trigger handleRetentionBlur on other keys', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('60');
@@ -259,7 +203,7 @@ describe('useRetentionInput', () => {
 
   describe('Input display value', () => {
     it('should show input value when user is typing', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       act(() => {
         result.current.setRetentionInput('45');
@@ -269,15 +213,15 @@ describe('useRetentionInput', () => {
     });
 
     it('should show current retention days when input is empty', () => {
-      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange, t));
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       expect(result.current.inputDisplayValue).toBe('30');
     });
 
-    it('should show permanent text when retention days is 0', () => {
-      const { result } = renderHook(() => useRetentionInput(0, mockOnRetentionChange, t));
+    it('should show 0 when retention days is 0 (permanent)', () => {
+      const { result } = renderHook(() => useRetentionInput(0, mockOnRetentionChange));
 
-      expect(result.current.inputDisplayValue).toBe(t.settings.permanent);
+      expect(result.current.inputDisplayValue).toBe('0');
     });
   });
 });

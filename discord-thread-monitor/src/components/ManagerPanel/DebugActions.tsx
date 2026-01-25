@@ -1,4 +1,4 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 
 interface DebugActionsProps {
   onSimulateTitleChange: () => void;
@@ -10,7 +10,9 @@ export function DebugActions({ onSimulateTitleChange, onClearChanges, t }: Debug
   return (
     <>
       <button onClick={onSimulateTitleChange}>{t.debug.simulateChange}</button>
-      <button onClick={onClearChanges}>{t.debug.clearAll}</button>
+      <button className="danger" onClick={onClearChanges}>
+        {t.debug.clearAll}
+      </button>
     </>
   );
 }

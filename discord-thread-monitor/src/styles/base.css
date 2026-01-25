@@ -1,0 +1,68 @@
+:host {
+  all: initial;
+  display: block;
+  font-family: var(--tm-font-display);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tm-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizelegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  letter-spacing: -0.01em;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+.tm-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tm-bg-active) transparent;
+}
+
+.tm-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tm-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+}
+
+.tm-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--tm-bg-active);
+  border-radius: var(--tm-radius-full);
+  transition: background var(--tm-transition-fast);
+}
+
+.tm-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--tm-bg-highlight);
+}
+
+::selection {
+  background: var(--tm-accent-subtle);
+  color: var(--tm-accent-bright);
+}

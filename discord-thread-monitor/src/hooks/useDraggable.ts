@@ -33,9 +33,16 @@ const usePersistentPosition = (storageKey: string, defaultPosition: Position, bo
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
-          return clampPosition(parsed, bounds);
+        const parsed = JSON.parse(saved) as unknown;
+        if (
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          'x' in parsed &&
+          'y' in parsed &&
+          typeof parsed.x === 'number' &&
+          typeof parsed.y === 'number'
+        ) {
+          return clampPosition(parsed as Position, bounds);
         }
       }
     } catch {
@@ -67,7 +74,9 @@ const useDragState = (
   const dragStartRef = useRef<Position>({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging) {
+      return;
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - dragStartRef.current.x;
@@ -116,7 +125,8 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
       setIsDragging(true);
       dragStartRef.current = { x: e.clientX, y: e.clientY };
     },
-    [excludeSelector, setIsDragging, dragStartRef]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [excludeSelector, setIsDragging]
   );
 
   return {

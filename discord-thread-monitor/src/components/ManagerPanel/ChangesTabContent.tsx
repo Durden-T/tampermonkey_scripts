@@ -1,9 +1,8 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 import { ThreadList } from '../ThreadList';
 import type { ThreadChangeGroup } from '../../types';
 import type { TimePeriod, TimeFilterMode } from '../../utils/timeFilters';
 import { FilterControls } from './FilterControls';
-import { HeaderActions } from './HeaderActions';
 
 interface ChangesTabContentProps {
   filterMode: TimeFilterMode | 'all';
@@ -21,7 +20,6 @@ interface ChangesTabContentProps {
   t: ReturnType<typeof getTexts>;
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const ChangesTabContent: React.FC<ChangesTabContentProps> = ({
   filterMode,
   selectedPeriod,
@@ -39,24 +37,17 @@ export const ChangesTabContent: React.FC<ChangesTabContentProps> = ({
 }) => {
   return (
     <>
-      <div className="content-header">
-        <div className="filter-controls">
-          <FilterControls
-            filterMode={filterMode}
-            selectedPeriod={selectedPeriod}
-            onFilterModeChange={onFilterModeChange}
-            onPeriodChange={onPeriodChange}
-            t={t}
-          />
-        </div>
-        <HeaderActions
-          unseenCount={unseenCount}
-          changesLength={changesLength}
-          onMarkAllRead={onMarkAllRead}
-          onClearChanges={onClearChanges}
-          t={t}
-        />
-      </div>
+      <FilterControls
+        filterMode={filterMode}
+        selectedPeriod={selectedPeriod}
+        onFilterModeChange={onFilterModeChange}
+        onPeriodChange={onPeriodChange}
+        unseenCount={unseenCount}
+        changesLength={changesLength}
+        onMarkAllRead={onMarkAllRead}
+        onClearChanges={onClearChanges}
+        t={t}
+      />
       <ThreadList
         threads={[]}
         changeGroups={filteredChangeGroups}

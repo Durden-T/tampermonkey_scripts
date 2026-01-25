@@ -1,12 +1,15 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadScanner } from './ThreadScanner';
+import * as shadowDomQuery from '../utils/shadowDomQuery';
 
 describe('ThreadScanner', () => {
   let scanner: ThreadScanner;
+  let container: HTMLDivElement;
 
   beforeEach(() => {
     scanner = new ThreadScanner();
-    vi.spyOn(document, 'querySelectorAll');
+    container = document.createElement('div');
+    document.body.appendChild(container);
     vi.spyOn(window, 'location', 'get').mockReturnValue({
       href: 'https://discord.com/channels/123/456',
       pathname: '/channels/123/456',
@@ -14,6 +17,7 @@ describe('ThreadScanner', () => {
   });
 
   afterEach(() => {
+    container.remove();
     vi.restoreAllMocks();
   });
 
@@ -38,22 +42,13 @@ describe('ThreadScanner', () => {
     });
 
     it('should return empty array when no thread elements found', () => {
-      (document.querySelectorAll as any).mockReturnValue([]);
-
       const threads = scanner.scanVisibleThreads();
       expect(threads).toEqual([]);
-      expect(document.querySelectorAll).toHaveBeenCalledWith(
-        '[data-list-item-id^="channels___"][aria-label*="(thread)"]'
-      );
     });
 
     it('should parse thread elements correctly', () => {
-      const mockElements = [
-        createMockThreadElement('channels___123456', 'Test Thread 1', 'General threads'),
-        createMockThreadElement('channels___789012', 'Test Thread 2', 'Random threads'),
-      ];
-
-      (document.querySelectorAll as any).mockReturnValue(mockElements);
+      createMockThreadElement(container, 'channels___123456', 'Test Thread 1', 'General threads');
+      createMockThreadElement(container, 'channels___789012', 'Test Thread 2', 'Random threads');
 
       const threads = scanner.scanVisibleThreads();
 
@@ -73,14 +68,13 @@ describe('ThreadScanner', () => {
     });
 
     it('should handle threads with unread marker', () => {
-      const mockElement = createMockThreadElement(
+      createMockThreadElement(
+        container,
         'channels___999',
         'Test Thread with unread',
         'General threads',
         true
       );
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -89,15 +83,11 @@ describe('ThreadScanner', () => {
     });
 
     it('should skip elements without data-list-item-id', () => {
-      const validElement = createMockThreadElement(
-        'channels___123',
-        'Valid Thread',
-        'General threads'
-      );
+      createMockThreadElement(container, 'channels___123', 'Valid Thread', 'General threads');
+
       const invalidElement = document.createElement('div');
       invalidElement.setAttribute('aria-label', 'Test Thread (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([validElement, invalidElement]);
+      container.appendChild(invalidElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -109,8 +99,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'malformed');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -121,8 +110,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', '');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -130,13 +118,10 @@ describe('ThreadScanner', () => {
     });
 
     it('should skip elements where title becomes empty after trimming', () => {
-      // Test case for line 44: if (!title) return null;
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
-      // Create an aria-label that will result in empty string after regex replacement and trimming
       mockElement.setAttribute('aria-label', 'unread,   (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -144,31 +129,27 @@ describe('ThreadScanner', () => {
     });
 
     it('should handle parent container with empty aria-label', () => {
-      // Test case for line 62: if (!label) return '';
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
 
-      // Create parent with empty aria-label
       const parentContainer = document.createElement('ul');
       parentContainer.setAttribute('role', 'group');
-      parentContainer.setAttribute('aria-label', ''); // Empty label
+      parentContainer.setAttribute('aria-label', '');
       parentContainer.appendChild(mockElement);
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(parentContainer);
 
       const threads = scanner.scanVisibleThreads();
 
       expect(threads).toHaveLength(1);
-      expect(threads[0].parentChannel).toBe(''); // Should return empty string
+      expect(threads[0].parentChannel).toBe('');
     });
 
     it('should handle threads without parent channel', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -180,8 +161,7 @@ describe('ThreadScanner', () => {
       const now = Date.now();
       vi.spyOn(Date, 'now').mockReturnValue(now);
 
-      const mockElement = createMockThreadElement('channels___123', 'Test', 'General threads');
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      createMockThreadElement(container, 'channels___123', 'Test', 'General threads');
 
       const threads = scanner.scanVisibleThreads();
 
@@ -194,8 +174,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'My (thread) Project (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -207,8 +186,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'unread, My Thread (thread)');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -220,8 +198,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', '   Test Thread   (thread)   ');
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -230,8 +207,7 @@ describe('ThreadScanner', () => {
     });
 
     it('should handle complex parent channel names', () => {
-      const mockElement = createMockThreadElement('channels___123', 'Test', 'General Chat threads');
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      createMockThreadElement(container, 'channels___123', 'Test', 'General Chat threads');
 
       const threads = scanner.scanVisibleThreads();
 
@@ -239,12 +215,10 @@ describe('ThreadScanner', () => {
     });
 
     it('should handle parent channel without "threads" suffix', () => {
-      const mockElement = createMockThreadElement('channels___123', 'Test', 'General');
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      createMockThreadElement(container, 'channels___123', 'Test', 'General');
 
       const threads = scanner.scanVisibleThreads();
 
-      // The current implementation expects "threads" in the label, so this will return empty
       expect(threads[0].parentChannel).toBe('');
     });
   });
@@ -299,8 +273,8 @@ describe('ThreadScanner', () => {
       ];
 
       testCases.forEach(({ ariaLabel, expected }) => {
-        const mockElement = createMockThreadElement('channels___123', 'Test', ariaLabel);
-        (document.querySelectorAll as any).mockReturnValue([mockElement]);
+        container.innerHTML = '';
+        createMockThreadElement(container, 'channels___123', 'Test', ariaLabel);
 
         const threads = scanner.scanVisibleThreads();
 
@@ -312,9 +286,7 @@ describe('ThreadScanner', () => {
       const mockElement = document.createElement('div');
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
-
-      // Don't add parent container
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(mockElement);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -326,13 +298,10 @@ describe('ThreadScanner', () => {
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
 
-      // Create parent container without aria-label
       const parentContainer = document.createElement('ul');
       parentContainer.setAttribute('role', 'group');
-      // Intentionally not setting aria-label
       parentContainer.appendChild(mockElement);
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(parentContainer);
 
       const threads = scanner.scanVisibleThreads();
 
@@ -344,19 +313,14 @@ describe('ThreadScanner', () => {
       mockElement.setAttribute('data-list-item-id', 'channels___123');
       mockElement.setAttribute('aria-label', 'Test Thread (thread)');
 
-      // Create parent container with aria-label that contains "threads" but doesn't match the expected pattern
-      // The selector requires aria-label to contain "threads", so we'll use a valid pattern
-      // but test the case where the regex replace doesn't change anything
       const parentContainer = document.createElement('ul');
       parentContainer.setAttribute('role', 'group');
-      parentContainer.setAttribute('aria-label', 'threads'); // Minimal case
+      parentContainer.setAttribute('aria-label', 'threads');
       parentContainer.appendChild(mockElement);
-
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      container.appendChild(parentContainer);
 
       const threads = scanner.scanVisibleThreads();
 
-      // The regex should handle this and return an empty string after trimming
       expect(threads[0].parentChannel).toBe('');
     });
   });
@@ -368,12 +332,7 @@ describe('ThreadScanner', () => {
         pathname: '/channels/123456789',
       } as Location);
 
-      const mockElement = createMockThreadElement(
-        'channels___987654321',
-        'Test',
-        'General threads'
-      );
-      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+      createMockThreadElement(container, 'channels___987654321', 'Test', 'General threads');
 
       const threads = scanner.scanVisibleThreads();
 
@@ -381,23 +340,87 @@ describe('ThreadScanner', () => {
     });
   });
 
+  describe('Shadow DOM support', () => {
+    it('should find thread elements inside shadow DOM', () => {
+      const host = document.createElement('div');
+      container.appendChild(host);
+
+      const shadow = host.attachShadow({ mode: 'open' });
+      createMockThreadElement(
+        shadow as unknown as HTMLDivElement,
+        'channels___123',
+        'Test Thread',
+        'General threads'
+      );
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].id).toBe('123');
+      expect(threads[0].currentTitle).toBe('Test Thread');
+    });
+
+    it('should find parent channel across shadow boundary', () => {
+      const parentContainer = document.createElement('ul');
+      parentContainer.setAttribute('role', 'group');
+      parentContainer.setAttribute('aria-label', 'General threads');
+      container.appendChild(parentContainer);
+
+      const host = document.createElement('div');
+      parentContainer.appendChild(host);
+
+      const shadow = host.attachShadow({ mode: 'open' });
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      mockElement.setAttribute('aria-label', 'Test Thread (thread)');
+      shadow.appendChild(mockElement);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].parentChannel).toBe('General');
+    });
+
+    it('should find threads in nested shadow DOM', () => {
+      const host1 = document.createElement('div');
+      container.appendChild(host1);
+
+      const shadow1 = host1.attachShadow({ mode: 'open' });
+      const host2 = document.createElement('div');
+      shadow1.appendChild(host2);
+
+      const shadow2 = host2.attachShadow({ mode: 'open' });
+      createMockThreadElement(
+        shadow2 as unknown as HTMLDivElement,
+        'channels___deep',
+        'Deep Thread',
+        'Nested threads'
+      );
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].id).toBe('deep');
+      expect(threads[0].currentTitle).toBe('Deep Thread');
+    });
+  });
+
   // Helper function to create mock thread elements
   function createMockThreadElement(
+    containerElement: HTMLElement | ShadowRoot,
     threadId: string,
     title: string,
     parentLabel: string,
     hasUnread: boolean = false
-  ): HTMLElement {
+  ): void {
     const element = document.createElement('div');
     element.setAttribute('data-list-item-id', threadId);
     element.setAttribute('aria-label', `${hasUnread ? 'unread, ' : ''}${title} (thread)`);
 
-    // Create parent container
     const parentContainer = document.createElement('ul');
     parentContainer.setAttribute('role', 'group');
     parentContainer.setAttribute('aria-label', parentLabel);
     parentContainer.appendChild(element);
-
-    return element;
+    containerElement.appendChild(parentContainer);
   }
 });

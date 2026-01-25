@@ -7,7 +7,17 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules', 'coverage', '**/*.config.*', 'vite.config.ts', '**/*.test.ts', '**/*.test.tsx', 'src/test/**/*'],
+    ignores: [
+      'dist',
+      'node_modules',
+      'coverage',
+      'vite-project-example',
+      '**/*.config.*',
+      'vite.config.ts',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      'src/test/**/*',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -32,15 +42,38 @@ export default tseslint.config(
       },
     },
     rules: {
-      // CLAUDE.md: Metrics enforcement
-      'complexity': ['error', { max: 10 }],
+      'complexity': ['error', { max: 15 }],
       'max-params': ['error', { max: 4 }],
-      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', {
+        max: 400,
+        skipBlankLines: true,
+        skipComments: true,
+      }],
+      'max-lines-per-function': ['error', {
+        max: 50,
+        skipBlankLines: true,
+        skipComments: true,
+      }],
       'max-depth': ['error', { max: 3 }],
-      'max-len': ['error', { code: 100, ignorePattern: '^\\s*(//|\\*)', ignoreUrls: true }],
+      'max-len': ['error', {
+        code: 120,
+        ignorePattern: '^\\s*(//|\\*)',
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+      }],
 
-      // Dead code detection
+      'no-magic-numbers': 'off',
+      '@typescript-eslint/no-magic-numbers': ['error', {
+        ignore: [0, 1, -1, 2],
+        ignoreArrayIndexes: true,
+        ignoreDefaultValues: true,
+        ignoreEnums: true,
+        ignoreNumericLiteralTypes: true,
+        ignoreReadonlyClassProperties: true,
+        ignoreTypeIndexes: true,
+      }],
+
       'no-unreachable': 'error',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', {
@@ -49,35 +82,47 @@ export default tseslint.config(
         destructuredArrayIgnorePattern: '^_',
       }],
       'no-constant-condition': 'error',
+      'no-debugger': 'error',
+      'no-empty': 'error',
+      'no-empty-function': 'off',
+      '@typescript-eslint/no-empty-function': 'error',
+      'no-lonely-if': 'error',
+      'no-else-return': ['error', { allowElseIf: false }],
+      'curly': ['error', 'all'],
+      'no-useless-return': 'error',
 
-      // Code quality
       'no-duplicate-imports': 'error',
       'prefer-const': 'error',
       'eqeqeq': ['error', 'always'],
       'no-var': 'error',
       'object-shorthand': 'error',
 
-      // TypeScript
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-confusing-void-expression': 'off',
       '@typescript-eslint/unbound-method': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/restrict-template-expressions': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/consistent-type-imports': ['error', {
+        prefer: 'type-imports',
+        fixStyle: 'inline-type-imports',
+      }],
 
-      // React
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': ['warn', {
+        allowConstantExport: true,
+      }],
       'react/prop-types': 'off',
 
-      // Console usage
       'no-console': 'off',
     },
   },

@@ -1,8 +1,8 @@
 import type { MonitoredThread, TitleChange } from '../types';
-import type { ThreadStore } from './ThreadStore';
+import type { IThreadRepository } from './IThreadRepository';
 
 export class ChangeDetector {
-  constructor(private store: ThreadStore) {}
+  constructor(private store: IThreadRepository) {}
 
   detectAndPersistChanges(currentThreads: MonitoredThread[]): TitleChange[] {
     const changes: TitleChange[] = [];

@@ -1,4 +1,4 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 import { formatBytes } from './utils';
 import type { StorageInfo } from '../../types';
 

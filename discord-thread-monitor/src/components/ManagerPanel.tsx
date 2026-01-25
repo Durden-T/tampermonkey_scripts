@@ -27,119 +27,96 @@ interface ManagerPanelProps {
   onRetentionChange: (days: number) => void;
 }
 
+// JSX verbosity in multi-section panel UI - already decomposed into sub-components
 // eslint-disable-next-line max-lines-per-function
-export function ManagerPanel({
-  isOpen,
-  threads,
-  changes,
-  changeGroups,
-  blacklistedThreads,
-  unseenCount,
-  retentionDays,
-  storageInfo,
-  onClose,
-  onScanNow,
-  onOpen,
-  onBlock,
-  onResume,
-  onClearChanges,
-  onMarkAllRead,
-  onSimulateTitleChange,
-  onRetentionChange,
-}: ManagerPanelProps) {
-  const {
-    activeTab,
-    setActiveTab,
-    filterMode,
-    setFilterMode,
-    selectedPeriod,
-    setSelectedPeriod,
-    showHelp,
-    setShowHelp,
-    language,
-    position,
-    isDragging,
-    handleMouseDown,
-    t,
-    handleLanguageToggle,
-    timeFilter,
-    now,
-    showStorageWarning,
-  } = useManagerPanelLogic({ isOpen, storageInfo, _onScanNow: onScanNow, _onClose: onClose });
-
-  const handleOpenThread = (url: string, threadId: string) => {
-    onOpen(url, threadId);
-  };
+export function ManagerPanel(props: ManagerPanelProps) {
+  const logic = useManagerPanelLogic({
+    isOpen: props.isOpen,
+    storageInfo: props.storageInfo,
+    _onScanNow: props.onScanNow,
+    _onClose: props.onClose,
+  });
 
   const filteredChangeGroups = useMemo(
-    () => (isOpen ? filterChangeGroupsByTime(changeGroups, timeFilter, now) : []),
-    [isOpen, changeGroups, timeFilter, now]
+    () =>
+      props.isOpen ? filterChangeGroupsByTime(props.changeGroups, logic.timeFilter, logic.now) : [],
+    [props.isOpen, props.changeGroups, logic.timeFilter, logic.now]
   );
 
-  if (!isOpen) return null;
+  if (!props.isOpen) {
+    return null;
+  }
 
   return (
     <>
       <div
         className="manager-panel"
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          cursor: isDragging ? 'grabbing' : 'default',
+          left: `${logic.position.x}px`,
+          top: `${logic.position.y}px`,
+          cursor: logic.isDragging ? 'grabbing' : 'default',
         }}
       >
-        <div className="panel-header" onMouseDown={handleMouseDown} style={{ cursor: 'grab' }}>
-          <h2>{t.title}</h2>
+        <div
+          className="panel-header"
+          onMouseDown={logic.handleMouseDown}
+          style={{ cursor: 'grab' }}
+        >
+          <h2>{logic.t.title}</h2>
           <div className="panel-actions">
-            <button className="scan-button" onClick={onScanNow}>
+            <button className="scan-button" onClick={props.onScanNow}>
               <ScanIcon />
-              <span>{t.scanNow}</span>
+              <span>{logic.t.scanNow}</span>
             </button>
-            <button className="lang-button" onClick={handleLanguageToggle} title="Switch Language">
-              {language === 'zh' ? 'EN' : 'ZH'}
+            <button
+              className="lang-button"
+              onClick={logic.handleLanguageToggle}
+              title="Switch Language"
+            >
+              {logic.language === 'zh' ? 'EN' : 'ZH'}
             </button>
-            <button className="help-button" onClick={() => setShowHelp(true)}>
+            <button className="help-button" onClick={() => logic.setShowHelp(true)}>
               <HelpIcon />
             </button>
-            <button className="close-button" onClick={onClose} title="Close">
+            <button className="close-button" onClick={props.onClose} title="Close">
               <CloseIcon />
             </button>
           </div>
         </div>
 
         <PanelTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          changesLength={changes.length}
-          t={t}
+          activeTab={logic.activeTab}
+          setActiveTab={logic.setActiveTab}
+          changesLength={props.changes.length}
+          t={logic.t}
         />
 
         <PanelContent
-          activeTab={activeTab}
-          threads={threads}
-          blacklistedThreads={blacklistedThreads}
+          activeTab={logic.activeTab}
+          threads={props.threads}
+          blacklistedThreads={props.blacklistedThreads}
           filteredChangeGroups={filteredChangeGroups}
-          storageInfo={storageInfo}
-          showStorageWarning={showStorageWarning}
-          retentionDays={retentionDays}
-          unseenCount={unseenCount}
-          changesLength={changes.length}
-          filterMode={filterMode}
-          selectedPeriod={selectedPeriod}
-          onFilterModeChange={setFilterMode}
-          onPeriodChange={setSelectedPeriod}
-          onMarkAllRead={onMarkAllRead}
-          onClearChanges={onClearChanges}
-          onOpen={handleOpenThread}
-          onBlock={onBlock}
-          onResume={onResume}
-          onSimulateTitleChange={onSimulateTitleChange}
-          onRetentionChange={onRetentionChange}
-          t={t}
+          storageInfo={props.storageInfo}
+          showStorageWarning={logic.showStorageWarning}
+          retentionDays={props.retentionDays}
+          unseenCount={props.unseenCount}
+          changesLength={props.changes.length}
+          filterMode={logic.filterMode}
+          selectedPeriod={logic.selectedPeriod}
+          onFilterModeChange={logic.setFilterMode}
+          onPeriodChange={logic.setSelectedPeriod}
+          onMarkAllRead={props.onMarkAllRead}
+          onClearChanges={props.onClearChanges}
+          onOpen={props.onOpen}
+          onBlock={props.onBlock}
+          onResume={props.onResume}
+          onSimulateTitleChange={props.onSimulateTitleChange}
+          onRetentionChange={props.onRetentionChange}
+          t={logic.t}
         />
       </div>
 
-      <HelpTooltip show={showHelp} onClose={() => setShowHelp(false)} />
+      <HelpTooltip show={logic.showHelp} onClose={() => logic.setShowHelp(false)} />
     </>
   );
 }

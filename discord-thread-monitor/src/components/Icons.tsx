@@ -1,51 +1,237 @@
-export const ScanIcon = () => (
-  <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
-    <path
-      d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966
-      2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11
-      2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384
-      0L.342 8.59A.25.25 0 0 0 .534 9z"
-    />
-    <path
-      fillRule="evenodd"
-      d="M8 3c-1.552 0-2.94.707-3.857
-      1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917
-      7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757
-      2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"
-    />
-  </svg>
-);
+import React from 'react';
 
-export const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-    <path d="M18 6L6 18M6 6l12 12" />
-  </svg>
-);
+interface IconProps {
+  size?: number;
+  className?: string;
+}
 
-export const HelpIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-    <path
-      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48
-      10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45
-      12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36
-      .59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4
-      4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
-    />
-  </svg>
-);
+interface ChevronIconProps extends IconProps {
+  expanded?: boolean;
+}
 
-export const ThreadIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path
-      d="M5.433 2.304A.5.5 0 0 1 6 2.5V4h6a3 3 0 0 1 3
-      3v1h2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-8a3 3 0 0 1-3-3v-1H4a3 3 0 0 1-3-3V7a3 3 0 0 1
-      3-3h1.5V2.5a.5.5 0 0 1 .933-.196zM4 5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2V8a3 3 0 0 1
-      3-3H5.5V4h-.067L4 5zm3 3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8z"
-    />
-    <path
-      d="M9 10.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0
-      3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h4a.5.5
-      0 0 1 0 1h-4a.5.5 0 0 1-.5-.5z"
-    />
+const STROKE_WIDTH = 2;
+
+export const ScanIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M21 12a9 9 0 1 1-6.22-8.56" />
+    <path d="M21 3v5h-5" />
   </svg>
+));
+ScanIcon.displayName = 'ScanIcon';
+
+export const CloseIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6 6 18" />
+    <path d="M6 6l12 12" />
+  </svg>
+));
+CloseIcon.displayName = 'CloseIcon';
+
+export const UpdateIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+    <path d="m15 5 4 4" />
+  </svg>
+));
+UpdateIcon.displayName = 'UpdateIcon';
+
+export const ChevronIcon = React.memo(
+  ({ expanded = false, size = 14, className }: ChevronIconProps) => (
+    <svg
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{
+        transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+        transition: 'transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  )
 );
+ChevronIcon.displayName = 'ChevronIcon';
+
+export const HelpIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    <path d="M12 17h.01" />
+  </svg>
+));
+HelpIcon.displayName = 'HelpIcon';
+
+export const ThreadIcon = React.memo(({ size = 20, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    <path d="M10 12h4" />
+    <path d="M10 16h2" />
+  </svg>
+));
+ThreadIcon.displayName = 'ThreadIcon';
+
+export const EyeIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+));
+EyeIcon.displayName = 'EyeIcon';
+
+export const BlockIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="m4.9 4.9 14.2 14.2" />
+  </svg>
+));
+BlockIcon.displayName = 'BlockIcon';
+
+export const CheckIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+));
+CheckIcon.displayName = 'CheckIcon';
+
+export const TrashIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+  </svg>
+));
+TrashIcon.displayName = 'TrashIcon';
+
+export const ExternalLinkIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M15 3h6v6" />
+    <path d="M10 14 21 3" />
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+  </svg>
+));
+ExternalLinkIcon.displayName = 'ExternalLinkIcon';
+
+export const ResumeIcon = React.memo(({ size = 16, className }: IconProps) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={STROKE_WIDTH}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+  </svg>
+));
+ResumeIcon.displayName = 'ResumeIcon';

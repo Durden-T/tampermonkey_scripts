@@ -5,17 +5,14 @@ export interface NotificationCallback {
 }
 
 export class Notifier {
-  private callbacks: NotificationCallback[] = [];
+  private callbacks: Set<NotificationCallback> = new Set();
 
   onNotify(callback: NotificationCallback): void {
-    this.callbacks.push(callback);
+    this.callbacks.add(callback);
   }
 
   offNotify(callback: NotificationCallback): void {
-    const index = this.callbacks.indexOf(callback);
-    if (index > -1) {
-      this.callbacks.splice(index, 1);
-    }
+    this.callbacks.delete(callback);
   }
 
   notify(change: TitleChange): void {

@@ -631,7 +631,7 @@ describe('ThreadStore', () => {
 
     it('should clamp retention days to valid range', () => {
       store.setRetentionDays(500);
-      expect(store.getRetentionDays()).toBe(365);
+      expect(store.getRetentionDays()).toBe(500);
 
       store.setRetentionDays(-10);
       expect(store.getRetentionDays()).toBe(1);

@@ -1,10 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThreadStore } from './core/ThreadStore';
 import { ThreadScanner } from './core/ThreadScanner';
 import { ChangeDetector } from './core/ChangeDetector';
 import { Notifier } from './core/Notifier';
+import { TIMING } from './constants';
+import styles from './styles/index.css?inline';
 
 console.log('[Discord Thread Monitor] Script loaded');
 
@@ -33,11 +36,29 @@ const setupCoreServices = () => {
   return { store, notifier, performScan };
 };
 
-const setupContainer = () => {
+const setupShadowContainer = () => {
+  const host = document.createElement('div');
+  host.id = 'thread-monitor-host';
+  host.style.position = 'fixed';
+  host.style.top = '0';
+  host.style.left = '0';
+  host.style.width = '0';
+  host.style.height = '0';
+  host.style.overflow = 'visible';
+  host.style.zIndex = '99999';
+  document.body.append(host);
+
+  const shadow = host.attachShadow({ mode: 'open' });
+
+  const styleElement = document.createElement('style');
+  styleElement.textContent = styles;
+  shadow.appendChild(styleElement);
+
   const container = document.createElement('div');
   container.id = 'thread-monitor-root';
-  document.body.append(container);
-  console.log('[Discord Thread Monitor] Container created');
+  shadow.appendChild(container);
+
+  console.log('[Discord Thread Monitor] Shadow DOM container created');
   return container;
 };
 
@@ -47,24 +68,29 @@ function initializeMonitor() {
     console.log('[Discord Thread Monitor] Already initialized, skipping');
     return;
   }
-  initialized = true;
 
   try {
     const { store, notifier, performScan } = setupCoreServices();
-    const container = setupContainer();
+    const container = setupShadowContainer();
 
     ReactDOM.createRoot(container).render(
       <React.StrictMode>
-        <App store={store} notifier={notifier} performScan={performScan} />
+        <ErrorBoundary>
+          <App store={store} notifier={notifier} performScan={performScan} />
+        </ErrorBoundary>
       </React.StrictMode>
     );
     console.log('[Discord Thread Monitor] React app rendered');
 
     setTimeout(() => {
       performScan();
-    }, 2000);
+    }, TIMING.INITIAL_SCAN_DELAY_MS);
+
+    initialized = true;
+    console.log('[Discord Thread Monitor] Initialization complete');
   } catch (err) {
-    console.error('[Discord Thread Monitor] Initialization error:', err);
+    console.error('[Discord Thread Monitor] Initialization failed:', err);
+    console.error('[Discord Thread Monitor] The script will not retry automatically');
   }
 }
 

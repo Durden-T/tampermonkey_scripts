@@ -1,4 +1,4 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 import { ThreadList } from '../ThreadList';
 import type { MonitoredThread, ThreadChangeGroup, StorageInfo } from '../../types';
 import { ChangesTabContent } from './ChangesTabContent';
@@ -29,89 +29,62 @@ interface PanelContentProps {
   t: ReturnType<typeof getTexts>;
 }
 
+// Switch statement with JSX for 4 tabs - prop forwarding, no complex logic
 // eslint-disable-next-line max-lines-per-function
 export const PanelContent: React.FC<PanelContentProps> = (props) => {
-  const {
-    activeTab,
-    threads,
-    blacklistedThreads,
-    filteredChangeGroups,
-    storageInfo,
-    showStorageWarning,
-    retentionDays,
-    unseenCount,
-    changesLength,
-    filterMode,
-    selectedPeriod,
-    onFilterModeChange,
-    onPeriodChange,
-    onMarkAllRead,
-    onClearChanges,
-    onOpen,
-    onBlock,
-    onResume,
-    onSimulateTitleChange,
-    onRetentionChange,
-    t,
-  } = props;
-
-  const handleOpenThread = (url: string, threadId: string) => {
-    onOpen(url, threadId);
-  };
-
   // eslint-disable-next-line max-lines-per-function
   const renderTab = () => {
-    switch (activeTab) {
+    switch (props.activeTab) {
       case 'changes':
         return (
           <ChangesTabContent
-            filterMode={filterMode}
-            selectedPeriod={selectedPeriod}
-            onFilterModeChange={onFilterModeChange}
-            onPeriodChange={onPeriodChange}
-            unseenCount={unseenCount}
-            changesLength={changesLength}
-            onMarkAllRead={onMarkAllRead}
-            onClearChanges={onClearChanges}
-            filteredChangeGroups={filteredChangeGroups}
-            onOpen={handleOpenThread}
-            onBlock={onBlock}
-            onResume={onResume}
-            t={t}
+            filterMode={props.filterMode}
+            selectedPeriod={props.selectedPeriod}
+            onFilterModeChange={props.onFilterModeChange}
+            onPeriodChange={props.onPeriodChange}
+            unseenCount={props.unseenCount}
+            changesLength={props.changesLength}
+            onMarkAllRead={props.onMarkAllRead}
+            onClearChanges={props.onClearChanges}
+            filteredChangeGroups={props.filteredChangeGroups}
+            onOpen={props.onOpen}
+            onBlock={props.onBlock}
+            onResume={props.onResume}
+            t={props.t}
           />
         );
       case 'monitoring':
         return (
           <ThreadList
-            threads={threads}
-            emptyMessage={t.labels.noThreads}
-            onOpen={handleOpenThread}
-            onBlock={onBlock}
-            onResume={onResume}
+            threads={props.threads}
+            emptyMessage={props.t.labels.noThreads}
+            onOpen={props.onOpen}
+            onBlock={props.onBlock}
+            onResume={props.onResume}
           />
         );
       case 'blacklist':
         return (
           <ThreadList
-            threads={blacklistedThreads}
+            threads={props.blacklistedThreads}
             isBlacklisted
-            emptyMessage={t.labels.noBlacklist}
-            onOpen={handleOpenThread}
-            onBlock={onBlock}
-            onResume={onResume}
+            emptyMessage={props.t.labels.noBlacklist}
+            onOpen={props.onOpen}
+            onBlock={props.onBlock}
+            onResume={props.onResume}
           />
         );
       case 'debug':
         return (
           <DebugTabContent
-            storageInfo={storageInfo}
-            showStorageWarning={showStorageWarning}
-            retentionDays={retentionDays}
-            unseenCount={unseenCount}
-            onSimulateTitleChange={onSimulateTitleChange}
-            onClearChanges={onClearChanges}
-            onRetentionChange={onRetentionChange}
-            t={t}
+            storageInfo={props.storageInfo}
+            showStorageWarning={props.showStorageWarning}
+            retentionDays={props.retentionDays}
+            unseenCount={props.unseenCount}
+            onSimulateTitleChange={props.onSimulateTitleChange}
+            onClearChanges={props.onClearChanges}
+            onRetentionChange={props.onRetentionChange}
+            t={props.t}
           />
         );
     }

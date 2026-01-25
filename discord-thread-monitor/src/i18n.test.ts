@@ -42,7 +42,7 @@ describe('i18n', () => {
       const { getCurrentLanguage, getTexts } = await import('./i18n');
 
       expect(getCurrentLanguage()).toBe('en');
-      expect(getTexts().title).toBe('Thread Monitor');
+      expect(getTexts().title).toBe('Title Monitor');
     });
 
     it('should default to Chinese for non-English browser languages', async () => {
@@ -51,7 +51,7 @@ describe('i18n', () => {
       const { getCurrentLanguage, getTexts } = await import('./i18n');
 
       expect(getCurrentLanguage()).toBe('zh');
-      expect(getTexts().title).toBe('帖子监控');
+      expect(getTexts().title).toBe('标题监控');
     });
   });
 
@@ -62,7 +62,7 @@ describe('i18n', () => {
       setLanguage('zh');
 
       expect(getCurrentLanguage()).toBe('zh');
-      expect(getTexts().title).toBe('帖子监控');
+      expect(getTexts().title).toBe('标题监控');
       expect(mockLocalStorage['thread-monitor-language']).toBe('zh');
     });
 
@@ -72,7 +72,7 @@ describe('i18n', () => {
       setLanguage('en');
 
       expect(getCurrentLanguage()).toBe('en');
-      expect(getTexts().title).toBe('Thread Monitor');
+      expect(getTexts().title).toBe('Title Monitor');
       expect(mockLocalStorage['thread-monitor-language']).toBe('en');
     });
 
@@ -111,10 +111,10 @@ describe('i18n', () => {
       const lang = getCurrentLanguage();
 
       expect(lang).toBe('zh');
-      expect(texts.title).toBe('帖子监控');
+      expect(texts.title).toBe('标题监控');
       expect(texts.scanNow).toBe('扫描');
       expect(texts.tabs.changes).toBe('变更');
-      expect(texts.tabs.monitoring).toBe('监控');
+      expect(texts.tabs.monitoring).toBe('列表');
     });
 
     it('should return correct English texts after switching', async () => {
@@ -126,10 +126,10 @@ describe('i18n', () => {
       const lang = getCurrentLanguage();
 
       expect(lang).toBe('en');
-      expect(texts.title).toBe('Thread Monitor');
+      expect(texts.title).toBe('Title Monitor');
       expect(texts.scanNow).toBe('Scan');
       expect(texts.tabs.changes).toBe('Changes');
-      expect(texts.tabs.monitoring).toBe('Monitor');
+      expect(texts.tabs.monitoring).toBe('Threads');
     });
   });
 
@@ -160,21 +160,21 @@ describe('i18n', () => {
       const now = Date.now();
       const fiveMinutesAgo = now - 5 * 60 * 1000;
 
-      expect(formatTime(fiveMinutesAgo)).toBe('5分钟前');
+      expect(formatTime(fiveMinutesAgo)).toBe('5 分钟前');
     });
 
     it('should format hours correctly in Chinese', () => {
       const now = Date.now();
       const twoHoursAgo = now - 2 * 60 * 60 * 1000;
 
-      expect(formatTime(twoHoursAgo)).toBe('2小时前');
+      expect(formatTime(twoHoursAgo)).toBe('2 小时前');
     });
 
     it('should format days correctly in Chinese', () => {
       const now = Date.now();
       const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
 
-      expect(formatTime(threeDaysAgo)).toBe('3天前');
+      expect(formatTime(threeDaysAgo)).toBe('3 天前');
     });
 
     it('should use English format after language switch', async () => {
@@ -197,15 +197,15 @@ describe('i18n', () => {
 
       // Exactly 1 minute
       const oneMinuteAgo = now - 60 * 1000;
-      expect(formatTime(oneMinuteAgo)).toBe('1分钟前');
+      expect(formatTime(oneMinuteAgo)).toBe('1 分钟前');
 
       // Exactly 1 hour
       const oneHourAgo = now - 60 * 60 * 1000;
-      expect(formatTime(oneHourAgo)).toBe('1小时前');
+      expect(formatTime(oneHourAgo)).toBe('1 小时前');
 
       // Exactly 1 day
       const oneDayAgo = now - 24 * 60 * 60 * 1000;
-      expect(formatTime(oneDayAgo)).toBe('1天前');
+      expect(formatTime(oneDayAgo)).toBe('1 天前');
     });
   });
 

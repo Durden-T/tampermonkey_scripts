@@ -18,17 +18,14 @@ describe('useThreadHandlers', () => {
   });
 
   describe('handleOpen', () => {
-    const originalLocation = window.location;
+    let pushStateSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-      delete (window as any).location;
-      window.location = {
-        href: '',
-      } as Location;
+      pushStateSpy = vi.spyOn(history, 'pushState');
     });
 
     afterEach(() => {
-      window.location = originalLocation;
+      pushStateSpy.mockRestore();
     });
 
     it('should mark change as seen when opening thread', () => {
@@ -61,7 +58,7 @@ describe('useThreadHandlers', () => {
       expect(mockRefreshData).toHaveBeenCalledTimes(1);
     });
 
-    it('should navigate to the provided URL', () => {
+    it('should navigate to the provided URL using history.pushState', () => {
       const { result } = renderHook(() =>
         useThreadHandlers({
           store: mockStore as ThreadStore,
@@ -69,13 +66,13 @@ describe('useThreadHandlers', () => {
         })
       );
 
-      const testUrl = 'https://discord.com/thread/123';
+      const testUrl = 'https://discord.com/channels/123/456';
 
       act(() => {
         result.current.handleOpen(testUrl, 'thread-123');
       });
 
-      expect(window.location.href).toBe(testUrl);
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/channels/123/456');
     });
 
     it('should handle different thread IDs', () => {

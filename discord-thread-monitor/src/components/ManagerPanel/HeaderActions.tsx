@@ -1,4 +1,4 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 
 interface HeaderActionsProps {
   unseenCount: number;
@@ -15,7 +15,7 @@ export const HeaderActions: React.FC<HeaderActionsProps> = ({
   onClearChanges,
   t,
 }) => (
-  <div className="header-actions">
+  <div className="filter-actions">
     {unseenCount > 0 && (
       <button className="mark-read-button" onClick={onMarkAllRead}>
         {t.actions.markAllRead}

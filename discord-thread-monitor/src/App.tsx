@@ -3,6 +3,7 @@ import { ToggleButton } from './components/ToggleButton';
 import { ToastContainer } from './components/ToastContainer';
 import { useAppHandlers } from './hooks/useAppHandlers';
 import { useAppData } from './hooks/useAppData';
+import { useManagerPanelProps } from './hooks/useManagerPanelProps';
 import type { ThreadStore } from './core/ThreadStore';
 import type { Notifier } from './core/Notifier';
 import type { MonitoredThread, TitleChange } from './types';
@@ -13,70 +14,40 @@ interface AppProps {
   performScan: () => { currentThreads: MonitoredThread[]; changes: TitleChange[] };
 }
 
-// eslint-disable-next-line max-lines-per-function
 function App({ store, notifier, performScan }: AppProps) {
-  const {
-    isPanelOpen,
-    setIsPanelOpen,
-    unseenCount,
-    pendingToasts,
-    setPendingToasts,
-    retentionDays,
-    setRetentionDays,
-    changeGroups,
-    storageInfo,
-    refreshData,
-  } = useAppData({ store, notifier, performScan });
-
-  const {
-    handleScanNow,
-    handleOpen,
-    handleBlock,
-    handleResume,
-    handleClearChanges,
-    handleMarkAllRead,
-    handleRetentionChange,
-    handleToastDismiss,
-    handleToastNavigate,
-    handleSimulateTitleChange,
-  } = useAppHandlers({
+  const data = useAppData({ store, notifier, performScan });
+  const handlers = useAppHandlers({
     store,
     notifier,
-    refreshData,
-    setPendingToasts,
-    setRetentionDays,
+    refreshData: data.refreshData,
+    setPendingToasts: data.setPendingToasts,
+    setRetentionDays: data.setRetentionDays,
     performScan,
+  });
+
+  const managerPanelProps = useManagerPanelProps({
+    store,
+    isPanelOpen: data.isPanelOpen,
+    changeGroups: data.changeGroups,
+    unseenCount: data.unseenCount,
+    retentionDays: data.retentionDays,
+    storageInfo: data.storageInfo,
+    setIsPanelOpen: data.setIsPanelOpen,
+    handlers,
   });
 
   return (
     <>
-      <ToggleButton unseenCount={unseenCount} onClick={() => setIsPanelOpen(!isPanelOpen)} />
-
-      <ManagerPanel
-        isOpen={isPanelOpen}
-        threads={Object.values(store.getThreads())}
-        changes={store.getChanges()}
-        changeGroups={changeGroups}
-        blacklistedThreads={store.getBlacklistedThreads()}
-        unseenCount={unseenCount}
-        retentionDays={retentionDays}
-        storageInfo={storageInfo}
-        onClose={() => setIsPanelOpen(false)}
-        onScanNow={handleScanNow}
-        onOpen={handleOpen}
-        onBlock={handleBlock}
-        onResume={handleResume}
-        onClearChanges={handleClearChanges}
-        onMarkAllRead={handleMarkAllRead}
-        onSimulateTitleChange={handleSimulateTitleChange}
-        onRetentionChange={handleRetentionChange}
+      <ToggleButton
+        unseenCount={data.unseenCount}
+        onClick={() => data.setIsPanelOpen(!data.isPanelOpen)}
       />
-
+      <ManagerPanel {...managerPanelProps} />
       <ToastContainer
-        changes={pendingToasts}
+        changes={data.pendingToasts}
         threads={store.getThreads()}
-        onDismiss={handleToastDismiss}
-        onNavigate={handleToastNavigate}
+        onDismiss={handlers.handleToastDismiss}
+        onNavigate={handlers.handleToastNavigate}
       />
     </>
   );

@@ -76,8 +76,8 @@ describe('timeFilters', () => {
     it('should return all groups sorted by latestChangeAt when filter is "all"', () => {
       const groups = [
         createMockGroup('thread1', now - 1000),
-        createMockGroup('thread2', now - 5000),
         createMockGroup('thread3', now - 2000),
+        createMockGroup('thread2', now - 5000),
       ];
 
       const result = filterChangeGroupsByTime(groups, 'all', now);

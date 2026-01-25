@@ -1,4 +1,10 @@
 import type { MonitoredThread } from '../types';
+import { querySelectorAllDeep, closestDeep } from '../utils/shadowDomQuery';
+
+const THREAD_ELEMENT_SELECTOR = '[data-list-item-id^="channels___"][aria-label*="(thread)"]';
+const PARENT_CONTAINER_SELECTOR = 'ul[role="group"][aria-label*="threads"]';
+const TITLE_CLEANUP_PATTERN = /^unread,\s*|\s*\(thread\)\s*$/g;
+const CHANNEL_LABEL_CLEANUP_PATTERN = /\s*threads.*$/i;
 
 export class ThreadScanner {
   scanVisibleThreads(): MonitoredThread[] {
@@ -10,9 +16,8 @@ export class ThreadScanner {
       return threads;
     }
 
-    const threadElements = document.querySelectorAll(
-      '[data-list-item-id^="channels___"][aria-label*="(thread)"]'
-    );
+    const discordRoot = document.querySelector('#app-mount') ?? document.body;
+    const threadElements = querySelectorAllDeep(THREAD_ELEMENT_SELECTOR, discordRoot);
 
     threadElements.forEach((element) => {
       const thread = this.parseThreadElement(element as HTMLElement, serverId);
@@ -31,17 +36,24 @@ export class ThreadScanner {
 
   private parseThreadElement(element: HTMLElement, serverId: string): MonitoredThread | null {
     const dataListItemId = element.getAttribute('data-list-item-id');
-    if (!dataListItemId) return null;
+    if (!dataListItemId) {
+      return null;
+    }
 
     const threadId = dataListItemId.split('___')[1];
-    if (!threadId) return null;
+    if (!threadId) {
+      return null;
+    }
 
     const ariaLabel = element.getAttribute('aria-label');
-    if (!ariaLabel) return null;
+    if (!ariaLabel) {
+      return null;
+    }
 
-    // Efficient single-pass regex replacement
-    const title = ariaLabel.replace(/^unread,\s*|\s*\(thread\)\s*$/g, '').trim();
-    if (!title) return null;
+    const title = ariaLabel.replace(TITLE_CLEANUP_PATTERN, '').trim();
+    if (!title) {
+      return null;
+    }
 
     const parentChannel = this.extractParentChannel(element);
 
@@ -55,14 +67,17 @@ export class ThreadScanner {
   }
 
   private extractParentChannel(element: HTMLElement): string {
-    const container = element.closest('ul[role="group"][aria-label*="threads"]');
-    if (!container) return '';
+    const container = closestDeep(element, PARENT_CONTAINER_SELECTOR);
+    if (!container) {
+      return '';
+    }
 
     const label = container.getAttribute('aria-label');
-    if (!label) return '';
+    if (!label) {
+      return '';
+    }
 
-    // Use regex for precise matching - remove "threads" and everything after
-    const result = label.replace(/\s*threads.*$/i, '').trim();
+    const result = label.replace(CHANNEL_LABEL_CLEANUP_PATTERN, '').trim();
     return result;
   }
 }

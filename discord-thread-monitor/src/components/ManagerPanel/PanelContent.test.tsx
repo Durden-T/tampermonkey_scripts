@@ -177,7 +177,7 @@ describe('PanelContent', () => {
       );
 
       // DebugTabContent should show storage info
-      expect(screen.getByText('Retention Period:')).toBeInTheDocument();
+      expect(screen.getByText('Retention:')).toBeInTheDocument();
     });
   });
 
@@ -291,8 +291,9 @@ describe('PanelContent', () => {
         />
       );
 
-      // DebugTabContent should show the retention input
-      expect(screen.getByPlaceholderText(t.settings.permanent)).toBeInTheDocument();
+      // DebugTabContent should show the retention input with hint
+      expect(screen.getByPlaceholderText('0')).toBeInTheDocument();
+      expect(screen.getByText(t.settings.retentionHint)).toBeInTheDocument();
     });
   });
 

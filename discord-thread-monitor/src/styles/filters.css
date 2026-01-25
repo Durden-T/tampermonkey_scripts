@@ -1,0 +1,130 @@
+.filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-mode-buttons {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--tm-bg-base);
+  border-radius: var(--tm-radius-md);
+}
+
+.filter-period-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.filter-button {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--tm-text-muted);
+  background: transparent;
+  transition:
+    background var(--tm-transition-fast),
+    color var(--tm-transition-fast);
+}
+
+.filter-button:hover {
+  color: var(--tm-text-secondary);
+  background: var(--tm-bg-surface);
+}
+
+.filter-button.active {
+  color: var(--tm-text-primary);
+  background: var(--tm-bg-surface);
+  box-shadow: var(--tm-shadow-xs);
+}
+
+.filter-button:focus-visible {
+  outline: none;
+  box-shadow: var(--tm-shadow-ring);
+}
+
+.filter-period-buttons .filter-button {
+  height: 24px;
+  padding: 0 8px;
+  font-family: var(--tm-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  background: var(--tm-bg-surface);
+}
+
+.filter-period-buttons .filter-button.active {
+  color: var(--tm-accent);
+  background: var(--tm-accent-subtle);
+  border: 1px solid var(--tm-accent-border-strong);
+}
+
+.mark-read-button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--tm-info);
+  background: var(--tm-info-muted);
+  transition:
+    background var(--tm-transition-fast),
+    transform var(--tm-transition-fast);
+}
+
+.mark-read-button:hover {
+  background: var(--tm-info-surface);
+}
+
+.mark-read-button:active {
+  transform: scale(0.96);
+}
+
+.mark-read-button:focus-visible {
+  outline: none;
+  box-shadow: var(--tm-shadow-ring);
+}
+
+.clear-button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--tm-danger);
+  background: var(--tm-danger-muted);
+  transition:
+    background var(--tm-transition-fast),
+    transform var(--tm-transition-fast);
+}
+
+.clear-button:hover {
+  background: var(--tm-danger-surface);
+}
+
+.clear-button:active {
+  transform: scale(0.96);
+}
+
+.clear-button:focus-visible {
+  outline: none;
+  box-shadow: var(--tm-shadow-ring);
+}

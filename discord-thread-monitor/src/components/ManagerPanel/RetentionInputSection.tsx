@@ -1,4 +1,4 @@
-import { getTexts } from '../../i18n';
+import { type getTexts } from '../../i18n';
 import { useRetentionInput } from './useRetentionInput';
 
 interface RetentionInputSectionProps {
@@ -13,7 +13,7 @@ export function RetentionInputSection({
   t,
 }: RetentionInputSectionProps) {
   const { handleRetentionBlur, handleRetentionKeyDown, inputDisplayValue, setRetentionInput } =
-    useRetentionInput(retentionDays, onRetentionChange, t);
+    useRetentionInput(retentionDays, onRetentionChange);
 
   return (
     <div className="settings-group">
@@ -26,10 +26,11 @@ export function RetentionInputSection({
           onBlur={handleRetentionBlur}
           onKeyDown={handleRetentionKeyDown}
           className="retention-input"
-          placeholder={t.settings.permanent}
+          placeholder="0"
         />
-        <span className="retention-unit">{retentionDays === 0 ? '' : t.settings.days}</span>
+        <span className="retention-unit">{t.settings.days}</span>
       </div>
+      <span className="retention-hint">{t.settings.retentionHint}</span>
     </div>
   );
 }

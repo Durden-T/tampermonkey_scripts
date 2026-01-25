@@ -1,33 +1,33 @@
 export const zh = {
-  title: '帖子监控',
+  title: '标题监控',
   scanNow: '扫描',
   tabs: {
     changes: '变更',
-    monitoring: '监控',
+    monitoring: '列表',
     blacklist: '屏蔽',
     debug: '调试',
   },
   actions: {
-    open: '打开',
+    open: '跳转',
     block: '屏蔽',
     resume: '恢复',
     clearChanges: '清空',
     markAllRead: '全部已读',
   },
   labels: {
-    oldTitle: '旧',
+    oldTitle: '原',
     newTitle: '新',
-    noChanges: '暂无标题变更',
+    noChanges: '暂无变更记录',
     noThreads: '暂无监控帖子',
     noBlacklist: '暂无屏蔽帖子',
     newThreadsFound: '发现 {count} 个新帖子',
   },
   filters: {
     all: '全部',
-    within: '近期',
+    within: '最近',
     older: '更早',
     periods: {
-      day: '24h',
+      day: '1天',
       week: '7天',
       month: '1月',
       month3: '3月',
@@ -37,39 +37,39 @@ export const zh = {
   },
   time: {
     justNow: '刚刚',
-    minutesAgo: '{n}分钟前',
-    hoursAgo: '{n}小时前',
-    daysAgo: '{n}天前',
+    minutesAgo: '{n} 分钟前',
+    hoursAgo: '{n} 小时前',
+    daysAgo: '{n} 天前',
   },
   help: {
-    title: '使用帮助',
-    content: `自动监控所有已关注频道的帖子
-每次打开Discord时自动检测标题变更
+    title: '帮助',
+    content: `自动监控已关注频道的帖子标题变化
 点击「扫描」手动刷新
-点击帖子可直接跳转
-不想监控的帖子可加入屏蔽列表`,
+点击帖子跳转至 Discord
+可将帖子加入屏蔽列表`,
   },
   debug: {
-    title: '调试面板',
-    simulateChange: '模拟标题变化',
-    clearAll: '清除所有变化',
+    title: '调试',
+    simulateChange: '模拟变更',
+    clearAll: '清空记录',
     stats: {
-      threads: '监控线程',
-      changes: '标题变化',
-      unseen: '未读数量',
+      threads: '帖子',
+      changes: '变更',
+      unseen: '未读',
     },
   },
   settings: {
-    retentionPeriod: '保留期限',
+    retentionPeriod: '保留天数',
     days: '天',
     permanent: '永久',
-    storageUsage: '存储使用',
-    rawSize: '原始大小',
+    retentionHint: '0 = 永久',
+    storageUsage: '存储占用',
+    rawSize: '原始',
     compressedSize: '压缩后',
-    compression: '压缩状态',
+    compression: '压缩',
     enabled: '已启用',
     disabled: '未启用',
-    storageTooLarge: '存储空间较大，如果感到卡顿可减少保留天数',
+    storageTooLarge: '存储占用较大，建议减少保留天数',
   },
   toast: {
     titleUpdated: '标题已更新',
@@ -77,35 +77,35 @@ export const zh = {
 };
 
 export const en = {
-  title: 'Thread Monitor',
+  title: 'Title Monitor',
   scanNow: 'Scan',
   tabs: {
     changes: 'Changes',
-    monitoring: 'Monitor',
+    monitoring: 'Threads',
     blacklist: 'Blocked',
     debug: 'Debug',
   },
   actions: {
-    open: 'Open',
+    open: 'Go',
     block: 'Block',
-    resume: 'Resume',
+    resume: 'Unblock',
     clearChanges: 'Clear',
-    markAllRead: 'Mark All Read',
+    markAllRead: 'Mark Read',
   },
   labels: {
-    oldTitle: 'Old',
-    newTitle: 'New',
-    noChanges: 'No title changes yet',
-    noThreads: 'No threads being monitored',
+    oldTitle: 'Was',
+    newTitle: 'Now',
+    noChanges: 'No changes yet',
+    noThreads: 'No threads monitored',
     noBlacklist: 'No blocked threads',
-    newThreadsFound: 'Found {count} new threads',
+    newThreadsFound: '{count} new threads found',
   },
   filters: {
     all: 'All',
-    within: 'Within',
+    within: 'Recent',
     older: 'Older',
     periods: {
-      day: '24h',
+      day: '1d',
       week: '7d',
       month: '1mo',
       month3: '3mo',
@@ -121,15 +121,14 @@ export const en = {
   },
   help: {
     title: 'Help',
-    content: `Automatically monitors all followed forum threads
-Detects title changes when you open Discord
-Click Scan to manually refresh
-Click a thread to navigate to it
-Add unwanted threads to the blocklist`,
+    content: `Monitors title changes in followed forum threads
+Click Scan to refresh manually
+Click a thread to open in Discord
+Unwanted threads can be blocked`,
   },
   debug: {
-    title: 'Debug Panel',
-    simulateChange: 'Simulate Change',
+    title: 'Debug',
+    simulateChange: 'Simulate',
     clearAll: 'Clear All',
     stats: {
       threads: 'Threads',
@@ -138,30 +137,32 @@ Add unwanted threads to the blocklist`,
     },
   },
   settings: {
-    retentionPeriod: 'Retention Period',
+    retentionPeriod: 'Retention',
     days: 'days',
     permanent: 'Permanent',
-    storageUsage: 'Storage Usage',
-    rawSize: 'Raw Size',
+    retentionHint: '0 = forever',
+    storageUsage: 'Storage',
+    rawSize: 'Raw',
     compressedSize: 'Compressed',
     compression: 'Compression',
-    enabled: 'Enabled',
-    disabled: 'Disabled',
-    storageTooLarge: 'Storage is large. If experiencing lag, consider reducing retention days',
+    enabled: 'On',
+    disabled: 'Off',
+    storageTooLarge: 'Storage is large, consider reducing retention days',
   },
   toast: {
-    titleUpdated: 'Title Updated',
+    titleUpdated: 'Title changed',
   },
 };
 
+import { STORAGE, TIME_MS, TIME_UNITS } from './constants';
+
 type I18nTexts = typeof zh;
 
-const LANGUAGE_STORAGE_KEY = 'thread-monitor-language';
 const SUPPORTED_LANGUAGES = ['zh', 'en'] as const;
 type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 function detectLanguage(): SupportedLanguage {
-  const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const saved = localStorage.getItem(STORAGE.LANGUAGE_KEY);
   if (saved && SUPPORTED_LANGUAGES.includes(saved as SupportedLanguage)) {
     return saved as SupportedLanguage;
   }
@@ -191,20 +192,35 @@ export function setLanguage(lang: SupportedLanguage): void {
   }
   currentLanguage = lang;
   currentTexts = lang === 'en' ? en : zh;
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  localStorage.setItem(STORAGE.LANGUAGE_KEY, lang);
 }
 
 export function formatTime(timestamp: number): string {
+  if (!Number.isFinite(timestamp) || timestamp < 0) {
+    return getTexts().time.justNow;
+  }
+
   const now = Date.now();
   const diff = now - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
+
+  if (diff < 0) {
+    return getTexts().time.justNow;
+  }
+
+  const minutes = Math.floor(diff / TIME_MS.MINUTE);
+  const hours = Math.floor(diff / TIME_MS.HOUR);
+  const days = Math.floor(diff / TIME_MS.DAY);
 
   const texts = getTexts();
 
-  if (minutes < 1) return texts.time.justNow;
-  if (minutes < 60) return texts.time.minutesAgo.replace('{n}', String(minutes));
-  if (hours < 24) return texts.time.hoursAgo.replace('{n}', String(hours));
+  if (minutes < 1) {
+    return texts.time.justNow;
+  }
+  if (minutes < TIME_UNITS.MINUTES_PER_HOUR) {
+    return texts.time.minutesAgo.replace('{n}', String(minutes));
+  }
+  if (hours < TIME_UNITS.HOURS_PER_DAY) {
+    return texts.time.hoursAgo.replace('{n}', String(hours));
+  }
   return texts.time.daysAgo.replace('{n}', String(days));
 }
