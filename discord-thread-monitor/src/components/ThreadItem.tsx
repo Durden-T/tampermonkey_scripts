@@ -10,6 +10,25 @@ interface ThreadItemProps {
   onResume: (threadId: string) => void;
 }
 
+const ThreadChangeDisplay = ({
+  change,
+  t,
+}: {
+  change: TitleChange;
+  t: ReturnType<typeof getTexts>;
+}) => (
+  <div className="thread-change">
+    <div className="thread-change-row">
+      <span className="change-label">{t.labels.oldTitle}</span>
+      <span className="change-old">{change.oldTitle}</span>
+    </div>
+    <div className="thread-change-row">
+      <span className="change-label">{t.labels.newTitle}</span>
+      <span className="change-new">{change.newTitle}</span>
+    </div>
+  </div>
+);
+
 export function ThreadItem({
   thread,
   change,
@@ -19,31 +38,19 @@ export function ThreadItem({
   onResume,
 }: ThreadItemProps) {
   const t = getTexts();
+  const isUnseen = change && !change.seen;
 
   return (
-    <div className={`thread-item ${change && !change.seen ? 'unseen' : ''}`}>
+    <div className={`thread-item ${isUnseen ? 'unseen' : ''}`}>
       <div className="thread-info">
         {change ? (
-          <div className="thread-change">
-            <div className="thread-change-row">
-              <span className="change-label">{t.labels.oldTitle}</span>
-              <span className="change-old">{change.oldTitle}</span>
-            </div>
-            <div className="thread-change-row">
-              <span className="change-label">{t.labels.newTitle}</span>
-              <span className="change-new">{change.newTitle}</span>
-            </div>
-          </div>
+          <ThreadChangeDisplay change={change} t={t} />
         ) : (
           <div className="thread-title">{thread.currentTitle}</div>
         )}
         <div className="thread-meta">
-          {change && (
-            <span className="thread-time">{formatTime(change.changedAt)}</span>
-          )}
-          {thread.parentChannel && (
-            <span className="thread-channel">{thread.parentChannel}</span>
-          )}
+          {change && <span className="thread-time">{formatTime(change.changedAt)}</span>}
+          {thread.parentChannel && <span className="thread-channel">{thread.parentChannel}</span>}
         </div>
       </div>
       <div className="thread-actions">
@@ -53,9 +60,7 @@ export function ThreadItem({
             <button onClick={() => onBlock(thread.id)}>{t.actions.block}</button>
           </>
         ) : (
-          <button onClick={() => onResume(thread.id)}>
-            {t.actions.resume}
-          </button>
+          <button onClick={() => onResume(thread.id)}>{t.actions.resume}</button>
         )}
       </div>
     </div>

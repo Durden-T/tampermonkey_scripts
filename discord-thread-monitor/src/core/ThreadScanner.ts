@@ -36,7 +36,9 @@ export class ThreadScanner {
     const threadId = dataListItemId.split('___')[1];
     if (!threadId) return null;
 
-    const ariaLabel = element.getAttribute('aria-label') || '';
+    const ariaLabel = element.getAttribute('aria-label');
+    if (!ariaLabel) return null;
+
     const title = ariaLabel
       .replace(/^unread,\s*/, '')
       .replace(/\s*\(thread\)\s*$/, '')
@@ -44,14 +46,12 @@ export class ThreadScanner {
 
     if (!title) return null;
 
-    const url = `https://discord.com/channels/${serverId}/${threadId}`;
-
     const parentChannel = this.extractParentChannel(element);
 
     return {
       id: threadId,
       currentTitle: title,
-      url,
+      url: `https://discord.com/channels/${serverId}/${threadId}`,
       parentChannel: parentChannel || '',
       firstSeenAt: Date.now(),
     };
@@ -59,12 +59,9 @@ export class ThreadScanner {
 
   private extractParentChannel(element: HTMLElement): string {
     const container = element.closest('ul[role="group"][aria-label*="threads"]');
-    if (container) {
-      const label = container.getAttribute('aria-label');
-      if (label) {
-        return label.replace(/\s*threads.*$/i, '').trim();
-      }
-    }
-    return '';
+    if (!container) return '';
+
+    const label = container.getAttribute('aria-label');
+    return label ? label.replace(/\s*threads.*$/i, '').trim() : '';
   }
 }

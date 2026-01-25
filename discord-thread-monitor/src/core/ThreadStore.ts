@@ -13,6 +13,8 @@ const STORAGE_KEY = 'discord-thread-monitor-data';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const SAVE_DEBOUNCE_MS = 300;
 
+const getStringSize = (str: string): number => new Blob([str]).size;
+
 const defaultData: StoredData = {
   threads: {},
   changes: [],
@@ -63,60 +65,41 @@ export class ThreadStore {
     try {
       const stored = GM_getValue(STORAGE_KEY, null);
       if (stored === null || stored === undefined || stored === 'undefined') {
-        // Create a deep copy to avoid sharing arrays between instances
-        return {
-          threads: { ...defaultData.threads },
-          changes: [...defaultData.changes],
-          blacklist: [...defaultData.blacklist],
-          retentionDays: defaultData.retentionDays,
-        };
+        return this.getEmptyData();
       }
 
-      let jsonStr: string;
-      if (typeof stored === 'string') {
-        try {
-          const wrapper = JSON.parse(stored) as StorageWrapper;
-          // Check if this is actually a wrapper object with expected structure
-          if (
-            wrapper &&
-            typeof wrapper === 'object' &&
-            'compressed' in wrapper &&
-            'data' in wrapper
-          ) {
-            if (wrapper.compressed) {
-              jsonStr = this.decompress(wrapper.data);
-              this.isCompressed = true;
-            } else {
-              jsonStr = wrapper.data;
-              this.isCompressed = false;
-            }
-          } else {
-            // This is old format - just the raw JSON string
-            jsonStr = stored;
-            this.isCompressed = false;
-          }
-        } catch {
-          jsonStr = stored;
-          this.isCompressed = false;
-        }
-      } else {
-        jsonStr = JSON.stringify(stored);
-        this.isCompressed = false;
-      }
-
-      this.lastRawSize = new Blob([jsonStr]).size;
-      const parsed = JSON.parse(jsonStr);
-      return this.migrateData(parsed);
+      const { jsonStr, isCompressed } = this.parseStoredData(stored);
+      this.isCompressed = isCompressed;
+      this.lastRawSize = getStringSize(jsonStr);
+      return this.migrateData(JSON.parse(jsonStr));
     } catch (error) {
       console.error('Failed to load data from storage:', error);
-      // Create a deep copy to avoid sharing arrays between instances
-      return {
-        threads: { ...defaultData.threads },
-        changes: [...defaultData.changes],
-        blacklist: [...defaultData.blacklist],
-        retentionDays: defaultData.retentionDays,
-      };
+      return this.getEmptyData();
     }
+  }
+
+  private parseStoredData(stored: unknown): { jsonStr: string; isCompressed: boolean } {
+    if (typeof stored === 'string') {
+      try {
+        const wrapper = JSON.parse(stored) as StorageWrapper;
+        if (wrapper?.compressed) {
+          return { jsonStr: this.decompress(wrapper.data), isCompressed: true };
+        }
+        return { jsonStr: wrapper?.data ?? stored, isCompressed: false };
+      } catch {
+        return { jsonStr: stored, isCompressed: false };
+      }
+    }
+    return { jsonStr: JSON.stringify(stored), isCompressed: false };
+  }
+
+  private getEmptyData(): StoredData {
+    return {
+      threads: {},
+      changes: [],
+      blacklist: [],
+      retentionDays: defaultData.retentionDays,
+    };
   }
 
   private migrateData(parsed: StoredData & { retentionMonths?: number }): StoredData {
@@ -154,12 +137,12 @@ export class ThreadStore {
   private saveData(): void {
     try {
       const jsonStr = JSON.stringify(this.data);
-      this.lastRawSize = new Blob([jsonStr]).size;
+      this.lastRawSize = getStringSize(jsonStr);
 
       let wrapper: StorageWrapper;
       if (this.lastRawSize > COMPRESSION_THRESHOLD_BYTES) {
         const compressed = this.compress(jsonStr);
-        this.lastCompressedSize = new Blob([compressed]).size;
+        this.lastCompressedSize = getStringSize(compressed);
         this.isCompressed = true;
         wrapper = { compressed: true, data: compressed };
       } else {
@@ -235,23 +218,33 @@ export class ThreadStore {
   }
 
   getChangesGroupedByThread(): ThreadChangeGroup[] {
-    const groupMap = new Map<string, TitleChange[]>();
+    const groupMap = new Map<string, { changes: TitleChange[]; hasUnseen: boolean }>();
 
     for (const change of this.data.changes) {
-      const existing = groupMap.get(change.threadId) ?? [];
-      existing.push(change);
-      groupMap.set(change.threadId, existing);
+      const existing = groupMap.get(change.threadId);
+      if (existing) {
+        existing.changes.push(change);
+        if (!change.seen) {
+          existing.hasUnseen = true;
+        }
+      } else {
+        groupMap.set(change.threadId, {
+          changes: [change],
+          hasUnseen: !change.seen,
+        });
+      }
     }
 
     const groups: ThreadChangeGroup[] = [];
-    for (const [threadId, changes] of groupMap) {
-      const sortedChanges = changes.sort((a, b) => b.changedAt - a.changedAt);
+    for (const [threadId, groupData] of groupMap) {
+      groupData.changes.sort((a, b) => b.changedAt - a.changedAt);
+
       groups.push({
         threadId,
         thread: this.data.threads[threadId],
-        changes: sortedChanges,
-        latestChangeAt: sortedChanges[0].changedAt,
-        hasUnseen: sortedChanges.some((c) => !c.seen),
+        changes: groupData.changes,
+        latestChangeAt: groupData.changes[0].changedAt,
+        hasUnseen: groupData.hasUnseen,
       });
     }
 
@@ -259,7 +252,11 @@ export class ThreadStore {
   }
 
   getUnseenChangesCount(): number {
-    return this.data.changes.filter((c) => !c.seen).length;
+    let count = 0;
+    for (const change of this.data.changes) {
+      if (!change.seen) count++;
+    }
+    return count;
   }
 
   markChangeSeen(threadId: string): void {
@@ -323,9 +320,14 @@ export class ThreadStore {
   }
 
   getBlacklistedThreads(): MonitoredThread[] {
-    return this.data.blacklist
-      .map((id) => this.data.threads[id])
-      .filter((thread): thread is MonitoredThread => thread !== undefined);
+    const result: MonitoredThread[] = [];
+    for (const id of this.data.blacklist) {
+      const thread = this.data.threads[id];
+      if (thread) {
+        result.push(thread);
+      }
+    }
+    return result;
   }
 
   getRetentionDays(): number {

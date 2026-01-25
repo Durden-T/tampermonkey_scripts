@@ -10,6 +10,37 @@ console.log('[Discord Thread Monitor] Script loaded');
 
 let initialized = false;
 
+const setupCoreServices = () => {
+  const store = new ThreadStore();
+  const scanner = new ThreadScanner();
+  const detector = new ChangeDetector(store);
+  const notifier = new Notifier();
+
+  const performScan = () => {
+    try {
+      const currentThreads = scanner.scanVisibleThreads();
+      const changes = detector.detectAndPersistChanges(currentThreads);
+      if (changes.length > 0) {
+        notifier.notifyAll(changes);
+      }
+      return { currentThreads, changes };
+    } catch (err) {
+      console.error('[Discord Thread Monitor] Scan error:', err);
+      return { currentThreads: [], changes: [] };
+    }
+  };
+
+  return { store, notifier, performScan };
+};
+
+const setupContainer = () => {
+  const container = document.createElement('div');
+  container.id = 'thread-monitor-root';
+  document.body.append(container);
+  console.log('[Discord Thread Monitor] Container created');
+  return container;
+};
+
 function initializeMonitor() {
   console.log('[Discord Thread Monitor] Initializing...');
   if (initialized) {
@@ -19,37 +50,12 @@ function initializeMonitor() {
   initialized = true;
 
   try {
-    const store = new ThreadStore();
-    const scanner = new ThreadScanner();
-    const detector = new ChangeDetector(store);
-    const notifier = new Notifier();
-
-    const performScan = () => {
-      try {
-        const currentThreads = scanner.scanVisibleThreads();
-        const changes = detector.detectAndPersistChanges(currentThreads);
-        if (changes.length > 0) {
-          notifier.notifyAll(changes);
-        }
-        return { currentThreads, changes };
-      } catch (err) {
-        console.error('[Discord Thread Monitor] Scan error:', err);
-        return { currentThreads: [], changes: [] };
-      }
-    };
-
-    const container = document.createElement('div');
-    container.id = 'thread-monitor-root';
-    document.body.append(container);
-    console.log('[Discord Thread Monitor] Container created');
+    const { store, notifier, performScan } = setupCoreServices();
+    const container = setupContainer();
 
     ReactDOM.createRoot(container).render(
       <React.StrictMode>
-        <App
-          store={store}
-          notifier={notifier}
-          performScan={performScan}
-        />
+        <App store={store} notifier={notifier} performScan={performScan} />
       </React.StrictMode>
     );
     console.log('[Discord Thread Monitor] React app rendered');

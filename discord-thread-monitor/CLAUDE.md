@@ -15,54 +15,20 @@ npm run build:dev     # Build unminified for debugging
 npm test              # Run tests in watch mode
 npm run test:run      # Run tests once
 npm run test:run -- src/core/ThreadStore.test.ts  # Run single test file
+npm run test:coverage # Run tests with coverage report
 npm run lint          # Check code for lint errors (fails on warnings)
 npm run lint:fix      # Auto-fix fixable lint issues
+npm run stylelint     # Check CSS for lint errors
+npm run stylelint:fix # Auto-fix fixable CSS issues
 npm run format        # Format code with Prettier
 npm run format:check  # Check formatting without fixing
 ```
-
-## Code Quality
-
-### Linting
-
-ESLint + Prettier configured with TypeScript and React support.
-
-**Key rules enforced:**
-- Complexity ≤ 15 (warn)
-- Max function parameters ≤ 5 (warn)
-- Max file lines ≤ 600 (warn)
-- No unused variables (error, prefix with `_` to allow)
-- No duplicate imports (error)
-- Prefer const over let (error)
-- Strict equality (===) required (error)
-
-**TypeScript:**
-- No explicit `any` types (warn)
-- No floating promises (warn)
-- Unsafe operations disabled (too strict for practical dev)
-
-**Test files relaxed:**
-- No line limits for test files
-- `any` types allowed
-- Non-null assertions allowed
-
-**Prettier:**
-- Single quotes, semicolons required
-- 2-space indentation
-- 100-char line width
-- Trailing commas in ES5
-- Arrow function parens always
-
-**Auto-formatting:**
-- Pre-commit hook automatically runs ESLint --fix and Prettier on staged files
-- Git hook configured at repo root (../.husky/pre-commit)
-- Manual formatting: `npm run format`
 
 ## Architecture
 
 ### Core Layer (`src/core/`)
 
-- **ThreadStore** - Persistence via `GM_getValue`/`GM_setValue`. Auto-compresses data with pako when exceeding 50KB
+- **ThreadStore** - Persistence via `GM_getValue`/`GM_setValue` with pako gzip compression at 50KB threshold. Debounced saves (300ms). Falls back to localStorage when GM APIs unavailable (testing).
 - **ThreadScanner** - DOM scraper parsing Discord's `aria-label` and `data-list-item-id` attributes
 - **ChangeDetector** - Compares scans against stored data, generates `TitleChange` records
 - **Notifier** - Pub/sub for propagating changes to UI
@@ -72,29 +38,48 @@ ESLint + Prettier configured with TypeScript and React support.
 ```
 ThreadScanner.scanVisibleThreads()
     -> ChangeDetector.detectChanges()
-    -> ThreadStore.addChange() + Notifier.notifyAll()
+    -> ThreadStore.recordTitleChange() + Notifier.notifyAll()
     -> React UI updates via callbacks
 ```
 
 ### UI Layer (`src/components/`)
 
-- **ManagerPanel** - Main panel with tabs (changes/monitoring/blacklist)
+- **ManagerPanel** - Main panel with tabs (changes/monitoring/blacklist), draggable via `useDraggable` hook
 - **ToggleButton** - Floating button showing unseen count
-- **ToastContainer** - Pop-up notifications for new changes
+- **ToastContainer** - Pop-up notifications with auto-dismiss (5s)
 
 ### Entry Point
 
-`src/main.tsx` initializes core classes, performs initial scan after 2s delay, mounts React to injected container.
+`src/main.tsx` initializes core classes, performs initial scan after 2s delay (required for Discord DOM readiness), mounts React to injected container (`thread-monitor-root`). Scan interval is 60s.
 
 ## Testing
 
-Tests use Vitest with jsdom. The setup file (`src/test/setup.ts`) mocks `localStorage` which ThreadStore uses as a fallback when GM APIs are unavailable.
+Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock` since GM APIs are unavailable in tests. Coverage excludes test files and `main.tsx`.
 
 ## Key Implementation Details
 
-- Thread IDs: extracted from `data-list-item-id="channels___<threadId>"`
-- Titles: parsed from `aria-label` (format: `[unread, ]<title> (thread)`)
-- Parent channel: detected via closest `ul[role="group"][aria-label*="threads"]`
-- Storage key: `discord-thread-monitor-data`
-- Compression: pako gzip at 50KB threshold, warning at 200KB
-- UI text in Chinese (`src/i18n.ts`)
+### DOM Selectors (fragile -- coupled to Discord's DOM structure)
+- Thread elements: `[data-list-item-id^="channels___"][aria-label*="(thread)"]`
+- Thread ID: `data-list-item-id.split('___')[1]`
+- Title: `aria-label` with `"unread, "` prefix and `" (thread)"` suffix stripped
+- Parent channel: closest `ul[role="group"][aria-label*="threads"]`
+- Server ID: `window.location.pathname.split('/')[2]`
+
+### Storage
+- Storage key: `discord-thread-monitor-data` (changing this breaks existing user data)
+- Compression wrapper format: `{ compressed: boolean, data: string | base64 }`
+- Backward-compatible deserialization handles old raw JSON format
+- Migration system in `ThreadStore.migrateData()` (e.g., `retentionMonths` -> `retentionDays`)
+- ThreadStore maintains three concerns: thread metadata, change history, blacklist (Set for O(1) lookup + array for persistence)
+
+### Internationalization
+- `src/i18n.ts`: Chinese (zh) and English (en). Detection: browser language -> localStorage (`thread-monitor-language`) -> default zh
+- Text substitution uses `'{n}'` placeholder pattern
+
+### Userscript Metadata (vite-plugin-monkey)
+- Grants: `GM_getValue`, `GM_setValue` only
+- Run-at: `document-end`
+- Match: `https://discord.com/*`
+
+### Debug
+- `src/debug/simulateTitleChange.ts` only available when `import.meta.env.DEV` is true

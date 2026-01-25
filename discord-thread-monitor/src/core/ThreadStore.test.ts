@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadStore } from './ThreadStore';
 import type { MonitoredThread, TitleChange, StoredData } from '../types';

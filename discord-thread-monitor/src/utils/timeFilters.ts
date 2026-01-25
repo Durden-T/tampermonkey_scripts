@@ -15,7 +15,9 @@ export const TIME_PERIOD_MS: Record<TimePeriod, number> = {
 
 export const TIME_PERIODS: TimePeriod[] = ['day', 'week', 'month', 'month3', 'month6', 'year'];
 
-export function parseTimeFilter(filter: TimeFilter): { period: TimePeriod; mode: TimeFilterMode } | null {
+export function parseTimeFilter(
+  filter: TimeFilter
+): { period: TimePeriod; mode: TimeFilterMode } | null {
   if (filter === 'all') return null;
   const [period, mode] = filter.split('_') as [TimePeriod, TimeFilterMode];
   return { period, mode };
@@ -39,9 +41,10 @@ export function filterChangeGroupsByTime(
   const thresholdMs = TIME_PERIOD_MS[period];
   const cutoffTime = now - thresholdMs;
 
-  const filterFn = mode === 'within'
-    ? (changedAt: number) => changedAt > cutoffTime
-    : (changedAt: number) => changedAt <= cutoffTime;
+  const filterFn =
+    mode === 'within'
+      ? (changedAt: number) => changedAt > cutoffTime
+      : (changedAt: number) => changedAt <= cutoffTime;
 
   return groups
     .map((group) => ({

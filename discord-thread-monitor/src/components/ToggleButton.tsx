@@ -10,16 +10,9 @@ interface ToggleButtonProps {
 const BUTTON_SIZE = 44;
 const DRAG_THRESHOLD = 3;
 
-export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
+const useButtonInteraction = (onClick: () => void) => {
   const [isHovered, setIsHovered] = useState(false);
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
-
-  const { position, isDragging, handleMouseDown } = useDraggable({
-    storageKey: 'thread-monitor-toggle-position',
-    defaultPosition: { x: window.innerWidth - BUTTON_SIZE - 16, y: 16 },
-    bounds: { width: BUTTON_SIZE, height: BUTTON_SIZE },
-    excludeSelector: '.toggle-badge',
-  });
 
   const handleClick = (e: React.MouseEvent) => {
     if (mouseDownPos.current) {
@@ -34,6 +27,32 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
 
   const handleMouseDownWrapper = (e: React.MouseEvent) => {
     mouseDownPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  return {
+    isHovered,
+    setIsHovered,
+    handleClick,
+    handleMouseDownWrapper,
+  };
+};
+
+export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
+  const { isHovered, setIsHovered, handleClick, handleMouseDownWrapper } =
+    useButtonInteraction(onClick);
+
+  const { position, isDragging, handleMouseDown } = useDraggable({
+    storageKey: 'thread-monitor-toggle-position',
+    defaultPosition: {
+      x: window.innerWidth - BUTTON_SIZE - 16,
+      y: 16,
+    },
+    bounds: { width: BUTTON_SIZE, height: BUTTON_SIZE },
+    excludeSelector: '.toggle-badge',
+  });
+
+  const handleMouseDownCombined = (e: React.MouseEvent) => {
+    handleMouseDownWrapper(e);
     handleMouseDown(e);
   };
 
@@ -48,16 +67,14 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onMouseDown={handleMouseDownWrapper}
+      onMouseDown={handleMouseDownCombined}
       onClick={handleClick}
     >
       <span className="toggle-icon">
         <ThreadIcon />
       </span>
       {unseenCount > 0 && (
-        <span className="toggle-badge pulse">
-          {unseenCount > 99 ? '99+' : unseenCount}
-        </span>
+        <span className="toggle-badge pulse">{unseenCount > 99 ? '99+' : unseenCount}</span>
       )}
     </button>
   );

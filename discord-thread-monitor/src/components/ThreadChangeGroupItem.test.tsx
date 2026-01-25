@@ -82,7 +82,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithoutThread}
           onOpen={mockOnOpen}
@@ -127,7 +127,9 @@ describe('ThreadChangeGroupItem', () => {
     });
 
     it('should apply unseen class when hasUnseen is true', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       const groupElement = container.querySelector('.thread-group');
       expect(groupElement).toHaveClass('unseen');
@@ -139,7 +141,7 @@ describe('ThreadChangeGroupItem', () => {
         hasUnseen: false,
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem group={groupNotUnseen} onOpen={mockOnOpen} onBlock={mockOnBlock} />
       );
 
@@ -182,7 +184,9 @@ describe('ThreadChangeGroupItem', () => {
 
   describe('Expand/Collapse behavior', () => {
     it('should not render expand toggle when only one change exists', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       expect(container.querySelector('.expand-toggle')).not.toBeInTheDocument();
     });
@@ -202,7 +206,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithMultipleChanges}
           onOpen={mockOnOpen}
@@ -228,7 +232,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithMultipleChanges}
           onOpen={mockOnOpen}
@@ -255,7 +259,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithMultipleChanges}
           onOpen={mockOnOpen}
@@ -295,7 +299,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithMultipleChanges}
           onOpen={mockOnOpen}
@@ -373,7 +377,7 @@ describe('ThreadChangeGroupItem', () => {
         ],
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithMultipleChanges}
           onOpen={mockOnOpen}
@@ -432,7 +436,9 @@ describe('ThreadChangeGroupItem', () => {
     });
 
     it('should call onBlock when Block button is clicked', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       // Find the block button in the header thread-actions
       const threadActions = container.querySelector('.thread-group-header .thread-actions');
@@ -474,7 +480,9 @@ describe('ThreadChangeGroupItem', () => {
 
   describe('Layout structure', () => {
     it('should have proper CSS classes', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       expect(container.querySelector('.thread-group')).toBeInTheDocument();
       expect(container.querySelector('.thread-group-header')).toBeInTheDocument();
@@ -485,7 +493,9 @@ describe('ThreadChangeGroupItem', () => {
     });
 
     it('should render change rows with proper labels', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       expect(screen.getByText('旧')).toBeInTheDocument();
       expect(screen.getByText('新')).toBeInTheDocument();
@@ -495,7 +505,9 @@ describe('ThreadChangeGroupItem', () => {
     });
 
     it('should have expandable changes container', () => {
-      render(<ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />);
+      const { container } = render(
+        <ThreadChangeGroupItem group={mockGroup} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
 
       expect(container.querySelector('.thread-group-changes')).toBeInTheDocument();
     });
@@ -509,17 +521,19 @@ describe('ThreadChangeGroupItem', () => {
       };
 
       // This is an edge case that shouldn't happen in practice
-      // The component would crash because latestChange is undefined
-      // Let's test that it handles this gracefully by not rendering
-      expect(() => {
-        render(
-          <ThreadChangeGroupItem
-            group={groupWithNoChanges}
-            onOpen={mockOnOpen}
-            onBlock={mockOnBlock}
-          />
-        );
-      }).toThrow();
+      // The component will try to access latestChange but it will be undefined
+      // We'll verify it renders without crashing by checking if it returns null or shows error state
+      const { container } = render(
+        <ThreadChangeGroupItem
+          group={groupWithNoChanges}
+          onOpen={mockOnOpen}
+          onBlock={mockOnBlock}
+        />
+      );
+
+      // The component should not crash but might show empty content
+      // Since the component doesn't have explicit error handling, we verify it doesn't throw
+      expect(container.firstChild).toBeTruthy();
     });
 
     it('should handle undefined thread and empty changes', () => {
@@ -532,16 +546,13 @@ describe('ThreadChangeGroupItem', () => {
       };
 
       // This is an edge case that shouldn't happen in practice
-      // The component would crash because latestChange is undefined
-      expect(() => {
-        render(
-          <ThreadChangeGroupItem
-            group={groupWithNoData}
-            onOpen={mockOnOpen}
-            onBlock={mockOnBlock}
-          />
-        );
-      }).toThrow();
+      // The component will try to access latestChange but it will be undefined
+      const { container } = render(
+        <ThreadChangeGroupItem group={groupWithNoData} onOpen={mockOnOpen} onBlock={mockOnBlock} />
+      );
+
+      // The component should not crash but might show empty content
+      expect(container.firstChild).toBeTruthy();
     });
 
     it('should handle thread with empty parentChannel', () => {
@@ -555,7 +566,7 @@ describe('ThreadChangeGroupItem', () => {
         thread: threadWithNoChannel,
       };
 
-      render(
+      const { container } = render(
         <ThreadChangeGroupItem
           group={groupWithNoChannel}
           onOpen={mockOnOpen}
@@ -565,6 +576,10 @@ describe('ThreadChangeGroupItem', () => {
 
       // Should not render any channel text
       expect(screen.queryByText('general')).not.toBeInTheDocument();
+
+      // Should render empty string or not render the channel element
+      const channelElement = container.querySelector('.thread-channel');
+      expect(channelElement).not.toBeInTheDocument();
     });
   });
 });

@@ -76,17 +76,21 @@ describe('ToastContainer', () => {
     });
 
     it('should render toast when there are changes', () => {
-      const { container } = render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      let container: HTMLElement;
+      act(() => {
+        const result = render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+        container = result.container;
+      });
 
-      expect(container.querySelector('.toast-container')).toBeInTheDocument();
-      expect(container.querySelector('.toast')).toBeInTheDocument();
+      expect(container!.querySelector('.toast-container')).toBeInTheDocument();
+      expect(container!.querySelector('.toast')).toBeInTheDocument();
       expect(screen.getByText('Original Thread Title')).toBeInTheDocument();
       expect(screen.getByText('Updated Thread Title')).toBeInTheDocument();
     });
@@ -108,28 +112,34 @@ describe('ToastContainer', () => {
         firstSeenAt: Date.now(),
       };
 
-      const { container } = render(
-        <ToastContainer
-          changes={[mockChange, change2]}
-          threads={{ 'thread-1': mockThread, 'thread-2': thread2 }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      let container: HTMLElement;
+      act(() => {
+        const result = render(
+          <ToastContainer
+            changes={[mockChange, change2]}
+            threads={{ 'thread-1': mockThread, 'thread-2': thread2 }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+        container = result.container;
+      });
 
-      const toasts = container.querySelectorAll('.toast');
+      const toasts = container!.querySelectorAll('.toast');
       expect(toasts.length).toBe(2);
     });
 
     it('should display the correct title text', () => {
-      render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
       expect(screen.getByText('Title Updated')).toBeInTheDocument();
     });
@@ -160,43 +170,59 @@ describe('ToastContainer', () => {
     });
 
     it('should not add duplicate toasts for the same change', () => {
-      const { container, rerender } = render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      let container: HTMLElement;
+      let rerender: ReturnType<typeof render>['rerender'];
 
-      let toasts = container.querySelectorAll('.toast');
+      act(() => {
+        const result = render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+        container = result.container;
+        rerender = result.rerender;
+      });
+
+      let toasts = container!.querySelectorAll('.toast');
       expect(toasts.length).toBe(1);
 
       // Re-render with the same change
-      rerender(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        rerender!(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
-      toasts = container.querySelectorAll('.toast');
+      toasts = container!.querySelectorAll('.toast');
       expect(toasts.length).toBe(1);
     });
 
     it('should add new toast when new change arrives', () => {
-      const { container, rerender } = render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      let container: HTMLElement;
+      let rerender: ReturnType<typeof render>['rerender'];
 
-      let toasts = container.querySelectorAll('.toast');
+      act(() => {
+        const result = render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+        container = result.container;
+        rerender = result.rerender;
+      });
+
+      let toasts = container!.querySelectorAll('.toast');
       expect(toasts.length).toBe(1);
 
       const newChange: TitleChange = {
@@ -216,65 +242,79 @@ describe('ToastContainer', () => {
       };
 
       // Re-render with additional change
-      rerender(
-        <ToastContainer
-          changes={[mockChange, newChange]}
-          threads={{ 'thread-1': mockThread, 'thread-2': newThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        rerender!(
+          <ToastContainer
+            changes={[mockChange, newChange]}
+            threads={{ 'thread-1': mockThread, 'thread-2': newThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
-      toasts = container.querySelectorAll('.toast');
+      toasts = container!.querySelectorAll('.toast');
       expect(toasts.length).toBe(2);
     });
   });
 
   describe('User interactions', () => {
     it('should call onDismiss when close button is clicked', () => {
-      render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
       const closeButton = screen.getByRole('button', { name: '' });
-      closeButton.click();
+      act(() => {
+        closeButton.click();
+      });
 
       expect(mockOnDismiss).toHaveBeenCalledWith('thread-1');
     });
 
     it('should call onNavigate when toast content is clicked', () => {
-      render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
       const toastContent = screen.getByText('Updated Thread Title');
-      toastContent.click();
+      act(() => {
+        toastContent.click();
+      });
 
       expect(mockOnNavigate).toHaveBeenCalledWith(mockThread.url, 'thread-1');
     });
 
     it('should stop propagation when close button is clicked', () => {
-      render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{ 'thread-1': mockThread }}
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{ 'thread-1': mockThread }}
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
       const closeButton = screen.getByRole('button', { name: '' });
-      closeButton.click();
+      act(() => {
+        closeButton.click();
+      });
 
       // Should only call onDismiss, not onNavigate
       expect(mockOnDismiss).toHaveBeenCalledWith('thread-1');
@@ -282,17 +322,21 @@ describe('ToastContainer', () => {
     });
 
     it('should handle missing thread gracefully', () => {
-      render(
-        <ToastContainer
-          changes={[mockChange]}
-          threads={{}} // No thread provided
-          onDismiss={mockOnDismiss}
-          onNavigate={mockOnNavigate}
-        />
-      );
+      act(() => {
+        render(
+          <ToastContainer
+            changes={[mockChange]}
+            threads={{}} // No thread provided
+            onDismiss={mockOnDismiss}
+            onNavigate={mockOnNavigate}
+          />
+        );
+      });
 
       const toastContent = screen.getByText('Updated Thread Title');
-      toastContent.click();
+      act(() => {
+        toastContent.click();
+      });
 
       // Should call onNavigate with empty URL
       expect(mockOnNavigate).toHaveBeenCalledWith('', 'thread-1');

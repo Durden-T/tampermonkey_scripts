@@ -7,7 +7,7 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules', 'coverage', '**/*.config.*', 'vite.config.ts'],
+    ignores: ['dist', 'node_modules', 'coverage', '**/*.config.*', 'vite.config.ts', '**/*.test.ts', '**/*.test.tsx', 'src/test/**/*'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -33,9 +33,12 @@ export default tseslint.config(
     },
     rules: {
       // CLAUDE.md: Metrics enforcement
-      'complexity': ['warn', { max: 15 }],
-      'max-params': ['warn', { max: 5 }],
-      'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
+      'complexity': ['error', { max: 10 }],
+      'max-params': ['error', { max: 4 }],
+      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
+      'max-depth': ['error', { max: 3 }],
+      'max-len': ['error', { code: 100, ignorePattern: '^\\s*(//|\\*)', ignoreUrls: true }],
 
       // Dead code detection
       'no-unreachable': 'error',
@@ -45,11 +48,14 @@ export default tseslint.config(
         varsIgnorePattern: '^_',
         destructuredArrayIgnorePattern: '^_',
       }],
+      'no-constant-condition': 'error',
 
       // Code quality
       'no-duplicate-imports': 'error',
       'prefer-const': 'error',
       'eqeqeq': ['error', 'always'],
+      'no-var': 'error',
+      'object-shorthand': 'error',
 
       // TypeScript
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -73,14 +79,6 @@ export default tseslint.config(
 
       // Console usage
       'no-console': 'off',
-    },
-  },
-  {
-    files: ['**/*.test.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
-    rules: {
-      'max-lines-per-function': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
 );

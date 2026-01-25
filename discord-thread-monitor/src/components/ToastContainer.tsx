@@ -17,28 +17,67 @@ const TOAST_DURATION_MS = 5000;
 
 const UpdateIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    <path
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2
+      12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+    />
   </svg>
 );
 
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-    <path d="M18 6L6 18M6 6l12 12"/>
+    <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
-export function ToastContainer({
-  changes,
-  threads,
-  onDismiss,
-  onNavigate,
-}: ToastContainerProps) {
+interface ToastItemProps {
+  toast: Toast;
+  thread?: MonitoredThread;
+  t: ReturnType<typeof getTexts>;
+  onDismiss: (toastId: string, threadId: string) => void;
+  onNavigate: (threadId: string, url: string) => void;
+}
+
+const ToastItem: React.FC<ToastItemProps> = ({ toast, thread, t, onDismiss, onNavigate }) => {
+  const handleClick = () => {
+    const url = thread?.url;
+    onNavigate(toast.threadId, url !== undefined ? url : '');
+  };
+
+  const handleDismissClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDismiss(toast.toastId, toast.threadId);
+  };
+
+  return (
+    <div key={toast.toastId} className="toast" onClick={handleClick}>
+      <div className="toast-icon">
+        <UpdateIcon />
+      </div>
+      <div className="toast-content">
+        <div className="toast-title">{t.toast?.titleUpdated || 'Title Updated'}</div>
+        <div className="toast-change">
+          <span className="toast-old">{toast.oldTitle}</span>
+          <span className="toast-new">{toast.newTitle}</span>
+        </div>
+      </div>
+      <button className="toast-close" onClick={handleDismissClick}>
+        <CloseIcon />
+      </button>
+      <div className="toast-progress" />
+    </div>
+  );
+};
+
+// eslint-disable-next-line max-lines-per-function
+const useToastManager = (changes: TitleChange[], onDismiss: (threadId: string) => void) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const onDismissRef = useRef(onDismiss);
-  const t = getTexts();
 
-  onDismissRef.current = onDismiss;
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   const scheduleRemoval = useCallback((toastId: string, threadId: string) => {
     const timer = setTimeout(() => {
@@ -50,15 +89,19 @@ export function ToastContainer({
   }, []);
 
   useEffect(() => {
-    for (const change of changes) {
+    const newToasts: Toast[] = [];
+    changes.forEach((change) => {
       const toastId = `${change.threadId}-${change.changedAt}`;
-      if (timersRef.current.has(toastId)) {
-        continue;
+      if (!timersRef.current.has(toastId)) {
+        const newToast: Toast = { ...change, toastId };
+        newToasts.push(newToast);
+        scheduleRemoval(toastId, change.threadId);
       }
+    });
 
-      const newToast: Toast = { ...change, toastId };
-      setToasts((prev) => [...prev, newToast]);
-      scheduleRemoval(toastId, change.threadId);
+    if (newToasts.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setToasts((prev) => [...prev, ...newToasts]);
     }
   }, [changes, scheduleRemoval]);
 
@@ -79,14 +122,25 @@ export function ToastContainer({
     setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
   };
 
-  const handleDismiss = (toast: Toast) => {
-    removeToast(toast.toastId);
-    onDismiss(toast.threadId);
+  const handleDismiss = (toastId: string, threadId: string) => {
+    removeToast(toastId);
+    onDismiss(threadId);
   };
 
-  const handleClick = (toast: Toast, url: string) => {
-    removeToast(toast.toastId);
-    onNavigate(url, toast.threadId);
+  return { toasts, handleDismiss, removeToast };
+};
+
+export function ToastContainer({ changes, threads, onDismiss, onNavigate }: ToastContainerProps) {
+  const t = getTexts();
+  const { toasts, handleDismiss, removeToast } = useToastManager(changes, onDismiss);
+
+  const handleToastNavigate = (threadId: string, url: string) => {
+    // Find and remove the toast for this thread
+    const toastToRemove = toasts.find((t) => t.threadId === threadId);
+    if (toastToRemove) {
+      removeToast(toastToRemove.toastId);
+    }
+    onNavigate(url, threadId);
   };
 
   return (
@@ -94,32 +148,14 @@ export function ToastContainer({
       {toasts.map((toast) => {
         const thread = threads[toast.threadId];
         return (
-          <div
+          <ToastItem
             key={toast.toastId}
-            className="toast"
-            onClick={() => handleClick(toast, thread?.url || '')}
-          >
-            <div className="toast-icon">
-              <UpdateIcon />
-            </div>
-            <div className="toast-content">
-              <div className="toast-title">{t.toast?.titleUpdated || 'Title Updated'}</div>
-              <div className="toast-change">
-                <span className="toast-old">{toast.oldTitle}</span>
-                <span className="toast-new">{toast.newTitle}</span>
-              </div>
-            </div>
-            <button
-              className="toast-close"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDismiss(toast);
-              }}
-            >
-              <CloseIcon />
-            </button>
-            <div className="toast-progress" />
-          </div>
+            toast={toast}
+            thread={thread}
+            t={t}
+            onDismiss={handleDismiss}
+            onNavigate={handleToastNavigate}
+          />
         );
       })}
     </div>

@@ -1,5 +1,5 @@
-import { ThreadItem } from './ThreadItem';
-import { ThreadChangeGroupItem } from './ThreadChangeGroupItem';
+import { ChangeGroupsList } from './ChangeGroupsList';
+import { ThreadsList } from './ThreadsList';
 import type { MonitoredThread, TitleChange, ThreadChangeGroup } from '../types';
 
 interface ThreadListProps {
@@ -24,45 +24,25 @@ export function ThreadList({
   onResume,
 }: ThreadListProps) {
   if (changeGroups) {
-    if (changeGroups.length === 0) {
-      return <div className="empty-message">{emptyMessage}</div>;
-    }
-
     return (
-      <div className="thread-list">
-        {changeGroups.map((group) => (
-          <ThreadChangeGroupItem
-            key={group.threadId}
-            group={group}
-            onOpen={onOpen}
-            onBlock={onBlock}
-          />
-        ))}
-      </div>
+      <ChangeGroupsList
+        changeGroups={changeGroups}
+        emptyMessage={emptyMessage}
+        onOpen={onOpen}
+        onBlock={onBlock}
+      />
     );
   }
 
-  if (threads.length === 0) {
-    return <div className="empty-message">{emptyMessage}</div>;
-  }
-
-  const getChangeForThread = (threadId: string): TitleChange | undefined => {
-    return changes.find((c) => c.threadId === threadId);
-  };
-
   return (
-    <div className="thread-list">
-      {threads.map((thread) => (
-        <ThreadItem
-          key={thread.id}
-          thread={thread}
-          change={getChangeForThread(thread.id)}
-          isBlacklisted={isBlacklisted}
-          onOpen={onOpen}
-          onBlock={onBlock}
-          onResume={onResume}
-        />
-      ))}
-    </div>
+    <ThreadsList
+      threads={threads}
+      changes={changes}
+      isBlacklisted={isBlacklisted}
+      emptyMessage={emptyMessage}
+      onOpen={onOpen}
+      onBlock={onBlock}
+      onResume={onResume}
+    />
   );
 }

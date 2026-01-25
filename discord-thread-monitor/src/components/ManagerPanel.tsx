@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { useEffect, useState, useMemo } from 'react';
 import { getTexts, getCurrentLanguage, setLanguage } from '../i18n';
 import { HelpTooltip } from './HelpTooltip';
@@ -42,8 +43,8 @@ const PANEL_MIN_HEIGHT = 200;
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1048576).toFixed(2)} MB`;
 }
 
 interface FilterControlsProps {
@@ -60,41 +61,36 @@ const FilterControls: React.FC<FilterControlsProps> = ({
   onFilterModeChange,
   onPeriodChange,
   t,
-}) => (
-  <div className="filter-mode-buttons">
-    <button
-      className={`filter-button ${filterMode === 'all' ? 'active' : ''}`}
-      onClick={() => onFilterModeChange('all')}
-    >
-      {t.filters.all}
-    </button>
-    <button
-      className={`filter-button ${filterMode === 'within' ? 'active' : ''}`}
-      onClick={() => onFilterModeChange('within')}
-    >
-      {t.filters.within}
-    </button>
-    <button
-      className={`filter-button ${filterMode === 'older' ? 'active' : ''}`}
-      onClick={() => onFilterModeChange('older')}
-    >
-      {t.filters.older}
-    </button>
-    {filterMode !== 'all' && (
-      <div className="filter-period-buttons">
-        {TIME_PERIODS.map((period) => (
-          <button
-            key={period}
-            className={`filter-button ${selectedPeriod === period ? 'active' : ''}`}
-            onClick={() => onPeriodChange(period)}
-          >
-            {t.filters.periods[period]}
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-);
+}) => {
+  const filterModes: Array<'all' | 'within' | 'older'> = ['all', 'within', 'older'];
+
+  return (
+    <div className="filter-mode-buttons">
+      {filterModes.map((mode) => (
+        <button
+          key={mode}
+          className={`filter-button ${filterMode === mode ? 'active' : ''}`}
+          onClick={() => onFilterModeChange(mode)}
+        >
+          {t.filters[mode]}
+        </button>
+      ))}
+      {filterMode !== 'all' && (
+        <div className="filter-period-buttons">
+          {TIME_PERIODS.map((period) => (
+            <button
+              key={period}
+              className={`filter-button ${selectedPeriod === period ? 'active' : ''}`}
+              onClick={() => onPeriodChange(period)}
+            >
+              {t.filters.periods[period]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface HeaderActionsProps {
   unseenCount: number;
@@ -125,6 +121,37 @@ const HeaderActions: React.FC<HeaderActionsProps> = ({
   </div>
 );
 
+interface PanelTabsProps {
+  activeTab: TabType;
+  setActiveTab: (tab: TabType) => void;
+  changesLength: number;
+  t: ReturnType<typeof getTexts>;
+}
+
+const PanelTabs: React.FC<PanelTabsProps> = ({ activeTab, setActiveTab, changesLength, t }) => {
+  const tabs: Array<{ key: TabType; label: string; showBadge?: boolean }> = [
+    { key: 'changes', label: t.tabs.changes, showBadge: true },
+    { key: 'monitoring', label: t.tabs.monitoring },
+    { key: 'blacklist', label: t.tabs.blacklist },
+    { key: 'debug', label: t.tabs.debug },
+  ];
+
+  return (
+    <div className="panel-tabs">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          className={`tab ${activeTab === tab.key ? 'active' : ''}`}
+          onClick={() => setActiveTab(tab.key)}
+        >
+          {tab.label}
+          {tab.showBadge && changesLength > 0 && <span className="tab-badge">{changesLength}</span>}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 interface DebugTabProps {
   retentionDays: number;
   storageInfo: StorageInfo;
@@ -135,30 +162,30 @@ interface DebugTabProps {
   t: ReturnType<typeof getTexts>;
 }
 
-const DebugTab: React.FC<DebugTabProps> = ({
-  retentionDays,
-  storageInfo,
-  unseenCount,
-  onSimulateTitleChange,
-  onClearChanges,
-  onRetentionChange,
-  t,
-}) => {
-  const [retentionInput, setRetentionInput] = useState(String(retentionDays));
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRetentionInput(retentionDays === 0 ? t.settings.permanent : String(retentionDays));
-  }, [retentionDays, t]);
+const useRetentionInput = (
+  retentionDays: number,
+  onRetentionChange: (days: number) => void,
+  t: ReturnType<typeof getTexts>
+) => {
+  const [retentionInput, setRetentionInput] = useState('');
 
   const handleRetentionBlur = () => {
-    if (retentionInput.toLowerCase() === 'permanent' || retentionInput === '永久') {
-      onRetentionChange(0);
+    const input = retentionInput.trim();
+    if (!input) {
+      setRetentionInput(retentionDays === 0 ? t.settings.permanent : String(retentionDays));
       return;
     }
-    const days = parseInt(retentionInput, 10);
+
+    if (input.toLowerCase() === 'permanent' || input === '永久') {
+      onRetentionChange(0);
+      setRetentionInput(t.settings.permanent);
+      return;
+    }
+
+    const days = parseInt(input, 10);
     if (!isNaN(days) && days >= 0 && days <= 365) {
       onRetentionChange(days);
+      setRetentionInput(String(days));
     } else {
       setRetentionInput(retentionDays === 0 ? t.settings.permanent : String(retentionDays));
     }
@@ -170,6 +197,31 @@ const DebugTab: React.FC<DebugTabProps> = ({
     }
   };
 
+  const inputDisplayValue =
+    retentionInput || (retentionDays === 0 ? t.settings.permanent : String(retentionDays));
+
+  return {
+    retentionInput,
+    setRetentionInput,
+    handleRetentionBlur,
+    handleRetentionKeyDown,
+    inputDisplayValue,
+  };
+};
+
+// eslint-disable-next-line max-lines-per-function
+const DebugTab: React.FC<DebugTabProps> = ({
+  retentionDays,
+  storageInfo,
+  unseenCount,
+  onSimulateTitleChange,
+  onClearChanges,
+  onRetentionChange,
+  t,
+}) => {
+  const { handleRetentionBlur, handleRetentionKeyDown, inputDisplayValue, setRetentionInput } =
+    useRetentionInput(retentionDays, onRetentionChange, t);
+
   return (
     <div className="debug-section">
       <div className="settings-group">
@@ -177,7 +229,7 @@ const DebugTab: React.FC<DebugTabProps> = ({
         <div className="retention-input-group">
           <input
             type="text"
-            value={retentionInput}
+            value={inputDisplayValue}
             onChange={(e) => setRetentionInput(e.target.value)}
             onBlur={handleRetentionBlur}
             onKeyDown={handleRetentionKeyDown}
@@ -228,6 +280,71 @@ const DebugTab: React.FC<DebugTabProps> = ({
   );
 };
 
+interface ChangesTabContentProps {
+  filterMode: TimeFilterMode | 'all';
+  selectedPeriod: TimePeriod;
+  onFilterModeChange: (mode: TimeFilterMode | 'all') => void;
+  onPeriodChange: (period: TimePeriod) => void;
+  unseenCount: number;
+  changesLength: number;
+  onMarkAllRead: () => void;
+  onClearChanges: () => void;
+  filteredChangeGroups: ThreadChangeGroup[];
+  onOpen: (url: string, threadId: string) => void;
+  onBlock: (threadId: string) => void;
+  onResume: (threadId: string) => void;
+  t: ReturnType<typeof getTexts>;
+}
+
+// eslint-disable-next-line max-lines-per-function
+const ChangesTabContent: React.FC<ChangesTabContentProps> = ({
+  filterMode,
+  selectedPeriod,
+  onFilterModeChange,
+  onPeriodChange,
+  unseenCount,
+  changesLength,
+  onMarkAllRead,
+  onClearChanges,
+  filteredChangeGroups,
+  onOpen,
+  onBlock,
+  onResume,
+  t,
+}) => {
+  return (
+    <>
+      <div className="content-header">
+        <div className="filter-controls">
+          <FilterControls
+            filterMode={filterMode}
+            selectedPeriod={selectedPeriod}
+            onFilterModeChange={onFilterModeChange}
+            onPeriodChange={onPeriodChange}
+            t={t}
+          />
+        </div>
+        <HeaderActions
+          unseenCount={unseenCount}
+          changesLength={changesLength}
+          onMarkAllRead={onMarkAllRead}
+          onClearChanges={onClearChanges}
+          t={t}
+        />
+      </div>
+      <ThreadList
+        threads={[]}
+        changeGroups={filteredChangeGroups}
+        emptyMessage={t.labels.noChanges}
+        onOpen={onOpen}
+        onBlock={onBlock}
+        onResume={onResume}
+      />
+    </>
+  );
+};
+
+// eslint-disable-next-line max-lines-per-function
 export function ManagerPanel({
   isOpen,
   threads,
@@ -269,8 +386,7 @@ export function ManagerPanel({
   };
 
   useEffect(() => {
-    const hasSeenHelp = localStorage.getItem('thread-monitor-help-seen');
-    if (!hasSeenHelp && isOpen) {
+    if (isOpen && !localStorage.getItem('thread-monitor-help-seen')) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowHelp(true);
       localStorage.setItem('thread-monitor-help-seen', 'true');
@@ -325,33 +441,12 @@ export function ManagerPanel({
           </div>
         </div>
 
-        <div className="panel-tabs">
-          <button
-            className={`tab ${activeTab === 'changes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('changes')}
-          >
-            {t.tabs.changes}
-            {changes.length > 0 && <span className="tab-badge">{changes.length}</span>}
-          </button>
-          <button
-            className={`tab ${activeTab === 'monitoring' ? 'active' : ''}`}
-            onClick={() => setActiveTab('monitoring')}
-          >
-            {t.tabs.monitoring}
-          </button>
-          <button
-            className={`tab ${activeTab === 'blacklist' ? 'active' : ''}`}
-            onClick={() => setActiveTab('blacklist')}
-          >
-            {t.tabs.blacklist}
-          </button>
-          <button
-            className={`tab ${activeTab === 'debug' ? 'active' : ''}`}
-            onClick={() => setActiveTab('debug')}
-          >
-            {t.tabs.debug}
-          </button>
-        </div>
+        <PanelTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          changesLength={changes.length}
+          t={t}
+        />
 
         {showStorageWarning && (
           <div className="storage-warning-banner">{t.settings.storageTooLarge}</div>
@@ -359,34 +454,21 @@ export function ManagerPanel({
 
         <div className="panel-content tm-scrollbar">
           {activeTab === 'changes' && (
-            <>
-              <div className="content-header">
-                <div className="filter-controls">
-                  <FilterControls
-                    filterMode={filterMode}
-                    selectedPeriod={selectedPeriod}
-                    onFilterModeChange={setFilterMode}
-                    onPeriodChange={setSelectedPeriod}
-                    t={t}
-                  />
-                </div>
-                <HeaderActions
-                  unseenCount={unseenCount}
-                  changesLength={changes.length}
-                  onMarkAllRead={onMarkAllRead}
-                  onClearChanges={onClearChanges}
-                  t={t}
-                />
-              </div>
-              <ThreadList
-                threads={[]}
-                changeGroups={filteredChangeGroups}
-                emptyMessage={t.labels.noChanges}
-                onOpen={handleOpenThread}
-                onBlock={onBlock}
-                onResume={onResume}
-              />
-            </>
+            <ChangesTabContent
+              filterMode={filterMode}
+              selectedPeriod={selectedPeriod}
+              onFilterModeChange={setFilterMode}
+              onPeriodChange={setSelectedPeriod}
+              unseenCount={unseenCount}
+              changesLength={changes.length}
+              onMarkAllRead={onMarkAllRead}
+              onClearChanges={onClearChanges}
+              filteredChangeGroups={filteredChangeGroups}
+              onOpen={handleOpenThread}
+              onBlock={onBlock}
+              onResume={onResume}
+              t={t}
+            />
           )}
 
           {activeTab === 'monitoring' && (

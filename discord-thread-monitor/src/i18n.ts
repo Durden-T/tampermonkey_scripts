@@ -158,7 +158,7 @@ type I18nTexts = typeof zh;
 
 const LANGUAGE_STORAGE_KEY = 'thread-monitor-language';
 const SUPPORTED_LANGUAGES = ['zh', 'en'] as const;
-type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
+type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 function detectLanguage(): SupportedLanguage {
   const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);

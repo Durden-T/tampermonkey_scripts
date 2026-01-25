@@ -25,9 +25,7 @@ function clampPosition(pos: Position, bounds: { width: number; height: number })
   };
 }
 
-export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
-  const { storageKey, defaultPosition, bounds, excludeSelector } = options;
-
+const usePersistentPosition = (storageKey: string, defaultPosition: Position, bounds: Bounds) => {
   const [position, setPosition] = useState<Position>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -43,9 +41,6 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
     return defaultPosition;
   });
 
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef<Position>({ x: 0, y: 0 });
-
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(position));
   }, [position, storageKey]);
@@ -58,19 +53,34 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
     return () => window.removeEventListener('resize', handleResize);
   }, [bounds]);
 
+  return [position, setPosition] as const;
+};
+
+const useDragState = (
+  bounds: Bounds,
+  setPosition: React.Dispatch<React.SetStateAction<Position>>
+) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<Position>({ x: 0, y: 0 });
+
   useEffect(() => {
     if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStart.current.x;
-      const deltaY = e.clientY - dragStart.current.y;
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
 
-      setPosition((prev) => clampPosition({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY,
-      }, bounds));
+      setPosition((prev) =>
+        clampPosition(
+          {
+            x: prev.x + deltaX,
+            y: prev.y + deltaY,
+          },
+          bounds
+        )
+      );
 
-      dragStart.current = { x: e.clientX, y: e.clientY };
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const handleMouseUp = () => {
@@ -84,15 +94,27 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, bounds]);
+  }, [isDragging, bounds, setPosition]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (excludeSelector && (e.target as HTMLElement).closest(excludeSelector)) {
-      return;
-    }
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY };
-  }, [excludeSelector]);
+  return { isDragging, setIsDragging, dragStartRef };
+};
+
+export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
+  const { storageKey, defaultPosition, bounds, excludeSelector } = options;
+
+  const [position, setPosition] = usePersistentPosition(storageKey, defaultPosition, bounds);
+  const { isDragging, setIsDragging, dragStartRef } = useDragState(bounds, setPosition);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (excludeSelector && (e.target as HTMLElement).closest(excludeSelector)) {
+        return;
+      }
+      setIsDragging(true);
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+    },
+    [excludeSelector, setIsDragging, dragStartRef]
+  );
 
   return {
     position,

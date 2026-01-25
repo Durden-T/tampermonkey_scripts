@@ -10,6 +10,7 @@ cli:
 
 event_loop:
   starting_event: "mob.start"  # Ralph publishes this after coordination
+  prompt_file: "PROMPT.md"
 
 hats:
   navigator:
