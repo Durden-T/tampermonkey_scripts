@@ -29,33 +29,34 @@ export function filterChangeGroupsByTime(
   now: number
 ): ThreadChangeGroup[] {
   if (filter === 'all') {
-    return groups.sort((a, b) => b.latestChangeAt - a.latestChangeAt);
+    return [...groups].sort((a, b) => b.latestChangeAt - a.latestChangeAt);
   }
 
   const parsed = parseTimeFilter(filter);
   if (!parsed) {
-    return groups.sort((a, b) => b.latestChangeAt - a.latestChangeAt);
+    return [...groups].sort((a, b) => b.latestChangeAt - a.latestChangeAt);
   }
 
   const { period, mode } = parsed;
-  const thresholdMs = TIME_PERIOD_MS[period];
-  const cutoffTime = now - thresholdMs;
+  const cutoffTime = now - TIME_PERIOD_MS[period];
+  const isWithin = mode === 'within';
 
-  const filterFn =
-    mode === 'within'
-      ? (changedAt: number) => changedAt > cutoffTime
-      : (changedAt: number) => changedAt <= cutoffTime;
+  const result: ThreadChangeGroup[] = [];
 
-  return groups
-    .map((group) => ({
-      ...group,
-      changes: group.changes.filter((c) => filterFn(c.changedAt)),
-    }))
-    .filter((group) => group.changes.length > 0)
-    .map((group) => ({
-      ...group,
-      latestChangeAt: group.changes[0]?.changedAt ?? group.latestChangeAt,
-      hasUnseen: group.changes.some((c) => !c.seen),
-    }))
-    .sort((a, b) => b.latestChangeAt - a.latestChangeAt);
+  for (const group of groups) {
+    const filteredChanges = group.changes.filter((c) =>
+      isWithin ? c.changedAt > cutoffTime : c.changedAt <= cutoffTime
+    );
+
+    if (filteredChanges.length > 0) {
+      result.push({
+        ...group,
+        changes: filteredChanges,
+        latestChangeAt: filteredChanges[0].changedAt,
+        hasUnseen: filteredChanges.some((c) => !c.seen),
+      });
+    }
+  }
+
+  return result.sort((a, b) => b.latestChangeAt - a.latestChangeAt);
 }

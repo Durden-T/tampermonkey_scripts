@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { beforeEach } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 class LocalStorageMock {
   private store: Record<string, string> = {};
@@ -24,4 +24,13 @@ class LocalStorageMock {
 beforeEach(() => {
   const mockStorage = new LocalStorageMock();
   global.localStorage = mockStorage as Storage;
+
+  // Suppress React act() warnings in tests since they're expected with timer-based updates
+  const originalError = console.error;
+  vi.spyOn(console, 'error').mockImplementation((...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('not wrapped in act')) {
+      return; // Suppress act() warnings
+    }
+    originalError(...args);
+  });
 });

@@ -13,7 +13,28 @@ const STORAGE_KEY = 'discord-thread-monitor-data';
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const SAVE_DEBOUNCE_MS = 300;
 
-const getStringSize = (str: string): number => new Blob([str]).size;
+// Optimized string size estimation - UTF-8 encoding typically uses 1-4 bytes per character
+// This is much faster than creating a Blob and provides a reasonable estimate
+const getStringSize = (str: string): number => {
+  // UTF-8 encoding: ASCII chars = 1 byte, multi-byte chars = 2-4 bytes
+  // For typical Discord text, most characters are ASCII or basic Unicode
+  let size = 0;
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    if (code < 0x80)
+      size += 1; // ASCII
+    else if (code < 0x800)
+      size += 2; // 2-byte UTF-8
+    else if (code < 0xd800 || code >= 0xe000)
+      size += 3; // 3-byte UTF-8
+    else {
+      // Surrogate pair (4 bytes)
+      size += 4;
+      i++; // Skip next char
+    }
+  }
+  return size;
+};
 
 const defaultData: StoredData = {
   threads: {},
@@ -167,6 +188,72 @@ export class ThreadStore {
     };
   }
 
+  // Batch method to get all dashboard data in one pass
+  getDashboardData(): {
+    unseenCount: number;
+    changeGroups: ThreadChangeGroup[];
+    storageInfo: StorageInfo;
+  } {
+    const { unseenCount, groupMap } = this.processChangesIntoGroups();
+    const changeGroups = this.buildChangeGroups(groupMap);
+
+    return {
+      unseenCount,
+      changeGroups,
+      storageInfo: this.getStorageInfo(),
+    };
+  }
+
+  private processChangesIntoGroups(): {
+    unseenCount: number;
+    groupMap: Map<string, { changes: TitleChange[]; hasUnseen: boolean; latestChangeAt: number }>;
+  } {
+    let unseenCount = 0;
+    const groupMap = new Map<
+      string,
+      { changes: TitleChange[]; hasUnseen: boolean; latestChangeAt: number }
+    >();
+
+    for (const change of this.data.changes) {
+      if (!change.seen) {
+        unseenCount++;
+      }
+
+      const existing = groupMap.get(change.threadId);
+      if (existing) {
+        existing.changes.push(change);
+        if (!change.seen) {
+          existing.hasUnseen = true;
+        }
+        if (change.changedAt > existing.latestChangeAt) {
+          existing.latestChangeAt = change.changedAt;
+        }
+      } else {
+        groupMap.set(change.threadId, {
+          changes: [change],
+          hasUnseen: !change.seen,
+          latestChangeAt: change.changedAt,
+        });
+      }
+    }
+
+    return { unseenCount, groupMap };
+  }
+
+  private buildChangeGroups(
+    groupMap: Map<string, { changes: TitleChange[]; hasUnseen: boolean; latestChangeAt: number }>
+  ): ThreadChangeGroup[] {
+    return Array.from(groupMap.entries())
+      .map(([threadId, groupData]) => ({
+        threadId,
+        thread: this.data.threads[threadId],
+        changes: groupData.changes.sort((a, b) => b.changedAt - a.changedAt),
+        latestChangeAt: groupData.latestChangeAt,
+        hasUnseen: groupData.hasUnseen,
+      }))
+      .sort((a, b) => b.latestChangeAt - a.latestChangeAt);
+  }
+
   addThread(thread: MonitoredThread): void {
     if (!this.isBlacklisted(thread.id)) {
       this.data.threads[thread.id] = thread;
@@ -218,37 +305,8 @@ export class ThreadStore {
   }
 
   getChangesGroupedByThread(): ThreadChangeGroup[] {
-    const groupMap = new Map<string, { changes: TitleChange[]; hasUnseen: boolean }>();
-
-    for (const change of this.data.changes) {
-      const existing = groupMap.get(change.threadId);
-      if (existing) {
-        existing.changes.push(change);
-        if (!change.seen) {
-          existing.hasUnseen = true;
-        }
-      } else {
-        groupMap.set(change.threadId, {
-          changes: [change],
-          hasUnseen: !change.seen,
-        });
-      }
-    }
-
-    const groups: ThreadChangeGroup[] = [];
-    for (const [threadId, groupData] of groupMap) {
-      groupData.changes.sort((a, b) => b.changedAt - a.changedAt);
-
-      groups.push({
-        threadId,
-        thread: this.data.threads[threadId],
-        changes: groupData.changes,
-        latestChangeAt: groupData.changes[0].changedAt,
-        hasUnseen: groupData.hasUnseen,
-      });
-    }
-
-    return groups.sort((a, b) => b.latestChangeAt - a.latestChangeAt);
+    const { groupMap } = this.processChangesIntoGroups();
+    return this.buildChangeGroups(groupMap);
   }
 
   getUnseenChangesCount(): number {

@@ -19,6 +19,9 @@ describe('ThreadScanner', () => {
 
   describe('scanVisibleThreads', () => {
     it('should return empty array when no server ID in URL', () => {
+      // Suppress expected console.warn from invalid URL extraction
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
       vi.spyOn(window, 'location', 'get').mockReturnValue({
         href: 'https://discord.com/channels',
         pathname: '/channels',
@@ -26,6 +29,12 @@ describe('ThreadScanner', () => {
 
       const threads = scanner.scanVisibleThreads();
       expect(threads).toEqual([]);
+
+      // Verify warning was logged (expected behavior)
+      expect(consoleSpy).toHaveBeenCalledWith('Could not extract server ID from URL');
+
+      // Restore console.warn
+      consoleSpy.mockRestore();
     });
 
     it('should return empty array when no thread elements found', () => {
@@ -118,6 +127,40 @@ describe('ThreadScanner', () => {
       const threads = scanner.scanVisibleThreads();
 
       expect(threads).toHaveLength(0);
+    });
+
+    it('should skip elements where title becomes empty after trimming', () => {
+      // Test case for line 44: if (!title) return null;
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      // Create an aria-label that will result in empty string after regex replacement and trimming
+      mockElement.setAttribute('aria-label', 'unread,   (thread)');
+
+      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(0);
+    });
+
+    it('should handle parent container with empty aria-label', () => {
+      // Test case for line 62: if (!label) return '';
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      mockElement.setAttribute('aria-label', 'Test Thread (thread)');
+
+      // Create parent with empty aria-label
+      const parentContainer = document.createElement('ul');
+      parentContainer.setAttribute('role', 'group');
+      parentContainer.setAttribute('aria-label', ''); // Empty label
+      parentContainer.appendChild(mockElement);
+
+      (document.querySelectorAll as any).mockReturnValue([mockElement]);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].parentChannel).toBe(''); // Should return empty string
     });
 
     it('should handle threads without parent channel', () => {
@@ -227,6 +270,9 @@ describe('ThreadScanner', () => {
     });
 
     it('should handle invalid URL paths gracefully', () => {
+      // Suppress expected console.warn from invalid URL extraction
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
       vi.spyOn(window, 'location', 'get').mockReturnValue({
         href: 'https://discord.com/invalid',
         pathname: '/invalid',
@@ -234,6 +280,12 @@ describe('ThreadScanner', () => {
 
       const threads = scanner.scanVisibleThreads();
       expect(threads).toEqual([]);
+
+      // Verify warning was logged (expected behavior)
+      expect(consoleSpy).toHaveBeenCalledWith('Could not extract server ID from URL');
+
+      // Restore console.warn
+      consoleSpy.mockRestore();
     });
   });
 

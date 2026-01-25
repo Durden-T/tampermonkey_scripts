@@ -5,10 +5,15 @@ export interface Position {
   y: number;
 }
 
+interface Bounds {
+  width: number;
+  height: number;
+}
+
 interface UseDraggableOptions {
   storageKey: string;
   defaultPosition: Position;
-  bounds: { width: number; height: number };
+  bounds: Bounds;
   excludeSelector?: string;
 }
 
@@ -18,12 +23,10 @@ interface UseDraggableResult {
   handleMouseDown: (e: React.MouseEvent) => void;
 }
 
-function clampPosition(pos: Position, bounds: { width: number; height: number }): Position {
-  return {
-    x: Math.max(0, Math.min(window.innerWidth - bounds.width, pos.x)),
-    y: Math.max(0, Math.min(window.innerHeight - bounds.height, pos.y)),
-  };
-}
+const clampPosition = (pos: Position, bounds: Bounds): Position => ({
+  x: Math.max(0, Math.min(window.innerWidth - bounds.width, pos.x)),
+  y: Math.max(0, Math.min(window.innerHeight - bounds.height, pos.y)),
+});
 
 const usePersistentPosition = (storageKey: string, defaultPosition: Position, bounds: Bounds) => {
   const [position, setPosition] = useState<Position>(() => {

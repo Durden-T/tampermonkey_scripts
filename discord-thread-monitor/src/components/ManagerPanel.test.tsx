@@ -466,7 +466,8 @@ describe('ManagerPanel', () => {
   });
 
   describe('Storage Warning', () => {
-    it('should display warning banner when storage exceeds threshold', () => {
+    it('should display warning banner when storage exceeds threshold', async () => {
+      const user = userEvent.setup();
       const storageInfo: StorageInfo = {
         rawSize: 250000,
         compressedSize: 125000,
@@ -476,6 +477,9 @@ describe('ManagerPanel', () => {
       };
 
       render(<ManagerPanel {...defaultProps} storageInfo={storageInfo} />);
+
+      const debugTab = screen.getByRole('button', { name: /Debug/i });
+      await user.click(debugTab);
 
       expect(screen.getByText('Storage too large')).toBeInTheDocument();
     });

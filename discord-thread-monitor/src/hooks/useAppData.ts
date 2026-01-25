@@ -29,9 +29,10 @@ export const useAppData = ({ store, notifier, performScan }: UseAppDataProps) =>
   const [storageInfo, setStorageInfo] = useState<StorageInfo>(defaultStorageInfo);
 
   const refreshData = useCallback(() => {
-    setUnseenCount(store.getUnseenChangesCount());
-    setChangeGroups(store.getChangesGroupedByThread());
-    setStorageInfo(store.getStorageInfo());
+    const dashboardData = store.getDashboardData();
+    setUnseenCount(dashboardData.unseenCount);
+    setChangeGroups(dashboardData.changeGroups);
+    setStorageInfo(dashboardData.storageInfo);
   }, [store]);
 
   const handleNotification = useCallback(

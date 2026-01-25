@@ -207,4 +207,29 @@ describe('ToggleButton', () => {
     const iconContainer = screen.getByTestId('thread-icon').parentElement;
     expect(iconContainer).toHaveClass('toggle-icon');
   });
+
+  describe('Window resize behavior', () => {
+    it('should maintain position within bounds after window resize', () => {
+      // Set initial window size
+      Object.defineProperty(window, 'innerWidth', {
+        value: 1024,
+        configurable: true,
+      });
+
+      // Mock useDraggable to return a position that would be valid for initial window
+      mockUseDraggable.mockReturnValue({
+        position: { x: 964, y: 16 }, // 1024 - 44 - 16
+        isDragging: false,
+        handleMouseDown: vi.fn(),
+      });
+
+      render(<ToggleButton unseenCount={0} onClick={mockOnClick} />);
+
+      const button = screen.getByRole('button');
+      expect(button).toHaveStyle({
+        left: '964px',
+        top: '16px',
+      });
+    });
+  });
 });

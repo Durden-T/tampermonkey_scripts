@@ -14,19 +14,20 @@ const useButtonInteraction = (onClick: () => void) => {
   const [isHovered, setIsHovered] = useState(false);
   const mouseDownPos = useRef<{ x: number; y: number } | null>(null);
 
+  const handleMouseDownWrapper = (e: React.MouseEvent) => {
+    mouseDownPos.current = { x: e.clientX, y: e.clientY };
+  };
+
   const handleClick = (e: React.MouseEvent) => {
-    if (mouseDownPos.current) {
-      const deltaX = Math.abs(e.clientX - mouseDownPos.current.x);
-      const deltaY = Math.abs(e.clientY - mouseDownPos.current.y);
+    const pos = mouseDownPos.current;
+    if (pos) {
+      const deltaX = Math.abs(e.clientX - pos.x);
+      const deltaY = Math.abs(e.clientY - pos.y);
       if (deltaX < DRAG_THRESHOLD && deltaY < DRAG_THRESHOLD) {
         onClick();
       }
+      mouseDownPos.current = null;
     }
-    mouseDownPos.current = null;
-  };
-
-  const handleMouseDownWrapper = (e: React.MouseEvent) => {
-    mouseDownPos.current = { x: e.clientX, y: e.clientY };
   };
 
   return {

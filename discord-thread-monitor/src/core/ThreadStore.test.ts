@@ -795,4 +795,136 @@ describe('ThreadStore', () => {
       expect(mockSetValue).toHaveBeenCalled();
     });
   });
+
+  describe('Edge Cases and Error Handling', () => {
+    it('should handle corrupted saved data gracefully', () => {
+      // Suppress expected console.error from corrupted data loading
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // Set up corrupted data in storage
+      storage['discord-thread-monitor-data'] = 'corrupted json';
+
+      // Should not throw, but should fall back to empty data
+      const store = new ThreadStore();
+      expect(store.getThreads()).toEqual({});
+
+      // Verify error was logged (expected behavior)
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to load data from storage:',
+        expect.any(SyntaxError)
+      );
+
+      // Restore console.error
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle migration from retentionMonths to retentionDays', () => {
+      // Set up old format data with retentionMonths
+      const oldFormatData: StoredData & { retentionMonths?: number } = {
+        threads: {},
+        changes: [],
+        blacklist: [],
+        retentionMonths: 6, // 6 months
+      };
+
+      storage['discord-thread-monitor-data'] = JSON.stringify(oldFormatData);
+
+      const store = new ThreadStore();
+
+      // Should migrate to retentionDays (6 * 30 = 180)
+      expect(store.getRetentionDays()).toBe(180);
+    });
+
+    it('should handle string storage format correctly', () => {
+      // Test when storage returns a plain string (old format)
+      storage['discord-thread-monitor-data'] = JSON.stringify({
+        threads: {},
+        changes: [],
+        blacklist: [],
+        retentionDays: 45,
+      });
+
+      const store = new ThreadStore();
+      expect(store.getRetentionDays()).toBe(45);
+    });
+
+    it('should handle wrapper format correctly', () => {
+      // Test when storage returns wrapper format (not compressed)
+      storage['discord-thread-monitor-data'] = JSON.stringify({
+        compressed: false,
+        data: JSON.stringify({
+          threads: {},
+          changes: [],
+          blacklist: [],
+          retentionDays: 60,
+        }),
+      });
+
+      const store = new ThreadStore();
+      expect(store.getRetentionDays()).toBe(60);
+    });
+  });
+
+  describe('getDashboardData', () => {
+    it('should return combined data in single pass', () => {
+      const store = new ThreadStore();
+
+      const thread1: MonitoredThread = {
+        id: '123',
+        currentTitle: 'Test 1',
+        url: 'https://discord.com/123/123',
+        parentChannel: 'General',
+        firstSeenAt: 1000,
+      };
+
+      const thread2: MonitoredThread = {
+        id: '456',
+        currentTitle: 'Test 2',
+        url: 'https://discord.com/123/456',
+        parentChannel: 'Random',
+        firstSeenAt: 2000,
+      };
+
+      store.addThread(thread1);
+      store.addThread(thread2);
+
+      const change1: TitleChange = {
+        threadId: '123',
+        oldTitle: 'Old 1',
+        newTitle: 'New 1',
+        changedAt: 1000,
+        seen: false,
+      };
+
+      const change2: TitleChange = {
+        threadId: '456',
+        oldTitle: 'Old 2',
+        newTitle: 'New 2',
+        changedAt: 2000,
+        seen: true,
+      };
+
+      store.recordTitleChange(change1, 'New 1');
+      store.recordTitleChange(change2, 'New 2');
+
+      const dashboardData = store.getDashboardData();
+
+      expect(dashboardData.unseenCount).toBe(1);
+      expect(dashboardData.changeGroups).toHaveLength(2);
+      expect(dashboardData.storageInfo).toBeDefined();
+      expect(dashboardData.storageInfo.threadCount).toBe(2);
+      expect(dashboardData.storageInfo.changeCount).toBe(2);
+    });
+
+    it('should handle empty dashboard data', () => {
+      const store = new ThreadStore();
+
+      const dashboardData = store.getDashboardData();
+
+      expect(dashboardData.unseenCount).toBe(0);
+      expect(dashboardData.changeGroups).toHaveLength(0);
+      expect(dashboardData.storageInfo.threadCount).toBe(0);
+      expect(dashboardData.storageInfo.changeCount).toBe(0);
+    });
+  });
 });

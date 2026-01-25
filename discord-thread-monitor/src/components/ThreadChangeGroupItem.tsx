@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { formatTime, getTexts } from '../i18n';
 import type { ThreadChangeGroup, TitleChange } from '../types';
+import { ThreadActions } from './ThreadActions';
 
 interface ThreadChangeGroupItemProps {
   group: ThreadChangeGroup;
@@ -52,7 +53,6 @@ const ThreadHeader = ({
   onBlock,
   changeCount,
 }: ThreadHeaderProps) => {
-  const t = getTexts();
   return (
     <div className="thread-group-header">
       <div className="thread-group-info" onClick={onToggleExpand}>
@@ -70,10 +70,12 @@ const ThreadHeader = ({
         <span className="thread-time">{formatTime(latestChangeAt)}</span>
         {parentChannel && <span className="thread-channel">{parentChannel}</span>}
       </div>
-      <div className="thread-actions">
-        {thread && <button onClick={() => onOpen(thread.url, threadId)}>{t.actions.open}</button>}
-        <button onClick={() => onBlock(threadId)}>{t.actions.block}</button>
-      </div>
+      <ThreadActions
+        threadId={threadId}
+        threadUrl={thread?.url}
+        onOpen={onOpen}
+        onBlock={onBlock}
+      />
     </div>
   );
 };

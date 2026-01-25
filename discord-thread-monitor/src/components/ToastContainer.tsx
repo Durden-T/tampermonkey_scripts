@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getTexts } from '../i18n';
 import type { TitleChange, MonitoredThread } from '../types';
 
@@ -73,29 +73,25 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, thread, t, onDismiss, onNa
 const useToastManager = (changes: TitleChange[], onDismiss: (threadId: string) => void) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const onDismissRef = useRef(onDismiss);
-
-  useEffect(() => {
-    onDismissRef.current = onDismiss;
-  }, [onDismiss]);
-
-  const scheduleRemoval = useCallback((toastId: string, threadId: string) => {
-    const timer = setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
-      timersRef.current.delete(toastId);
-      onDismissRef.current(threadId);
-    }, TOAST_DURATION_MS);
-    timersRef.current.set(toastId, timer);
-  }, []);
 
   useEffect(() => {
     const newToasts: Toast[] = [];
+    const changeIds = new Set(changes.map((c) => `${c.threadId}-${c.changedAt}`));
+
+    // Add new toasts
     changes.forEach((change) => {
       const toastId = `${change.threadId}-${change.changedAt}`;
       if (!timersRef.current.has(toastId)) {
         const newToast: Toast = { ...change, toastId };
         newToasts.push(newToast);
-        scheduleRemoval(toastId, change.threadId);
+
+        // Schedule removal
+        const timer = setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
+          timersRef.current.delete(toastId);
+          onDismiss(change.threadId);
+        }, TOAST_DURATION_MS);
+        timersRef.current.set(toastId, timer);
       }
     });
 
@@ -103,7 +99,16 @@ const useToastManager = (changes: TitleChange[], onDismiss: (threadId: string) =
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setToasts((prev) => [...prev, ...newToasts]);
     }
-  }, [changes, scheduleRemoval]);
+
+    // Cleanup timers for toasts that are no longer in changes
+    timersRef.current.forEach((timer, toastId) => {
+      if (!changeIds.has(toastId)) {
+        clearTimeout(timer);
+        timersRef.current.delete(toastId);
+        setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
+      }
+    });
+  }, [changes, onDismiss]);
 
   useEffect(() => {
     const timers = timersRef.current;

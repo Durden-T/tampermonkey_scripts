@@ -2,6 +2,10 @@ import { useCallback } from 'react';
 import type { ThreadStore } from '../core/ThreadStore';
 import type { Notifier } from '../core/Notifier';
 import type { TitleChange, MonitoredThread } from '../types';
+import { useThreadHandlers } from './useThreadHandlers';
+import { useSettingsHandlers } from './useSettingsHandlers';
+import { useToastHandlers } from './useToastHandlers';
+import { useDebugHandlers } from './useDebugHandlers';
 
 interface UseAppHandlersProps {
   store: ThreadStore;
@@ -26,31 +30,6 @@ export const useAppHandlers = ({
     refreshData();
   }, [performScan, refreshData]);
 
-  const handleOpen = useCallback(
-    (url: string, threadId: string) => {
-      store.markChangeSeen(threadId);
-      refreshData();
-      window.location.href = url;
-    },
-    [store, refreshData]
-  );
-
-  const handleBlock = useCallback(
-    (threadId: string) => {
-      store.addToBlacklist(threadId);
-      refreshData();
-    },
-    [store, refreshData]
-  );
-
-  const handleResume = useCallback(
-    (threadId: string) => {
-      store.removeFromBlacklist(threadId);
-      refreshData();
-    },
-    [store, refreshData]
-  );
-
   const handleClearChanges = useCallback(() => {
     store.clearChanges();
     refreshData();
@@ -61,39 +40,21 @@ export const useAppHandlers = ({
     refreshData();
   }, [store, refreshData]);
 
-  const handleRetentionChange = useCallback(
-    (days: number) => {
-      store.setRetentionDays(days);
-      setRetentionDays(days);
-      refreshData();
-    },
-    [store, setRetentionDays, refreshData]
-  );
+  const { handleOpen, handleBlock, handleResume } = useThreadHandlers({ store, refreshData });
 
-  const handleToastDismiss = useCallback(
-    (threadId: string) => {
-      setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
-    },
-    [setPendingToasts]
-  );
+  const { handleRetentionChange } = useSettingsHandlers({
+    store,
+    refreshData,
+    setRetentionDays,
+  });
 
-  const handleToastNavigate = useCallback(
-    (url: string, threadId: string) => {
-      store.markChangeSeen(threadId);
-      setPendingToasts((prev) => prev.filter((toast) => toast.threadId !== threadId));
-      refreshData();
-      window.location.href = url;
-    },
-    [store, setPendingToasts, refreshData]
-  );
+  const { handleToastDismiss, handleToastNavigate } = useToastHandlers({
+    store,
+    refreshData,
+    setPendingToasts,
+  });
 
-  const handleSimulateTitleChange = useCallback(() => {
-    if (import.meta.env.DEV) {
-      void import('../debug/simulateTitleChange').then(({ simulateTitleChange }) => {
-        simulateTitleChange(store, notifier, refreshData);
-      });
-    }
-  }, [store, notifier, refreshData]);
+  const { handleSimulateTitleChange } = useDebugHandlers({ store, notifier, refreshData });
 
   return {
     handleScanNow,

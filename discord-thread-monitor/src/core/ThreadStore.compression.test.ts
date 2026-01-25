@@ -193,4 +193,90 @@ describe('ThreadStore Compression', () => {
     expect(store.getThreads()).toEqual({});
     expect(store.getRetentionDays()).toBe(0);
   });
+
+  it('should handle compressed data successfully with large data', () => {
+    // Test that data exceeding compression threshold gets compressed
+    // COMPRESSION_THRESHOLD_BYTES is 50KB = 51200 bytes
+    // Create data that should definitely exceed this threshold
+
+    const store = new ThreadStore();
+
+    // Create multiple threads with large titles to exceed 50KB threshold
+    for (let i = 0; i < 10; i++) {
+      const largeThread: MonitoredThread = {
+        id: `test-thread-${i}`,
+        currentTitle: 'A'.repeat(10000), // Each title ~10KB
+        url: `https://discord.com/channels/123/test-thread-${i}`,
+        parentChannel: 'Test Channel ' + i,
+        firstSeenAt: Date.now() - i * 1000,
+      };
+      store.addThread(largeThread);
+    }
+
+    // Wait for debounced save
+    vi.advanceTimersByTime(500);
+
+    // Verify compression was used
+    expect(mockSetValue).toHaveBeenCalled();
+    const savedData = mockSetValue.mock.calls[mockSetValue.mock.calls.length - 1][1];
+    const parsed = JSON.parse(savedData);
+    expect(parsed.compressed).toBe(true);
+  });
+
+  it('should handle getDashboardData with empty changes array', () => {
+    const store = new ThreadStore();
+
+    const dashboardData = store.getDashboardData();
+
+    expect(dashboardData).toHaveProperty('unseenCount');
+    expect(dashboardData).toHaveProperty('changeGroups');
+    expect(dashboardData).toHaveProperty('storageInfo');
+    expect(dashboardData.unseenCount).toBe(0);
+    expect(dashboardData.changeGroups).toEqual([]);
+  });
+
+  it('should handle getDashboardData with unseen changes', () => {
+    const store = new ThreadStore();
+
+    const thread: MonitoredThread = {
+      id: 'test-thread',
+      currentTitle: 'Test Title',
+      url: 'https://discord.com/channels/123/test-thread',
+      parentChannel: 'Test Channel',
+      firstSeenAt: Date.now(),
+    };
+
+    store.addThread(thread);
+
+    const change: TitleChange = {
+      threadId: 'test-thread',
+      oldTitle: 'Old Title',
+      newTitle: 'New Title',
+      timestamp: Date.now(),
+      url: 'https://discord.com/channels/123/test-thread',
+      seen: false,
+    };
+
+    store.recordTitleChange(change, 'New Title');
+
+    const dashboardData = store.getDashboardData();
+
+    expect(dashboardData.unseenCount).toBe(1);
+    expect(dashboardData.changeGroups.length).toBeGreaterThan(0);
+  });
+
+  it('should handle corrupted data that throws in parseStoredData catch block', () => {
+    // Mock GM_getValue to return a non-string, non-object value that causes JSON.parse to throw
+    mockGetValue.mockReturnValue(Symbol('corrupted'));
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const store = new ThreadStore();
+
+    // Should handle gracefully and return empty data
+    expect(store.getThreads()).toEqual({});
+    expect(store.getChanges()).toEqual([]);
+
+    consoleSpy.mockRestore();
+  });
 });

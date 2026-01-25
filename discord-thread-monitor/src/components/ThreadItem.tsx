@@ -1,5 +1,6 @@
 import { formatTime, getTexts } from '../i18n';
 import type { MonitoredThread, TitleChange } from '../types';
+import { ThreadActions } from './ThreadActions';
 
 interface ThreadItemProps {
   thread: MonitoredThread;
@@ -53,16 +54,14 @@ export function ThreadItem({
           {thread.parentChannel && <span className="thread-channel">{thread.parentChannel}</span>}
         </div>
       </div>
-      <div className="thread-actions">
-        {!isBlacklisted ? (
-          <>
-            <button onClick={() => onOpen(thread.url, thread.id)}>{t.actions.open}</button>
-            <button onClick={() => onBlock(thread.id)}>{t.actions.block}</button>
-          </>
-        ) : (
-          <button onClick={() => onResume(thread.id)}>{t.actions.resume}</button>
-        )}
-      </div>
+      <ThreadActions
+        threadId={thread.id}
+        threadUrl={thread.url}
+        isBlacklisted={isBlacklisted}
+        onOpen={onOpen}
+        onBlock={onBlock}
+        onResume={onResume}
+      />
     </div>
   );
 }

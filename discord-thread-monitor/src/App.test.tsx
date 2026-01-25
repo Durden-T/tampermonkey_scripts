@@ -89,7 +89,17 @@ describe('App', () => {
     });
 
     it('should initialize with unseen count from store', () => {
-      vi.spyOn(store, 'getUnseenChangesCount').mockReturnValue(5);
+      vi.spyOn(store, 'getDashboardData').mockReturnValue({
+        unseenCount: 5,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
+      });
 
       render(<App store={store} notifier={notifier} performScan={performScan} />);
 
@@ -97,7 +107,17 @@ describe('App', () => {
     });
 
     it('should initialize with zero unseen count when no changes', () => {
-      vi.spyOn(store, 'getUnseenChangesCount').mockReturnValue(0);
+      vi.spyOn(store, 'getDashboardData').mockReturnValue({
+        unseenCount: 0,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
+      });
 
       render(<App store={store} notifier={notifier} performScan={performScan} />);
 
@@ -105,23 +125,21 @@ describe('App', () => {
     });
 
     it('should call refreshData on mount', () => {
-      const getUnseenChangesCountSpy = vi.spyOn(store, 'getUnseenChangesCount').mockReturnValue(0);
-      const getChangesGroupedByThreadSpy = vi
-        .spyOn(store, 'getChangesGroupedByThread')
-        .mockReturnValue([]);
-      const getStorageInfoSpy = vi.spyOn(store, 'getStorageInfo').mockReturnValue({
-        rawSize: 0,
-        compressedSize: 0,
-        isCompressed: false,
-        changeCount: 0,
-        threadCount: 0,
+      const getDashboardDataSpy = vi.spyOn(store, 'getDashboardData').mockReturnValue({
+        unseenCount: 0,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
       });
 
       render(<App store={store} notifier={notifier} performScan={performScan} />);
 
-      expect(getUnseenChangesCountSpy).toHaveBeenCalled();
-      expect(getChangesGroupedByThreadSpy).toHaveBeenCalled();
-      expect(getStorageInfoSpy).toHaveBeenCalled();
+      expect(getDashboardDataSpy).toHaveBeenCalled();
     });
   });
 
@@ -149,14 +167,34 @@ describe('App', () => {
     });
 
     it('should handle notifier callback triggering state updates', async () => {
-      const getUnseenCountSpy = vi.spyOn(store, 'getUnseenChangesCount');
-      getUnseenCountSpy.mockReturnValue(0);
+      const getDashboardDataSpy = vi.spyOn(store, 'getDashboardData');
+      getDashboardDataSpy.mockReturnValue({
+        unseenCount: 0,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
+      });
 
       render(<App store={store} notifier={notifier} performScan={performScan} />);
 
       expect(screen.getByTestId('toggle-button')).toHaveTextContent('0');
 
-      getUnseenCountSpy.mockReturnValue(1);
+      getDashboardDataSpy.mockReturnValue({
+        unseenCount: 1,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
+      });
 
       await act(async () => {
         notifier.notifyAll([mockChange]);
@@ -207,17 +245,27 @@ describe('App', () => {
     });
 
     it('should refresh data after interval scan', () => {
-      const getUnseenChangesCountSpy = vi.spyOn(store, 'getUnseenChangesCount').mockReturnValue(0);
+      const getDashboardDataSpy = vi.spyOn(store, 'getDashboardData').mockReturnValue({
+        unseenCount: 0,
+        changeGroups: [],
+        storageInfo: {
+          rawSize: 0,
+          compressedSize: 0,
+          isCompressed: false,
+          changeCount: 0,
+          threadCount: 0,
+        },
+      });
 
       render(<App store={store} notifier={notifier} performScan={performScan} />);
 
-      getUnseenChangesCountSpy.mockClear();
+      getDashboardDataSpy.mockClear();
 
       act(() => {
         vi.advanceTimersByTime(60000);
       });
 
-      expect(getUnseenChangesCountSpy).toHaveBeenCalled();
+      expect(getDashboardDataSpy).toHaveBeenCalled();
     });
   });
 

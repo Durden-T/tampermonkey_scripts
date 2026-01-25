@@ -39,11 +39,8 @@ export class ThreadScanner {
     const ariaLabel = element.getAttribute('aria-label');
     if (!ariaLabel) return null;
 
-    const title = ariaLabel
-      .replace(/^unread,\s*/, '')
-      .replace(/\s*\(thread\)\s*$/, '')
-      .trim();
-
+    // Efficient single-pass regex replacement
+    const title = ariaLabel.replace(/^unread,\s*|\s*\(thread\)\s*$/g, '').trim();
     if (!title) return null;
 
     const parentChannel = this.extractParentChannel(element);
@@ -62,6 +59,10 @@ export class ThreadScanner {
     if (!container) return '';
 
     const label = container.getAttribute('aria-label');
-    return label ? label.replace(/\s*threads.*$/i, '').trim() : '';
+    if (!label) return '';
+
+    // Use regex for precise matching - remove "threads" and everything after
+    const result = label.replace(/\s*threads.*$/i, '').trim();
+    return result;
   }
 }
