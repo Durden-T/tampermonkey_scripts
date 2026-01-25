@@ -123,7 +123,7 @@ export class ThreadStore implements IThreadRepository {
   }
 
   getChanges(): TitleChange[] {
-    return this.changeTracker.getChanges();
+    return [...this.changeTracker.getChanges()];
   }
 
   getChangesGroupedByThread(): ThreadChangeGroup[] {

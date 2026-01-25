@@ -12,9 +12,14 @@ export class ChangeTracker {
   }
 
   recordChange(change: TitleChange): void {
-    this.changes.push(change);
     if (!change.seen) {
-      this.unseenCount++;
+      const hadUnseenBefore = this.threadHasUnseen(change.threadId);
+      this.changes.push(change);
+      if (!hadUnseenBefore) {
+        this.unseenCount++;
+      }
+    } else {
+      this.changes.push(change);
     }
   }
 
@@ -31,9 +36,11 @@ export class ChangeTracker {
     for (const change of this.changes) {
       if (change.threadId === threadId && !change.seen) {
         change.seen = true;
-        this.unseenCount--;
         changed = true;
       }
+    }
+    if (changed) {
+      this.unseenCount--;
     }
     return changed;
   }
@@ -62,6 +69,7 @@ export class ChangeTracker {
     const retentionMs = retentionDays * TIME_MS.DAY;
     const cutoffTime = Date.now() - retentionMs;
     const originalLength = this.changes.length;
+    const threadsToRecount = new Set<string>();
 
     let writeIndex = 0;
     for (let readIndex = 0; readIndex < this.changes.length; readIndex++) {
@@ -72,10 +80,18 @@ export class ChangeTracker {
         }
         writeIndex++;
       } else if (!change.seen) {
-        this.unseenCount--;
+        threadsToRecount.add(change.threadId);
       }
     }
     this.changes.length = writeIndex;
+
+    if (threadsToRecount.size > 0) {
+      for (const threadId of threadsToRecount) {
+        if (!this.threadHasUnseen(threadId)) {
+          this.unseenCount--;
+        }
+      }
+    }
 
     return this.changes.length !== originalLength;
   }
@@ -95,13 +111,17 @@ export class ChangeTracker {
     return ChangeGroupBuilder.buildGroups(groupMap, threads);
   }
 
+  private threadHasUnseen(threadId: string): boolean {
+    return this.changes.some((c) => c.threadId === threadId && !c.seen);
+  }
+
   private calculateInitialUnseenCount(): number {
-    let count = 0;
+    const unseenThreads = new Set<string>();
     for (const change of this.changes) {
       if (!change.seen) {
-        count++;
+        unseenThreads.add(change.threadId);
       }
     }
-    return count;
+    return unseenThreads.size;
   }
 }

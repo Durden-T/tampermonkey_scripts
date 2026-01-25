@@ -43,6 +43,13 @@ export function ManagerPanel(props: ManagerPanelProps) {
     [props.isOpen, props.changeGroups, logic.timeFilter, logic.now]
   );
 
+  const filteredUnseenCount = useMemo(
+    () => filteredChangeGroups.filter((group) => group.hasUnseen).length,
+    [filteredChangeGroups]
+  );
+
+  const filteredChangesCount = filteredChangeGroups.length;
+
   if (!props.isOpen) {
     return null;
   }
@@ -87,7 +94,7 @@ export function ManagerPanel(props: ManagerPanelProps) {
         <PanelTabs
           activeTab={logic.activeTab}
           setActiveTab={logic.setActiveTab}
-          changesLength={props.changes.length}
+          changesLength={filteredChangesCount}
           t={logic.t}
         />
 
@@ -99,7 +106,7 @@ export function ManagerPanel(props: ManagerPanelProps) {
           storageInfo={props.storageInfo}
           showStorageWarning={logic.showStorageWarning}
           retentionDays={props.retentionDays}
-          unseenCount={props.unseenCount}
+          unseenCount={logic.activeTab === 'changes' ? filteredUnseenCount : props.unseenCount}
           changesLength={props.changes.length}
           filterMode={logic.filterMode}
           selectedPeriod={logic.selectedPeriod}

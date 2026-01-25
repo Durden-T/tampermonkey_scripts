@@ -1,9 +1,26 @@
 :host {
-  /* Typography - Discord-Native with Character */
+  /* Typography */
   --tm-font-display: 'gg sans', 'Noto Sans', 'Helvetica Neue', helvetica, arial, sans-serif;
   --tm-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
 
-  /* Surface Colors - Deeper, Richer Darks */
+  /* Scale System */
+  --tm-scale-base: 15px;
+  --tm-scale-xs: 10px;
+  --tm-scale-sm: 12px;
+  --tm-scale-md: 14px;
+  --tm-scale-lg: 16px;
+  --tm-scale-xl: 18px;
+  --tm-scale-2xl: 20px;
+
+  /* Spacing Scale */
+  --tm-space-xs: 4px;
+  --tm-space-sm: 8px;
+  --tm-space-md: 12px;
+  --tm-space-lg: 16px;
+  --tm-space-xl: 20px;
+  --tm-space-2xl: 24px;
+
+  /* Surface Colors */
   --tm-bg-void: #020204;
   --tm-bg-deep: #050508;
   --tm-bg-base: #08080c;
@@ -37,7 +54,7 @@
   --tm-accent-muted: #c08818;
   --tm-accent-glow: rgb(224 160 40 / 28%);
   --tm-accent-subtle: rgb(224 160 40 / 8%);
-  --tm-accent-border-light: rgb(224 160 40 / 12%);
+  --tm-accent-border: rgb(224 160 40 / 12%);
   --tm-accent-border-strong: rgb(224 160 40 / 16%);
   --tm-accent-border-hover: rgb(224 160 40 / 22%);
   --tm-accent-surface: rgb(224 160 40 / 12%);
@@ -47,6 +64,8 @@
   /* Semantic Colors */
   --tm-success: #40d070;
   --tm-success-muted: rgb(64 208 112 / 14%);
+  --tm-success-border: rgb(64 208 112 / 16%);
+  --tm-success-surface: rgb(64 208 112 / 20%);
   --tm-danger: #e85858;
   --tm-danger-muted: rgb(232 88 88 / 14%);
   --tm-danger-border: rgb(232 88 88 / 16%);
@@ -62,11 +81,11 @@
   --tm-new-title: #50c880;
 
   /* Border Radius */
-  --tm-radius-xs: 3px;
-  --tm-radius-sm: 5px;
-  --tm-radius-md: 8px;
-  --tm-radius-lg: 12px;
-  --tm-radius-xl: 16px;
+  --tm-radius-xs: 4px;
+  --tm-radius-sm: 6px;
+  --tm-radius-md: 10px;
+  --tm-radius-lg: 14px;
+  --tm-radius-xl: 18px;
   --tm-radius-full: 9999px;
 
   /* Shadows */

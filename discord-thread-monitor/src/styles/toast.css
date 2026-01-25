@@ -1,12 +1,12 @@
 .toast-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: var(--tm-space-2xl);
+  right: var(--tm-space-2xl);
   z-index: var(--tm-z-toast);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 340px;
+  gap: var(--tm-space-md);
+  max-width: 380px;
   pointer-events: none;
 }
 
@@ -14,8 +14,8 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--tm-space-md);
+  padding: var(--tm-space-lg);
   background: var(--tm-bg-elevated);
   backdrop-filter: blur(var(--tm-blur-sm));
   border-radius: var(--tm-radius-lg);
@@ -34,10 +34,6 @@
 
   60% {
     opacity: 1;
-  }
-
-  100% {
-    transform: translateX(0) scale(1);
   }
 }
 
@@ -59,8 +55,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   background: linear-gradient(135deg, var(--tm-accent-subtle) 0%, var(--tm-accent-surface) 100%);
   border: 1px solid var(--tm-accent-surface-hover);
   border-radius: var(--tm-radius-md);
@@ -68,52 +64,47 @@
 }
 
 .toast-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
 }
 
 .toast-content {
   flex: 1;
   min-width: 0;
-  padding-right: 16px;
+  padding-right: var(--tm-space-xl);
 }
 
 .toast-title {
-  font-size: 11px;
+  font-size: var(--tm-scale-sm);
   font-weight: 600;
   color: var(--tm-text-primary);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   letter-spacing: -0.01em;
 }
 
 .toast-change {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--tm-space-xs);
 }
 
 .toast-old {
-  font-size: 10px;
-  color: var(--tm-old-title);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  opacity: 0.85;
+  font-size: var(--tm-scale-xs);
 }
 
 .toast-new {
-  font-size: 10px;
-  color: var(--tm-new-title);
+  font-size: var(--tm-scale-xs);
 }
 
 .toast-close {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: var(--tm-space-sm);
+  right: var(--tm-space-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: var(--tm-radius-sm);
   color: var(--tm-text-muted);
   transition:
@@ -124,4 +115,9 @@
 .toast-close:hover {
   color: var(--tm-text-primary);
   background: var(--tm-bg-surface);
+}
+
+.toast-close svg {
+  width: 14px;
+  height: 14px;
 }

@@ -9,7 +9,7 @@ export const useManagerPanelTabState = () => {
 };
 
 export const useManagerPanelFilterState = () => {
-  const [filterMode, setFilterMode] = useState<TimeFilterMode | 'all'>('all');
+  const [filterMode, setFilterMode] = useState<TimeFilterMode | 'all' | 'allUnread'>('allUnread');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
   const [now] = useState(() => Date.now());
 

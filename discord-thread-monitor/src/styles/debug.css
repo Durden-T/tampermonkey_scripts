@@ -1,37 +1,39 @@
 .debug-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--tm-space-xl);
 }
 
+/* Settings Group */
 .settings-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tm-space-sm);
 }
 
 .settings-group label {
-  font-size: 9px;
+  font-size: var(--tm-scale-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--tm-text-dim);
 }
 
+/* Retention Input */
 .retention-input-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--tm-space-sm);
 }
 
 .retention-input {
-  width: 72px;
-  height: 32px;
-  padding: 0 8px;
+  width: 80px;
+  height: 38px;
+  padding: 0 var(--tm-space-md);
   border: 1px solid var(--tm-glass-border);
   border-radius: var(--tm-radius-sm);
   font-family: var(--tm-font-mono);
-  font-size: 12px;
+  font-size: var(--tm-scale-md);
   color: var(--tm-text-primary);
   background: var(--tm-bg-base);
   transition:
@@ -50,23 +52,24 @@
 }
 
 .retention-unit {
-  font-size: 11px;
+  font-size: var(--tm-scale-sm);
   color: var(--tm-text-muted);
 }
 
 .retention-hint {
-  font-size: 10px;
+  font-size: var(--tm-scale-xs);
   color: var(--tm-text-dim);
 }
 
+/* Storage Info */
 .storage-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tm-space-sm);
 }
 
 .storage-info label {
-  font-size: 9px;
+  font-size: var(--tm-scale-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -74,7 +77,7 @@
 }
 
 .storage-details {
-  padding: 10px;
+  padding: var(--tm-space-md);
   background: var(--tm-bg-base);
   border-radius: var(--tm-radius-md);
   border: 1px solid var(--tm-glass-border);
@@ -83,8 +86,8 @@
 .storage-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 0;
-  font-size: 11px;
+  padding: 5px 0;
+  font-size: var(--tm-scale-sm);
 }
 
 .storage-row span:first-child {
@@ -100,17 +103,18 @@
   border-top: 1px solid var(--tm-glass-border);
 }
 
+/* Debug Info Grid */
 .debug-info {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: var(--tm-space-sm);
 }
 
 .debug-info > div {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px;
+  gap: var(--tm-space-xs);
+  padding: var(--tm-space-md);
   background: var(--tm-bg-base);
   border-radius: var(--tm-radius-md);
   border: 1px solid var(--tm-glass-border);
@@ -118,7 +122,7 @@
 }
 
 .debug-info span:first-child {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -127,15 +131,16 @@
 
 .debug-info span:last-child {
   font-family: var(--tm-font-mono);
-  font-size: 16px;
+  font-size: var(--tm-scale-xl);
   font-weight: 600;
   color: var(--tm-text-primary);
 }
 
+/* Debug Buttons */
 .debug-section > button {
-  height: 36px;
+  height: 42px;
   border-radius: var(--tm-radius-md);
-  font-size: 12px;
+  font-size: var(--tm-scale-md);
   font-weight: 600;
   color: var(--tm-text-secondary);
   background: var(--tm-bg-surface);
@@ -173,13 +178,14 @@
   border-color: var(--tm-danger-border-hover);
 }
 
+/* Warning Banner */
 .storage-warning-banner {
-  padding: 8px 10px;
-  margin-bottom: 14px;
-  font-size: 11px;
+  padding: var(--tm-space-md);
+  margin-bottom: var(--tm-space-lg);
+  font-size: var(--tm-scale-sm);
   line-height: 1.5;
   color: var(--tm-accent);
   background: var(--tm-accent-subtle);
   border-radius: var(--tm-radius-md);
-  border-left: 2px solid var(--tm-accent);
+  border-left: 3px solid var(--tm-accent);
 }

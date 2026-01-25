@@ -15,9 +15,9 @@ interface PanelContentProps {
   retentionDays: number;
   unseenCount: number;
   changesLength: number;
-  filterMode: TimeFilterMode | 'all';
+  filterMode: TimeFilterMode | 'all' | 'allUnread';
   selectedPeriod: TimePeriod;
-  onFilterModeChange: (mode: TimeFilterMode | 'all') => void;
+  onFilterModeChange: (mode: TimeFilterMode | 'all' | 'allUnread') => void;
   onPeriodChange: (period: TimePeriod) => void;
   onMarkAllRead: () => void;
   onClearChanges: () => void;
@@ -43,9 +43,7 @@ export const PanelContent: React.FC<PanelContentProps> = (props) => {
             onFilterModeChange={props.onFilterModeChange}
             onPeriodChange={props.onPeriodChange}
             unseenCount={props.unseenCount}
-            changesLength={props.changesLength}
             onMarkAllRead={props.onMarkAllRead}
-            onClearChanges={props.onClearChanges}
             filteredChangeGroups={props.filteredChangeGroups}
             onOpen={props.onOpen}
             onBlock={props.onBlock}

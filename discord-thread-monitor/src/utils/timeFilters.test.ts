@@ -6,22 +6,20 @@ import {
   TIME_PERIODS,
 } from './timeFilters';
 import type { ThreadChangeGroup, TitleChange } from '../types';
+import { TIME_MS } from '../constants';
 
 describe('timeFilters', () => {
   describe('TIME_PERIOD_MS', () => {
     it('should have correct millisecond values', () => {
-      expect(TIME_PERIOD_MS.day).toBe(86400000); // 24 * 60 * 60 * 1000
       expect(TIME_PERIOD_MS.week).toBe(604800000); // 7 * 24 * 60 * 60 * 1000
       expect(TIME_PERIOD_MS.month).toBe(2592000000); // 30 * 24 * 60 * 60 * 1000
       expect(TIME_PERIOD_MS.month3).toBe(7776000000); // 90 * 24 * 60 * 60 * 1000
-      expect(TIME_PERIOD_MS.month6).toBe(15552000000); // 180 * 24 * 60 * 60 * 1000
-      expect(TIME_PERIOD_MS.year).toBe(31536000000); // 365 * 24 * 60 * 60 * 1000
     });
   });
 
   describe('TIME_PERIODS', () => {
     it('should contain all expected time periods', () => {
-      expect(TIME_PERIODS).toEqual(['day', 'week', 'month', 'month3', 'month6', 'year']);
+      expect(TIME_PERIODS).toEqual(['week', 'month', 'month3']);
     });
   });
 
@@ -32,12 +30,9 @@ describe('timeFilters', () => {
     });
 
     it('should parse valid time filters correctly', () => {
-      expect(parseTimeFilter('day_within')).toEqual({ period: 'day', mode: 'within' });
       expect(parseTimeFilter('week_older')).toEqual({ period: 'week', mode: 'older' });
       expect(parseTimeFilter('month_within')).toEqual({ period: 'month', mode: 'within' });
       expect(parseTimeFilter('month3_older')).toEqual({ period: 'month3', mode: 'older' });
-      expect(parseTimeFilter('month6_within')).toEqual({ period: 'month6', mode: 'within' });
-      expect(parseTimeFilter('year_older')).toEqual({ period: 'year', mode: 'older' });
     });
   });
 
@@ -88,43 +83,10 @@ describe('timeFilters', () => {
       expect(result[2].threadId).toBe('thread2');
     });
 
-    it('should filter changes within day', () => {
-      const oneDayAgo = now - TIME_PERIOD_MS.day;
-      const twoDaysAgo = now - TIME_PERIOD_MS.day * 2;
-
-      const groups = [
-        createMockGroup('thread1', now - 1000), // Within day
-        createMockGroup('thread2', twoDaysAgo), // Older than day
-        createMockGroup('thread3', oneDayAgo - 1000), // Just outside day
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'day_within', now);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].threadId).toBe('thread1');
-    });
-
-    it('should filter changes older than day', () => {
-      const oneDayAgo = now - TIME_PERIOD_MS.day;
-      const twoDaysAgo = now - TIME_PERIOD_MS.day * 2;
-
-      const groups = [
-        createMockGroup('thread1', now - 1000), // Within day
-        createMockGroup('thread2', twoDaysAgo), // Older than day
-        createMockGroup('thread3', oneDayAgo - 1), // Just outside day (older)
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'day_older', now);
-
-      expect(result).toHaveLength(2); // thread2 and thread3 are both older than day
-      expect(result.map((g) => g.threadId)).toContain('thread2');
-      expect(result.map((g) => g.threadId)).toContain('thread3');
-    });
-
     it('should filter changes older than week', () => {
-      const threeDaysAgo = now - TIME_PERIOD_MS.day * 3;
-      const eightDaysAgo = now - TIME_PERIOD_MS.day * 8;
-      const tenDaysAgo = now - TIME_PERIOD_MS.day * 10;
+      const threeDaysAgo = now - TIME_MS.DAY * 3;
+      const eightDaysAgo = now - TIME_MS.DAY * 8;
+      const tenDaysAgo = now - TIME_MS.DAY * 10;
 
       const groups = [
         createMockGroup('thread1', threeDaysAgo), // Within week
@@ -140,9 +102,9 @@ describe('timeFilters', () => {
     });
 
     it('should filter changes older than month', () => {
-      const twoWeeksAgo = now - TIME_PERIOD_MS.day * 14;
-      const thirtyFiveDaysAgo = now - TIME_PERIOD_MS.day * 35;
-      const fortyDaysAgo = now - TIME_PERIOD_MS.day * 40;
+      const twoWeeksAgo = now - TIME_MS.DAY * 14;
+      const thirtyFiveDaysAgo = now - TIME_MS.DAY * 35;
+      const fortyDaysAgo = now - TIME_MS.DAY * 40;
 
       const groups = [
         createMockGroup('thread1', twoWeeksAgo), // Within month
@@ -158,9 +120,9 @@ describe('timeFilters', () => {
     });
 
     it('should filter changes older than 3 months', () => {
-      const twoMonthsAgo = now - TIME_PERIOD_MS.day * 60;
-      const fourMonthsAgo = now - TIME_PERIOD_MS.day * 120;
-      const fiveMonthsAgo = now - TIME_PERIOD_MS.day * 150;
+      const twoMonthsAgo = now - TIME_MS.DAY * 60;
+      const fourMonthsAgo = now - TIME_MS.DAY * 120;
+      const fiveMonthsAgo = now - TIME_MS.DAY * 150;
 
       const groups = [
         createMockGroup('thread1', twoMonthsAgo), // Within 3 months
@@ -175,45 +137,9 @@ describe('timeFilters', () => {
       expect(result.map((g) => g.threadId)).toContain('thread3');
     });
 
-    it('should filter changes older than 6 months', () => {
-      const fourMonthsAgo = now - TIME_PERIOD_MS.day * 120;
-      const sevenMonthsAgo = now - TIME_PERIOD_MS.day * 210;
-      const eightMonthsAgo = now - TIME_PERIOD_MS.day * 240;
-
-      const groups = [
-        createMockGroup('thread1', fourMonthsAgo), // Within 6 months
-        createMockGroup('thread2', sevenMonthsAgo), // Older than 6 months
-        createMockGroup('thread3', eightMonthsAgo), // Much older than 6 months
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'month6_older', now);
-
-      expect(result).toHaveLength(2); // thread2 and thread3 are older than 6 months
-      expect(result.map((g) => g.threadId)).toContain('thread2');
-      expect(result.map((g) => g.threadId)).toContain('thread3');
-    });
-
-    it('should filter changes older than year', () => {
-      const sixMonthsAgo = now - TIME_PERIOD_MS.day * 180;
-      const twoYearsAgo = now - TIME_PERIOD_MS.day * 730;
-      const threeYearsAgo = now - TIME_PERIOD_MS.day * 1095;
-
-      const groups = [
-        createMockGroup('thread1', sixMonthsAgo), // Within year
-        createMockGroup('thread2', twoYearsAgo), // Older than year
-        createMockGroup('thread3', threeYearsAgo), // Much older than year
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'year_older', now);
-
-      expect(result).toHaveLength(2); // thread2 and thread3 are older than year
-      expect(result.map((g) => g.threadId)).toContain('thread2');
-      expect(result.map((g) => g.threadId)).toContain('thread3');
-    });
-
     it('should filter changes within week', () => {
-      const threeDaysAgo = now - TIME_PERIOD_MS.day * 3;
-      const eightDaysAgo = now - TIME_PERIOD_MS.day * 8;
+      const threeDaysAgo = now - TIME_MS.DAY * 3;
+      const eightDaysAgo = now - TIME_MS.DAY * 8;
 
       const groups = [
         createMockGroup('thread1', threeDaysAgo), // Within week
@@ -227,8 +153,8 @@ describe('timeFilters', () => {
     });
 
     it('should filter changes within month', () => {
-      const twoWeeksAgo = now - TIME_PERIOD_MS.day * 14;
-      const thirtyFiveDaysAgo = now - TIME_PERIOD_MS.day * 35;
+      const twoWeeksAgo = now - TIME_MS.DAY * 14;
+      const thirtyFiveDaysAgo = now - TIME_MS.DAY * 35;
 
       const groups = [
         createMockGroup('thread1', twoWeeksAgo), // Within month
@@ -242,8 +168,8 @@ describe('timeFilters', () => {
     });
 
     it('should filter changes within 3 months', () => {
-      const twoMonthsAgo = now - TIME_PERIOD_MS.day * 60;
-      const fourMonthsAgo = now - TIME_PERIOD_MS.day * 120;
+      const twoMonthsAgo = now - TIME_MS.DAY * 60;
+      const fourMonthsAgo = now - TIME_MS.DAY * 120;
 
       const groups = [
         createMockGroup('thread1', twoMonthsAgo), // Within 3 months
@@ -256,41 +182,11 @@ describe('timeFilters', () => {
       expect(result[0].threadId).toBe('thread1');
     });
 
-    it('should filter changes within 6 months', () => {
-      const fourMonthsAgo = now - TIME_PERIOD_MS.day * 120;
-      const sevenMonthsAgo = now - TIME_PERIOD_MS.day * 210;
-
-      const groups = [
-        createMockGroup('thread1', fourMonthsAgo), // Within 6 months
-        createMockGroup('thread2', sevenMonthsAgo), // Older than 6 months
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'month6_within', now);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].threadId).toBe('thread1');
-    });
-
-    it('should filter changes within year', () => {
-      const sixMonthsAgo = now - TIME_PERIOD_MS.day * 180;
-      const twoYearsAgo = now - TIME_PERIOD_MS.day * 730;
-
-      const groups = [
-        createMockGroup('thread1', sixMonthsAgo), // Within year
-        createMockGroup('thread2', twoYearsAgo), // Older than year
-      ];
-
-      const result = filterChangeGroupsByTime(groups, 'year_within', now);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].threadId).toBe('thread1');
-    });
-
     it('should filter out groups with no changes after filtering', () => {
-      const oneDayAgo = now - TIME_PERIOD_MS.day;
-      const twoDaysAgo = now - TIME_PERIOD_MS.day * 2;
+      const threeDaysAgo = now - TIME_PERIOD_MS.week / 2;
+      const eightDaysAgo = now - TIME_PERIOD_MS.week - 86400000;
 
-      // Group with changes, all outside time range (older than day)
+      // Group with changes, all outside time range (older than week)
       const group1: ThreadChangeGroup = {
         threadId: 'thread1',
         thread: {
@@ -298,22 +194,22 @@ describe('timeFilters', () => {
           currentTitle: 'Test',
           url: 'https://discord.com/123/thread1',
           parentChannel: 'Test',
-          firstSeenAt: oneDayAgo,
+          firstSeenAt: threeDaysAgo,
         },
         changes: [
           {
             threadId: 'thread1',
             oldTitle: 'Old',
             newTitle: 'New',
-            changedAt: twoDaysAgo, // Outside range (> 1 day ago)
+            changedAt: eightDaysAgo, // Outside range (> 1 week ago)
             seen: false,
           },
         ],
-        latestChangeAt: twoDaysAgo,
+        latestChangeAt: eightDaysAgo,
         hasUnseen: true,
       };
 
-      // Group with changes, all within time range (< 1 day ago)
+      // Group with changes, all within time range (< 1 week ago)
       const group2: ThreadChangeGroup = {
         threadId: 'thread2',
         thread: {
@@ -321,7 +217,7 @@ describe('timeFilters', () => {
           currentTitle: 'Test',
           url: 'https://discord.com/123/thread2',
           parentChannel: 'Test',
-          firstSeenAt: oneDayAgo,
+          firstSeenAt: threeDaysAgo,
         },
         changes: [
           {
@@ -336,7 +232,7 @@ describe('timeFilters', () => {
         hasUnseen: true,
       };
 
-      const result = filterChangeGroupsByTime([group1, group2], 'day_within', now);
+      const result = filterChangeGroupsByTime([group1, group2], 'week_within', now);
 
       expect(result).toHaveLength(1);
       expect(result[0].threadId).toBe('thread2');
@@ -344,8 +240,8 @@ describe('timeFilters', () => {
 
     it('should update latestChangeAt and hasUnseen for filtered groups', () => {
       const testNow = 1000000000000;
-      const oneDayAgo = testNow - TIME_PERIOD_MS.day;
-      const twoDaysAgo = testNow - TIME_PERIOD_MS.day * 2;
+      const threeDaysAgo = testNow - TIME_MS.DAY * 3;
+      const eightDaysAgo = testNow - TIME_MS.DAY * 8;
 
       const group: ThreadChangeGroup = {
         threadId: 'thread1',
@@ -354,21 +250,21 @@ describe('timeFilters', () => {
           currentTitle: 'Test',
           url: 'https://discord.com/123/thread1',
           parentChannel: 'Test',
-          firstSeenAt: oneDayAgo,
+          firstSeenAt: threeDaysAgo,
         },
         changes: [
           {
             threadId: 'thread1',
             oldTitle: 'Old',
             newTitle: 'New 1',
-            changedAt: twoDaysAgo, // Outside range (> 1 day ago)
+            changedAt: eightDaysAgo, // Outside range (> 1 week ago)
             seen: true,
           },
           {
             threadId: 'thread1',
             oldTitle: 'New 1',
             newTitle: 'New 2',
-            changedAt: testNow - 1000, // Within range (< 1 day ago)
+            changedAt: testNow - 1000, // Within range (< 1 week ago)
             seen: false,
           },
         ],
@@ -376,7 +272,7 @@ describe('timeFilters', () => {
         hasUnseen: true,
       };
 
-      const result = filterChangeGroupsByTime([group], 'day_within', testNow);
+      const result = filterChangeGroupsByTime([group], 'week_within', testNow);
 
       expect(result).toHaveLength(1);
       expect(result[0].latestChangeAt).toBe(testNow - 1000);
@@ -386,17 +282,17 @@ describe('timeFilters', () => {
     });
 
     it('should handle empty groups array', () => {
-      const result = filterChangeGroupsByTime([], 'day_within', now);
+      const result = filterChangeGroupsByTime([], 'week_within', now);
       expect(result).toEqual([]);
     });
 
     it('should handle groups with no matching changes', () => {
-      const twoDaysAgo = now - TIME_PERIOD_MS.day * 2;
+      const eightDaysAgo = now - TIME_MS.DAY * 8;
       const groups = [
-        createMockGroup('thread1', twoDaysAgo), // Older than day
+        createMockGroup('thread1', eightDaysAgo), // Older than week
       ];
 
-      const result = filterChangeGroupsByTime(groups, 'day_within', now);
+      const result = filterChangeGroupsByTime(groups, 'week_within', now);
       expect(result).toEqual([]);
     });
 
@@ -416,7 +312,7 @@ describe('timeFilters', () => {
         createMockGroup('thread3', twoHoursAgo),
       ];
 
-      const result = filterChangeGroupsByTime(groups, 'day_within', now);
+      const result = filterChangeGroupsByTime(groups, 'week_within', now);
 
       expect(result).toHaveLength(3);
       expect(result[0].threadId).toBe('thread2'); // Most recent

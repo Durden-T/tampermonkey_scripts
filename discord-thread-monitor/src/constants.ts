@@ -53,6 +53,7 @@ export const UI = {
   PANEL_MIN_HEIGHT: 200,
   PANEL_DEFAULT_X_OFFSET: 16,
   PANEL_DEFAULT_Y_POSITION: 80,
+  SEGMENTED_CONTROL_PADDING: 3,
 } as const;
 
 export const TIMING = {

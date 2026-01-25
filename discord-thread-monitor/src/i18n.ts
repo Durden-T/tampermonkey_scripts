@@ -23,16 +23,14 @@ export const zh = {
     newThreadsFound: '发现 {count} 个新帖子',
   },
   filters: {
+    allUnread: '未读',
     all: '全部',
     within: '最近',
     older: '更早',
     periods: {
-      day: '1天',
       week: '7天',
-      month: '1月',
-      month3: '3月',
-      month6: '半年',
-      year: '1年',
+      month: '30天',
+      month3: '90天',
     },
   },
   time: {
@@ -101,16 +99,14 @@ export const en = {
     newThreadsFound: '{count} new threads found',
   },
   filters: {
+    allUnread: 'Unread',
     all: 'All',
     within: 'Recent',
     older: 'Older',
     periods: {
-      day: '1d',
       week: '7d',
       month: '1mo',
       month3: '3mo',
-      month6: '6mo',
-      year: '1yr',
     },
   },
   time: {

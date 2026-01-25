@@ -45,13 +45,14 @@ vi.mock('../i18n', () => ({
       clearChanges: 'Clear Changes',
     },
     filters: {
+      allUnread: 'All Unread',
       all: 'All',
       within: 'Within',
       older: 'Older',
       periods: {
-        day: '1 Day',
         week: '1 Week',
         month: '1 Month',
+        month3: '3 Months',
       },
     },
     labels: {
@@ -166,12 +167,29 @@ describe('ManagerPanel', () => {
     });
 
     it('should display change count badge on changes tab', () => {
+      const now = Date.now();
       const changes: TitleChange[] = [
-        { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: Date.now(), seen: false },
-        { threadId: '2', oldTitle: 'Old2', newTitle: 'New2', changedAt: Date.now(), seen: false },
+        { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: now, seen: false },
+        { threadId: '2', oldTitle: 'Old2', newTitle: 'New2', changedAt: now, seen: false },
+      ];
+      const changeGroups: ThreadChangeGroup[] = [
+        {
+          threadId: '1',
+          thread: undefined,
+          changes: [changes[0]],
+          latestChangeAt: now,
+          hasUnseen: true,
+        },
+        {
+          threadId: '2',
+          thread: undefined,
+          changes: [changes[1]],
+          latestChangeAt: now,
+          hasUnseen: true,
+        },
       ];
 
-      render(<ManagerPanel {...defaultProps} changes={changes} />);
+      render(<ManagerPanel {...defaultProps} changes={changes} changeGroups={changeGroups} />);
 
       const badge = document.querySelector('.tab-badge');
       expect(badge).toBeInTheDocument();
@@ -293,7 +311,25 @@ describe('ManagerPanel', () => {
 
   describe('Changes Tab', () => {
     it('should display mark all read button when there are unseen changes', () => {
-      render(<ManagerPanel {...defaultProps} unseenCount={5} />);
+      const changeGroups: ThreadChangeGroup[] = [
+        {
+          threadId: '1',
+          thread: {
+            id: '1',
+            currentTitle: 'Test',
+            url: 'https://discord.com/1',
+            parentChannel: 'General',
+            firstSeenAt: Date.now(),
+          },
+          changes: [
+            { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: Date.now(), seen: false },
+          ],
+          latestChangeAt: Date.now(),
+          hasUnseen: true,
+        },
+      ];
+
+      render(<ManagerPanel {...defaultProps} unseenCount={1} changeGroups={changeGroups} />);
 
       expect(screen.getByRole('button', { name: /Mark All Read/i })).toBeInTheDocument();
     });
@@ -308,37 +344,37 @@ describe('ManagerPanel', () => {
       const user = userEvent.setup();
       const onMarkAllRead = vi.fn();
 
-      render(<ManagerPanel {...defaultProps} unseenCount={5} onMarkAllRead={onMarkAllRead} />);
+      const changeGroups: ThreadChangeGroup[] = [
+        {
+          threadId: '1',
+          thread: {
+            id: '1',
+            currentTitle: 'Test',
+            url: 'https://discord.com/1',
+            parentChannel: 'General',
+            firstSeenAt: Date.now(),
+          },
+          changes: [
+            { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: Date.now(), seen: false },
+          ],
+          latestChangeAt: Date.now(),
+          hasUnseen: true,
+        },
+      ];
+
+      render(
+        <ManagerPanel
+          {...defaultProps}
+          unseenCount={1}
+          changeGroups={changeGroups}
+          onMarkAllRead={onMarkAllRead}
+        />
+      );
 
       const button = screen.getByRole('button', { name: /Mark All Read/i });
       await user.click(button);
 
       expect(onMarkAllRead).toHaveBeenCalledTimes(1);
-    });
-
-    it('should display clear changes button when there are changes', () => {
-      const changes: TitleChange[] = [
-        { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: Date.now(), seen: false },
-      ];
-
-      render(<ManagerPanel {...defaultProps} changes={changes} />);
-
-      expect(screen.getByRole('button', { name: /Clear Changes/i })).toBeInTheDocument();
-    });
-
-    it('should call onClearChanges when clear changes button is clicked', async () => {
-      const user = userEvent.setup();
-      const onClearChanges = vi.fn();
-      const changes: TitleChange[] = [
-        { threadId: '1', oldTitle: 'Old', newTitle: 'New', changedAt: Date.now(), seen: false },
-      ];
-
-      render(<ManagerPanel {...defaultProps} changes={changes} onClearChanges={onClearChanges} />);
-
-      const button = screen.getByRole('button', { name: /Clear Changes/i });
-      await user.click(button);
-
-      expect(onClearChanges).toHaveBeenCalledTimes(1);
     });
 
     it('should display filter mode buttons', () => {
@@ -357,15 +393,21 @@ describe('ManagerPanel', () => {
       const withinButton = screen.getByRole('button', { name: /Within/i });
       await user.click(withinButton);
 
-      expect(screen.getByRole('button', { name: /1 Day/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /1 Week/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /1 Month/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /3 Months/i })).toBeInTheDocument();
     });
 
-    it('should not show period buttons when filter mode is "all"', () => {
+    it('should not show period buttons when filter mode is "all"', async () => {
+      const user = userEvent.setup();
       render(<ManagerPanel {...defaultProps} />);
 
-      expect(screen.queryByRole('button', { name: /1 Day/i })).not.toBeInTheDocument();
+      const allButton = screen.getByRole('button', { name: /^All$/ });
+      await user.click(allButton);
+
+      expect(screen.queryByRole('button', { name: /1 Week/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /1 Month/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /3 Months/i })).not.toBeInTheDocument();
     });
   });
 

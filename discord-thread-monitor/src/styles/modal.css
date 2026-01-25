@@ -1,37 +1,55 @@
-.help-tooltip-overlay {
+/* Overlay Base */
+.help-tooltip-overlay,
+.error-boundary {
   position: fixed;
   inset: 0;
-  z-index: var(--tm-z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--tm-overlay-medium);
   backdrop-filter: blur(6px);
+}
+
+.help-tooltip-overlay {
+  z-index: var(--tm-z-modal);
+  background: var(--tm-overlay-medium);
   animation: overlay-fade 160ms var(--tm-ease-out);
+}
+
+.error-boundary {
+  z-index: var(--tm-z-error);
+  background: var(--tm-overlay-strong);
+  backdrop-filter: blur(12px);
 }
 
 @keyframes overlay-fade {
   from {
     opacity: 0;
   }
-
-  to {
-    opacity: 1;
-  }
 }
 
-.help-tooltip {
+/* Modal Base */
+.help-tooltip,
+.error-boundary-content {
   position: relative;
-  width: 340px;
-  max-width: calc(100vw - 40px);
-  max-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
+  max-width: calc(100vw - 48px);
   background: var(--tm-bg-elevated);
   border-radius: var(--tm-radius-xl);
   box-shadow: var(--tm-shadow-xl);
   overflow: hidden;
+}
+
+.help-tooltip {
+  width: 380px;
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
   animation: modal-scale 300ms var(--tm-ease-spring);
+}
+
+.error-boundary-content {
+  width: 420px;
+  padding: var(--tm-space-2xl);
+  border: 1px solid var(--tm-danger-border);
 }
 
 .help-tooltip::before {
@@ -48,34 +66,29 @@
     opacity: 0;
     transform: scale(0.9);
   }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
+/* Help Header */
 .help-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: var(--tm-space-lg) var(--tm-space-xl);
   border-bottom: 1px solid var(--tm-glass-border);
 }
 
 .help-header h3 {
-  font-size: 13px;
+  font-size: var(--tm-scale-base);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--tm-text-primary);
 }
 
 .help-header button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--tm-radius-sm);
   color: var(--tm-text-muted);
   transition:
@@ -89,8 +102,8 @@
 }
 
 .help-header button svg {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
 }
 
 .help-header button:focus-visible {
@@ -98,60 +111,41 @@
   box-shadow: var(--tm-shadow-ring);
 }
 
+/* Help Content */
 .help-content {
   flex: 1;
   min-height: 0;
-  padding: 18px;
+  padding: var(--tm-space-xl);
   overflow-y: auto;
 }
 
 .help-content p,
 .error-boundary-content p {
-  font-size: 12px;
+  font-size: var(--tm-scale-md);
   line-height: 1.6;
   color: var(--tm-text-secondary);
 }
 
 .error-boundary-content p {
-  margin-bottom: 14px;
+  margin-bottom: var(--tm-space-lg);
 }
 
 .help-content p + p {
-  margin-top: 10px;
+  margin-top: var(--tm-space-md);
 }
 
-.error-boundary {
-  position: fixed;
-  inset: 0;
-  z-index: var(--tm-z-error);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--tm-overlay-strong);
-  backdrop-filter: blur(12px);
-}
-
-.error-boundary-content {
-  width: 380px;
-  max-width: calc(100vw - 40px);
-  padding: 22px;
-  background: var(--tm-bg-elevated);
-  border-radius: var(--tm-radius-xl);
-  border: 1px solid var(--tm-danger-border);
-  box-shadow: var(--tm-shadow-xl);
-}
-
+/* Error Boundary */
 .error-boundary-content h2 {
-  font-size: 14px;
+  font-size: var(--tm-scale-lg);
   font-weight: 600;
   color: var(--tm-danger);
-  margin-bottom: 10px;
+  margin-bottom: var(--tm-space-md);
 }
 
 .error-message {
-  padding: 10px;
+  padding: var(--tm-space-md);
   font-family: var(--tm-font-mono);
-  font-size: 10px;
+  font-size: var(--tm-scale-xs);
   line-height: 1.5;
   color: var(--tm-danger);
   background: var(--tm-danger-muted);
@@ -160,14 +154,14 @@
   overflow-x: auto;
   white-space: pre-wrap;
   overflow-wrap: break-word;
-  margin-bottom: 14px;
+  margin-bottom: var(--tm-space-lg);
 }
 
 .error-reset-button {
   width: 100%;
-  height: 36px;
+  height: 42px;
   border-radius: var(--tm-radius-md);
-  font-size: 12px;
+  font-size: var(--tm-scale-md);
   font-weight: 600;
   color: var(--tm-text-primary);
   background: var(--tm-bg-surface);

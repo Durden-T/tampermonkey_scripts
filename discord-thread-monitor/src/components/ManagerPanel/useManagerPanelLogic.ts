@@ -26,7 +26,10 @@ export const useManagerPanelLogic = ({ isOpen, storageInfo }: UseManagerPanelLog
   } = useManagerPanelUI(isOpen);
 
   const t = getTexts();
-  const timeFilter: TimeFilter = filterMode === 'all' ? 'all' : `${selectedPeriod}_${filterMode}`;
+  const timeFilter: TimeFilter =
+    filterMode === 'all' || filterMode === 'allUnread'
+      ? filterMode
+      : `${selectedPeriod}_${filterMode}`;
   const showStorageWarning = storageInfo.rawSize > STORAGE_WARNING_BYTES;
 
   return {

@@ -5,14 +5,12 @@ import type { TimePeriod, TimeFilterMode } from '../../utils/timeFilters';
 import { FilterControls } from './FilterControls';
 
 interface ChangesTabContentProps {
-  filterMode: TimeFilterMode | 'all';
+  filterMode: TimeFilterMode | 'all' | 'allUnread';
   selectedPeriod: TimePeriod;
-  onFilterModeChange: (mode: TimeFilterMode | 'all') => void;
+  onFilterModeChange: (mode: TimeFilterMode | 'all' | 'allUnread') => void;
   onPeriodChange: (period: TimePeriod) => void;
   unseenCount: number;
-  changesLength: number;
   onMarkAllRead: () => void;
-  onClearChanges: () => void;
   filteredChangeGroups: ThreadChangeGroup[];
   onOpen: (url: string, threadId: string) => void;
   onBlock: (threadId: string) => void;
@@ -26,9 +24,7 @@ export const ChangesTabContent: React.FC<ChangesTabContentProps> = ({
   onFilterModeChange,
   onPeriodChange,
   unseenCount,
-  changesLength,
   onMarkAllRead,
-  onClearChanges,
   filteredChangeGroups,
   onOpen,
   onBlock,
@@ -43,9 +39,7 @@ export const ChangesTabContent: React.FC<ChangesTabContentProps> = ({
         onFilterModeChange={onFilterModeChange}
         onPeriodChange={onPeriodChange}
         unseenCount={unseenCount}
-        changesLength={changesLength}
         onMarkAllRead={onMarkAllRead}
-        onClearChanges={onClearChanges}
         t={t}
       />
       <ThreadList

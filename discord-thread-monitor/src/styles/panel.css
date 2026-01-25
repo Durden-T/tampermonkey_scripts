@@ -1,9 +1,9 @@
 .manager-panel {
   position: fixed;
   z-index: var(--tm-z-panel);
-  width: 420px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 24px);
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
   background: var(--tm-glass);
@@ -27,50 +27,46 @@
 }
 
 @keyframes panel-enter {
-  0% {
+  from {
     opacity: 0;
     transform: scale(0.92) translateY(12px);
   }
-
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
+/* Header */
 .panel-header {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: var(--tm-space-lg) var(--tm-space-xl);
   background: linear-gradient(180deg, var(--tm-bg-elevated) 0%, transparent 100%);
   border-bottom: 1px solid var(--tm-glass-border);
   user-select: none;
 }
 
 .panel-header h2 {
-  font-size: 13px;
+  font-size: var(--tm-scale-base);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--tm-text-primary);
 }
 
+/* Actions */
 .panel-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--tm-space-sm);
 }
 
 .panel-actions button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 10px;
+  gap: 6px;
+  height: 36px;
+  padding: 0 var(--tm-space-md);
   border-radius: var(--tm-radius-md);
-  font-size: 11px;
+  font-size: var(--tm-scale-sm);
   font-weight: 600;
   color: var(--tm-text-secondary);
   background: var(--tm-bg-surface);
@@ -97,15 +93,15 @@
 }
 
 .panel-actions button svg {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
 .panel-actions .scan-button {
   color: var(--tm-accent);
   background: var(--tm-accent-subtle);
-  border-color: var(--tm-accent-border-light);
+  border-color: var(--tm-accent-border);
 }
 
 .panel-actions .scan-button:hover {
@@ -116,13 +112,13 @@
 .panel-actions .lang-button,
 .panel-actions .help-button,
 .panel-actions .close-button {
-  width: 30px;
+  width: 36px;
   padding: 0;
 }
 
 .panel-actions .lang-button {
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: var(--tm-scale-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -132,10 +128,11 @@
   background: var(--tm-danger-muted);
 }
 
+/* Tabs */
 .panel-tabs {
   display: flex;
-  gap: 2px;
-  padding: 10px 12px;
+  gap: 3px;
+  padding: var(--tm-space-md) var(--tm-space-lg);
   background: var(--tm-bg-deep);
   border-bottom: 1px solid var(--tm-glass-border);
 }
@@ -146,10 +143,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 34px;
+  gap: var(--tm-space-sm);
+  height: 40px;
   border-radius: var(--tm-radius-md);
-  font-size: 11px;
+  font-size: var(--tm-scale-sm);
   font-weight: 500;
   color: var(--tm-text-muted);
   background: transparent;
@@ -184,7 +181,7 @@
 }
 
 .tab.active::after {
-  width: 18px;
+  width: 22px;
 }
 
 .tab:focus-visible {
@@ -196,11 +193,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: var(--tm-scale-xs);
   font-weight: 700;
   color: var(--tm-bg-void);
   background: var(--tm-accent-gradient);
@@ -212,12 +209,13 @@
   transform: scale(1.06);
 }
 
+/* Content */
 .panel-content {
   position: relative;
   flex: 1;
   min-height: 0;
-  max-height: 400px;
-  padding: 14px;
+  max-height: 450px;
+  padding: var(--tm-space-lg);
   overflow-y: auto;
 }
 
@@ -225,8 +223,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
-  font-size: 12px;
+  min-height: 120px;
+  font-size: var(--tm-scale-md);
   color: var(--tm-text-dim);
   font-style: italic;
 }

@@ -1,7 +1,7 @@
 {
   "name": "discord-thread-monitor",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Tampermonkey userscript that monitors Discord forum thread titles for changes",
   "author": "Tyler",
@@ -20,7 +20,8 @@
     "stylelint:fix": "stylelint \"src/**/*.css\" --fix --allow-empty-input",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css}\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release:check": "npm run format:check && npm run lint && npm run stylelint && npm run test:run && npm run build && echo '\n Release checks passed! Run: npm version patch/minor/major && git push --follow-tags'"
   },
   "dependencies": {
     "pako": "^2.1.0",

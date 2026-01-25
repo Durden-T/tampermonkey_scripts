@@ -2,7 +2,7 @@
   all: initial;
   display: block;
   font-family: var(--tm-font-display);
-  font-size: 13px;
+  font-size: var(--tm-scale-base);
   line-height: 1.5;
   color: var(--tm-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -20,22 +20,17 @@
   padding: 0;
 }
 
-button {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
+button,
+input {
+  font: inherit;
   letter-spacing: inherit;
-  cursor: pointer;
+  color: inherit;
   border: none;
   background: none;
-  color: inherit;
 }
 
-input {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  letter-spacing: inherit;
+button {
+  cursor: pointer;
 }
 
 .tm-scrollbar {
@@ -44,12 +39,12 @@ input {
 }
 
 .tm-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .tm-scrollbar::-webkit-scrollbar-track {
   background: transparent;
-  margin: 6px 0;
+  margin: var(--tm-space-sm) 0;
 }
 
 .tm-scrollbar::-webkit-scrollbar-thumb {
@@ -65,4 +60,86 @@ input {
 ::selection {
   background: var(--tm-accent-subtle);
   color: var(--tm-accent-bright);
+}
+
+/* Glass Panel Base - Reusable */
+.tm-glass-panel {
+  background: var(--tm-glass);
+  backdrop-filter: blur(var(--tm-blur-lg)) saturate(1.3);
+  box-shadow:
+    var(--tm-shadow-xl),
+    var(--tm-shadow-border),
+    inset 0 1px 0 var(--tm-glass-highlight);
+}
+
+.tm-glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--tm-glass-shine);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Icon Button Base */
+.tm-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-text-muted);
+  transition:
+    color var(--tm-transition-fast),
+    background var(--tm-transition-fast);
+}
+
+.tm-icon-btn:hover {
+  color: var(--tm-text-primary);
+  background: var(--tm-bg-surface);
+}
+
+.tm-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--tm-shadow-ring);
+}
+
+/* Card Base */
+.tm-card {
+  padding: var(--tm-space-md);
+  background: var(--tm-bg-base);
+  border-radius: var(--tm-radius-md);
+  border: 1px solid var(--tm-glass-border);
+}
+
+/* Label Style */
+.tm-label {
+  font-size: var(--tm-scale-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tm-text-dim);
+}
+
+/* Badge Style */
+.tm-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-family: var(--tm-font-mono);
+  font-size: var(--tm-scale-xs);
+  font-weight: 700;
+  border-radius: var(--tm-radius-full);
+}
+
+.tm-badge-accent {
+  color: var(--tm-bg-void);
+  background: var(--tm-accent-gradient);
+}
+
+.tm-badge-muted {
+  color: var(--tm-text-dim);
+  background: var(--tm-bg-base);
 }

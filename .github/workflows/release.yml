@@ -1,0 +1,66 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: discord-thread-monitor
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: discord-thread-monitor/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run stylelint
+        run: npm run stylelint
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Build userscript
+        run: npm run build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Discord Thread Monitor ${{ github.ref_name }}
+          body: |
+            ## Discord Thread Monitor ${{ github.ref_name }}
+
+            ### Installation
+
+            Click the link below to install or update:
+
+            **[Install/Update Discord Thread Monitor](https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@${{ github.ref_name }}/discord-thread-monitor/dist/discord-thread-monitor.user.js)**
+
+            ### Auto-Update
+
+            If you have auto-update enabled in Tampermonkey, the script will automatically update to this version.
+
+            ### Changes
+
+            See commit history for details.
+          files: discord-thread-monitor/dist/discord-thread-monitor.user.js
