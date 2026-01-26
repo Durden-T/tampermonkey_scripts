@@ -51,6 +51,25 @@
   letter-spacing: -0.02em;
 }
 
+.scan-error-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--tm-danger);
+  margin-left: var(--tm-space-sm);
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* Actions */
 .panel-actions {
   display: flex;

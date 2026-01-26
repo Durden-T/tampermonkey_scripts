@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { HelpTooltip } from './HelpTooltip';
-import { ScanIcon, CloseIcon, HelpIcon } from './Icons';
+import { ScanIcon, CloseIcon, HelpIcon, WarningIcon } from './Icons';
 import { filterChangeGroupsByTime } from '../utils/timeFilters';
+import { scanStatus } from '../core/ScanStatus';
 import type { MonitoredThread, TitleChange, ThreadChangeGroup, StorageInfo } from '../types';
 import { useManagerPanelLogic } from './ManagerPanel/useManagerPanelLogic';
 import { PanelContent } from './ManagerPanel/PanelContent';
@@ -70,6 +71,11 @@ export function ManagerPanel(props: ManagerPanelProps) {
           style={{ cursor: 'grab' }}
         >
           <h2>{logic.t.title}</h2>
+          {scanStatus.hasPersistentError() && (
+            <span className="scan-error-badge" title={logic.t.scanError}>
+              <WarningIcon size={14} />
+            </span>
+          )}
           <div className="panel-actions">
             <button className="scan-button" onClick={props.onScanNow}>
               <ScanIcon />

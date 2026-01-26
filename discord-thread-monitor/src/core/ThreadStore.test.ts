@@ -184,26 +184,6 @@ describe('ThreadStore', () => {
       expect(store.getThreads()).not.toHaveProperty('blacklisted');
     });
 
-    it('should update thread title', () => {
-      const thread: MonitoredThread = {
-        id: '123',
-        currentTitle: 'Old Title',
-        url: 'https://discord.com/channels/123/456',
-        parentChannel: 'General',
-        firstSeenAt: 1000,
-      };
-
-      store.addThread(thread);
-      store.updateTitle('123', 'New Title');
-
-      const updatedThread = store.getThread('123');
-      expect(updatedThread?.currentTitle).toBe('New Title');
-    });
-
-    it('should handle updating non-existent thread', () => {
-      expect(() => store.updateTitle('nonexistent', 'New Title')).not.toThrow();
-    });
-
     it('should cache threads for performance', () => {
       const thread: MonitoredThread = {
         id: '123',
@@ -221,7 +201,7 @@ describe('ThreadStore', () => {
       expect(firstCall).toBe(secondCall); // Should return cached reference
     });
 
-    it('should invalidate cache when thread is modified', () => {
+    it('should invalidate cache when thread title is changed', () => {
       const thread: MonitoredThread = {
         id: '123',
         currentTitle: 'Test',
@@ -233,7 +213,16 @@ describe('ThreadStore', () => {
       store.addThread(thread);
       const firstCall = store.getThreads();
 
-      store.updateTitle('123', 'Updated');
+      store.recordTitleChange(
+        {
+          threadId: '123',
+          oldTitle: 'Test',
+          newTitle: 'Updated',
+          changedAt: Date.now(),
+          seen: false,
+        },
+        'Updated'
+      );
       const secondCall = store.getThreads();
 
       expect(firstCall).not.toBe(secondCall);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import type { Notifier } from '../core/Notifier';
 import type { TitleChange } from '../types';
 
@@ -7,21 +7,13 @@ export const useNotificationListener = (
   onNotification: (change: TitleChange) => void,
   onMount: () => void
 ) => {
-  const hasMounted = useRef(false);
-  const onMountRef = useRef(onMount);
-
   useEffect(() => {
-    onMountRef.current = onMount;
-  }, [onMount]);
+    onMount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     notifier.onNotify(onNotification);
-
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      onMountRef.current();
-    }
-
     return () => notifier.offNotify(onNotification);
   }, [notifier, onNotification]);
 };
