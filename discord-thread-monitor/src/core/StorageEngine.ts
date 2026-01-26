@@ -77,7 +77,7 @@ export class StorageEngine {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      GM_setValue(STORAGE.KEY, JSON.stringify(wrapper) as string & number);
+      GM_setValue(STORAGE.KEY, JSON.stringify(wrapper));
     } catch (error) {
       console.error('Failed to save data to storage:', error);
     }

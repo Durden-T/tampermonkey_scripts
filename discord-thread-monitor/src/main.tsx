@@ -6,6 +6,7 @@ import { ThreadStore } from './core/ThreadStore';
 import { ThreadScanner } from './core/ThreadScanner';
 import { ChangeDetector } from './core/ChangeDetector';
 import { Notifier } from './core/Notifier';
+import { ScanScheduler } from './core/ScanScheduler';
 import { scanStatus } from './core/ScanStatus';
 import { TIMING } from './constants';
 import styles from './styles/index.css?inline';
@@ -19,6 +20,7 @@ const setupCoreServices = () => {
   const scanner = new ThreadScanner();
   const detector = new ChangeDetector(store);
   const notifier = new Notifier();
+  const scheduler = new ScanScheduler();
 
   const performScan = () => {
     try {
@@ -35,7 +37,7 @@ const setupCoreServices = () => {
     }
   };
 
-  return { store, notifier, performScan };
+  return { store, notifier, scheduler, performScan };
 };
 
 const setupShadowContainer = () => {
@@ -60,7 +62,7 @@ const setupShadowContainer = () => {
   container.id = 'thread-monitor-root';
   shadow.appendChild(container);
 
-  console.log('[Discord Thread Monitor] Shadow DOM container created');
+  console.log('[Discord Thread Monitor] Isolated UI container created');
   return container;
 };
 
@@ -72,20 +74,21 @@ function initializeMonitor() {
   }
 
   try {
-    const { store, notifier, performScan } = setupCoreServices();
+    const { store, notifier, scheduler, performScan } = setupCoreServices();
     const container = setupShadowContainer();
 
     ReactDOM.createRoot(container).render(
       <React.StrictMode>
         <ErrorBoundary>
-          <App store={store} notifier={notifier} performScan={performScan} />
+          <App store={store} notifier={notifier} scheduler={scheduler} performScan={performScan} />
         </ErrorBoundary>
       </React.StrictMode>
     );
     console.log('[Discord Thread Monitor] React app rendered');
 
     const scheduleInitialScan = (attempt: number = 0) => {
-      const delay = TIMING.INITIAL_SCAN_DELAY_MS * (attempt + 1);
+      // Fixed 2s delay for consistent retry timing during Discord DOM initialization
+      const delay = TIMING.INITIAL_SCAN_DELAY_MS;
       setTimeout(() => {
         const { currentThreads } = performScan();
         if (currentThreads.length === 0 && attempt < TIMING.INITIAL_SCAN_MAX_RETRIES) {

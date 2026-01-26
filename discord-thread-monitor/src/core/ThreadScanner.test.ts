@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadScanner } from './ThreadScanner';
-import * as shadowDomQuery from '../utils/shadowDomQuery';
 
 describe('ThreadScanner', () => {
   let scanner: ThreadScanner;
@@ -376,74 +375,9 @@ describe('ThreadScanner', () => {
     });
   });
 
-  describe('Shadow DOM support', () => {
-    it('should find thread elements inside shadow DOM', () => {
-      const host = document.createElement('div');
-      container.appendChild(host);
-
-      const shadow = host.attachShadow({ mode: 'open' });
-      createMockThreadElement(
-        shadow as unknown as HTMLDivElement,
-        'channels___123',
-        'Test Thread',
-        'General threads'
-      );
-
-      const threads = scanner.scanVisibleThreads();
-
-      expect(threads).toHaveLength(1);
-      expect(threads[0].id).toBe('123');
-      expect(threads[0].currentTitle).toBe('Test Thread');
-    });
-
-    it('should find parent channel across shadow boundary', () => {
-      const parentContainer = document.createElement('ul');
-      parentContainer.setAttribute('role', 'group');
-      parentContainer.setAttribute('aria-label', 'General threads');
-      container.appendChild(parentContainer);
-
-      const host = document.createElement('div');
-      parentContainer.appendChild(host);
-
-      const shadow = host.attachShadow({ mode: 'open' });
-      const mockElement = document.createElement('div');
-      mockElement.setAttribute('data-list-item-id', 'channels___123');
-      mockElement.setAttribute('aria-label', 'Test Thread (thread)');
-      shadow.appendChild(mockElement);
-
-      const threads = scanner.scanVisibleThreads();
-
-      expect(threads).toHaveLength(1);
-      expect(threads[0].parentChannel).toBe('General');
-    });
-
-    it('should find threads in nested shadow DOM', () => {
-      const host1 = document.createElement('div');
-      container.appendChild(host1);
-
-      const shadow1 = host1.attachShadow({ mode: 'open' });
-      const host2 = document.createElement('div');
-      shadow1.appendChild(host2);
-
-      const shadow2 = host2.attachShadow({ mode: 'open' });
-      createMockThreadElement(
-        shadow2 as unknown as HTMLDivElement,
-        'channels___deep',
-        'Deep Thread',
-        'Nested threads'
-      );
-
-      const threads = scanner.scanVisibleThreads();
-
-      expect(threads).toHaveLength(1);
-      expect(threads[0].id).toBe('deep');
-      expect(threads[0].currentTitle).toBe('Deep Thread');
-    });
-  });
-
   // Helper function to create mock thread elements
   function createMockThreadElement(
-    containerElement: HTMLElement | ShadowRoot,
+    containerElement: HTMLElement,
     threadId: string,
     title: string,
     parentLabel: string,

@@ -71,7 +71,7 @@ export class ChangeTracker {
     const retentionMs = retentionDays * TIME_MS.DAY;
     const cutoffTime = Date.now() - retentionMs;
     const originalLength = this.changes.length;
-    const threadsToCheck = new Set<string>();
+    const remainingUnseenThreads = new Set<string>();
 
     let writeIndex = 0;
     for (let readIndex = 0; readIndex < this.changes.length; readIndex++) {
@@ -81,18 +81,15 @@ export class ChangeTracker {
           this.changes[writeIndex] = change;
         }
         writeIndex++;
-      } else if (!change.seen) {
-        threadsToCheck.add(change.threadId);
+        if (!change.seen) {
+          remainingUnseenThreads.add(change.threadId);
+        }
       }
     }
     this.changes.length = writeIndex;
 
-    for (const threadId of threadsToCheck) {
-      if (!this.threadHasUnseen(threadId)) {
-        this.unseenThreads.delete(threadId);
-        this.unseenCount--;
-      }
-    }
+    this.unseenThreads = remainingUnseenThreads;
+    this.unseenCount = remainingUnseenThreads.size;
 
     return this.changes.length !== originalLength;
   }
@@ -110,15 +107,6 @@ export class ChangeTracker {
     threads: Record<string, MonitoredThread>
   ): ThreadChangeGroup[] {
     return ChangeGroupBuilder.buildGroups(groupMap, threads);
-  }
-
-  private threadHasUnseen(threadId: string): boolean {
-    for (const change of this.changes) {
-      if (change.threadId === threadId && !change.seen) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private buildUnseenThreadsSet(): Set<string> {

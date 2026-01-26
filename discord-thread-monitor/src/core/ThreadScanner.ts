@@ -1,12 +1,18 @@
 import type { MonitoredThread } from '../types';
-import { querySelectorAllDeep, closestDeep } from '../utils/shadowDomQuery';
 
 const THREAD_ELEMENT_SELECTOR = '[data-list-item-id^="channels___"][aria-label*="(thread)"]';
 const PARENT_CONTAINER_SELECTOR = 'ul[role="group"][aria-label*="threads"]';
+
+// Discord's thread aria-label format: [unread, ][N mention(s), ]<title> (thread)
+// Examples: "unread, 3 mentions, Bug Report (thread)", "Feature Request (thread)"
 const TITLE_CLEANUP_PATTERN = /^(unread,\s*)?(\d+\s+mentions?,\s*)?|\s*\(thread\)\s*$/g;
+
+// Discord's parent channel aria-label format: "<channel name> threads"
 const CHANNEL_LABEL_CLEANUP_PATTERN = /\s*threads.*$/i;
 
 export class ThreadScanner {
+  private cachedRoot: Element | null = null;
+
   scanVisibleThreads(): MonitoredThread[] {
     const threads: MonitoredThread[] = [];
     const serverId = this.extractServerId();
@@ -16,8 +22,12 @@ export class ThreadScanner {
       return threads;
     }
 
-    const discordRoot = document.querySelector('#app-mount') ?? document.body;
-    const threadElements = querySelectorAllDeep(THREAD_ELEMENT_SELECTOR, discordRoot);
+    const appMount = document.querySelector('#app-mount');
+    if (appMount && (!this.cachedRoot || this.cachedRoot !== appMount)) {
+      this.cachedRoot = appMount;
+    }
+    const discordRoot = this.cachedRoot ?? document.body;
+    const threadElements = discordRoot.querySelectorAll(THREAD_ELEMENT_SELECTOR);
 
     threadElements.forEach((element) => {
       const thread = this.parseThreadElement(element as HTMLElement, serverId);
@@ -67,7 +77,7 @@ export class ThreadScanner {
   }
 
   private extractParentChannel(element: HTMLElement): string {
-    const container = closestDeep(element, PARENT_CONTAINER_SELECTOR);
+    const container = element.closest(PARENT_CONTAINER_SELECTOR);
     if (!container) {
       return '';
     }

@@ -166,7 +166,8 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 - Title: `aria-label` with `"unread, "` prefix and `" (thread)"` suffix stripped
 - Parent channel: closest `ul[role="group"][aria-label*="threads"]`
 - Server ID: `window.location.pathname.split('/')[2]`
-- **Shadow DOM Support**: Uses `querySelectorAllDeep` and `closestDeep` from `src/utils/shadowDomQuery.ts` to pierce shadow DOM boundaries, ensuring compatibility if Discord uses Web Components
+
+**Note:** Discord does not currently use Shadow DOM for thread elements. Previous Shadow DOM query utilities were removed as they added unnecessary complexity and performance overhead without functional benefit. Standard `querySelector` and `closest` methods are sufficient.
 
 ### Storage
 

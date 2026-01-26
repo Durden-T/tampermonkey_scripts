@@ -6,16 +6,18 @@ import { useAppData } from './hooks/useAppData';
 import { useManagerPanelProps } from './hooks/useManagerPanelProps';
 import type { ThreadStore } from './core/ThreadStore';
 import type { Notifier } from './core/Notifier';
+import type { ScanScheduler } from './core/ScanScheduler';
 import type { MonitoredThread, TitleChange } from './types';
 
 interface AppProps {
   store: ThreadStore;
   notifier: Notifier;
+  scheduler: ScanScheduler;
   performScan: () => { currentThreads: MonitoredThread[]; changes: TitleChange[] };
 }
 
-function App({ store, notifier, performScan }: AppProps) {
-  const data = useAppData({ store, notifier, performScan });
+function App({ store, notifier, scheduler, performScan }: AppProps) {
+  const data = useAppData({ store, notifier, scheduler, performScan });
   const handlers = useAppHandlers({
     store,
     notifier,

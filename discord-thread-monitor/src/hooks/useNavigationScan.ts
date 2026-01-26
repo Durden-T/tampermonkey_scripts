@@ -1,38 +1,57 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { TIMING } from '../constants';
+import { useEffect, useCallback } from 'react';
+import { ScanPriority, type ScanScheduler } from '../core/ScanScheduler';
 
-export const useNavigationScan = (performScan: () => void, refreshData: () => void) => {
-  const lastScanTimeRef = useRef(0);
-  const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const createHistoryWrapper = (
+  original: typeof history.pushState | typeof history.replaceState,
+  onNavigate: () => void,
+  methodName: string
+) => {
+  return function (this: History, ...args: Parameters<typeof history.pushState>) {
+    try {
+      const result = original.apply(this, args);
+      onNavigate();
+      return result;
+    } catch (err) {
+      console.error(`[NavigationScan] ${methodName} error:`, err);
+      throw err;
+    }
+  };
+};
 
+export const useNavigationScan = (
+  scheduler: ScanScheduler,
+  performScan: () => void,
+  refreshData: () => void
+) => {
   const triggerDelayedScan = useCallback(() => {
-    const now = Date.now();
-    if (now - lastScanTimeRef.current < TIMING.MIN_SCAN_GAP_MS) {
-      return;
-    }
-
-    if (pendingTimeoutRef.current) {
-      clearTimeout(pendingTimeoutRef.current);
-    }
-
-    pendingTimeoutRef.current = setTimeout(() => {
-      lastScanTimeRef.current = Date.now();
+    scheduler.schedule(() => {
       performScan();
       refreshData();
-      pendingTimeoutRef.current = null;
-    }, TIMING.NAV_SCAN_DELAY_MS);
-  }, [performScan, refreshData]);
+    }, ScanPriority.NORMAL);
+  }, [scheduler, performScan, refreshData]);
 
   useEffect(() => {
-    let lastPathname = location.pathname;
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
 
-    const navCheckId = setInterval(() => {
-      const currentPathname = location.pathname;
-      if (currentPathname !== lastPathname) {
-        lastPathname = currentPathname;
-        triggerDelayedScan();
-      }
-    }, TIMING.NAV_CHECK_INTERVAL_MS);
+    const wrappedPushState = createHistoryWrapper(
+      originalPushState,
+      triggerDelayedScan,
+      'pushState'
+    );
+    const wrappedReplaceState = createHistoryWrapper(
+      originalReplaceState,
+      triggerDelayedScan,
+      'replaceState'
+    );
+
+    history.pushState = wrappedPushState;
+    history.replaceState = wrappedReplaceState;
+
+    const handlePopState = () => {
+      triggerDelayedScan();
+    };
+    window.addEventListener('popstate', handlePopState);
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -42,11 +61,15 @@ export const useNavigationScan = (performScan: () => void, refreshData: () => vo
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(navCheckId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (pendingTimeoutRef.current) {
-        clearTimeout(pendingTimeoutRef.current);
+      // Only restore if our wrappers are still active to avoid breaking other scripts
+      if (history.pushState === wrappedPushState) {
+        history.pushState = originalPushState;
       }
+      if (history.replaceState === wrappedReplaceState) {
+        history.replaceState = originalReplaceState;
+      }
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [triggerDelayedScan]);
+  }, [triggerDelayedScan, scheduler]);
 };

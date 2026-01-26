@@ -12,6 +12,7 @@ export default tseslint.config(
       'node_modules',
       'coverage',
       'vite-project-example',
+      'scripts',
       '**/*.config.*',
       'vite.config.ts',
       '**/*.test.ts',

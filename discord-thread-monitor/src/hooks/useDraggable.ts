@@ -28,6 +28,8 @@ const clampPosition = (pos: Position, bounds: Bounds): Position => ({
   y: Math.max(0, Math.min(window.innerHeight - bounds.height, pos.y)),
 });
 
+const POSITION_SAVE_DEBOUNCE_MS = 300;
+
 const usePersistentPosition = (storageKey: string, defaultPosition: Position, bounds: Bounds) => {
   const [position, setPosition] = useState<Position>(() => {
     try {
@@ -51,8 +53,23 @@ const usePersistentPosition = (storageKey: string, defaultPosition: Position, bo
     return defaultPosition;
   });
 
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(position));
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(storageKey, JSON.stringify(position));
+      saveTimeoutRef.current = null;
+    }, POSITION_SAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        localStorage.setItem(storageKey, JSON.stringify(position));
+      }
+    };
   }, [position, storageKey]);
 
   useEffect(() => {
@@ -125,6 +142,7 @@ export function useDraggable(options: UseDraggableOptions): UseDraggableResult {
       setIsDragging(true);
       dragStartRef.current = { x: e.clientX, y: e.clientY };
     },
+    // Refs are stable and don't need to be in dependency array
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [excludeSelector, setIsDragging]
   );
