@@ -82,6 +82,42 @@ describe('ThreadScanner', () => {
       expect(threads[0].currentTitle).toBe('Test Thread with unread');
     });
 
+    it('should strip mention prefix from thread title (singular)', () => {
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      mockElement.setAttribute('aria-label', '1 mention, Test Thread (thread)');
+      container.appendChild(mockElement);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].currentTitle).toBe('Test Thread');
+    });
+
+    it('should strip mention prefix from thread title (plural)', () => {
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      mockElement.setAttribute('aria-label', '5 mentions, Test Thread (thread)');
+      container.appendChild(mockElement);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].currentTitle).toBe('Test Thread');
+    });
+
+    it('should strip both unread and mention prefixes', () => {
+      const mockElement = document.createElement('div');
+      mockElement.setAttribute('data-list-item-id', 'channels___123');
+      mockElement.setAttribute('aria-label', 'unread, 3 mentions, Test Thread (thread)');
+      container.appendChild(mockElement);
+
+      const threads = scanner.scanVisibleThreads();
+
+      expect(threads).toHaveLength(1);
+      expect(threads[0].currentTitle).toBe('Test Thread');
+    });
+
     it('should skip elements without data-list-item-id', () => {
       createMockThreadElement(container, 'channels___123', 'Valid Thread', 'General threads');
 

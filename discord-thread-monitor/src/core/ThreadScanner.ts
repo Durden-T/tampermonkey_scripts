@@ -3,7 +3,7 @@ import { querySelectorAllDeep, closestDeep } from '../utils/shadowDomQuery';
 
 const THREAD_ELEMENT_SELECTOR = '[data-list-item-id^="channels___"][aria-label*="(thread)"]';
 const PARENT_CONTAINER_SELECTOR = 'ul[role="group"][aria-label*="threads"]';
-const TITLE_CLEANUP_PATTERN = /^unread,\s*|\s*\(thread\)\s*$/g;
+const TITLE_CLEANUP_PATTERN = /^(unread,\s*)?(\d+\s+mentions?,\s*)?|\s*\(thread\)\s*$/g;
 const CHANNEL_LABEL_CLEANUP_PATTERN = /\s*threads.*$/i;
 
 export class ThreadScanner {
