@@ -1,7 +1,7 @@
 {
   "name": "discord-thread-monitor",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Tampermonkey userscript that monitors Discord forum thread titles for changes",
   "author": "Tyler",
