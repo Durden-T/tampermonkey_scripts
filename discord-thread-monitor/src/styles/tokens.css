@@ -4,21 +4,21 @@
   --tm-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
 
   /* Scale System */
-  --tm-scale-base: 15px;
+  --tm-scale-base: 14px;
   --tm-scale-xs: 10px;
-  --tm-scale-sm: 12px;
-  --tm-scale-md: 14px;
-  --tm-scale-lg: 16px;
-  --tm-scale-xl: 18px;
-  --tm-scale-2xl: 20px;
+  --tm-scale-sm: 11px;
+  --tm-scale-md: 13px;
+  --tm-scale-lg: 15px;
+  --tm-scale-xl: 17px;
+  --tm-scale-2xl: 19px;
 
   /* Spacing Scale */
   --tm-space-xs: 4px;
-  --tm-space-sm: 8px;
-  --tm-space-md: 12px;
-  --tm-space-lg: 16px;
-  --tm-space-xl: 20px;
-  --tm-space-2xl: 24px;
+  --tm-space-sm: 7px;
+  --tm-space-md: 11px;
+  --tm-space-lg: 14px;
+  --tm-space-xl: 18px;
+  --tm-space-2xl: 22px;
 
   /* Surface Colors */
   --tm-bg-void: #020204;

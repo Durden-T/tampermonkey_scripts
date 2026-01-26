@@ -125,11 +125,11 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: var(--tm-scale-xs);
+  font-size: 9px;
   font-weight: 700;
   border-radius: var(--tm-radius-full);
 }

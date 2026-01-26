@@ -8,9 +8,9 @@
 .thread-item,
 .thread-group {
   position: relative;
-  padding: var(--tm-space-lg);
+  padding: var(--tm-space-md);
   background: var(--tm-bg-surface);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   border: 1px solid transparent;
   transition:
     background var(--tm-transition-fast),
@@ -33,8 +33,8 @@
 .thread-info {
   display: flex;
   flex-direction: column;
-  gap: var(--tm-space-sm);
-  margin-bottom: var(--tm-space-md);
+  gap: var(--tm-space-xs);
+  margin-bottom: var(--tm-space-sm);
 }
 
 .thread-title,
@@ -79,8 +79,7 @@
   color: var(--tm-text-dim);
 }
 
-.change-old,
-.toast-old {
+.change-old {
   flex: 1;
   font-size: var(--tm-scale-sm);
   color: var(--tm-old-title);
@@ -90,8 +89,7 @@
   opacity: 0.85;
 }
 
-.change-new,
-.toast-new {
+.change-new {
   flex: 1;
   font-size: var(--tm-scale-sm);
   color: var(--tm-new-title);
@@ -140,9 +138,9 @@
 }
 
 .thread-actions button {
-  height: 28px;
-  padding: 0 var(--tm-space-md);
-  border-radius: var(--tm-radius-sm);
+  height: 26px;
+  padding: 0 var(--tm-space-sm);
+  border-radius: var(--tm-radius-xs);
   font-size: var(--tm-scale-xs);
   font-weight: 500;
   color: var(--tm-text-secondary);
@@ -204,9 +202,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--tm-radius-sm);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--tm-radius-xs);
   color: var(--tm-text-dim);
   background: var(--tm-bg-base);
   transition:
@@ -229,11 +227,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: var(--tm-scale-xs);
+  font-size: 9px;
   font-weight: 600;
   color: var(--tm-text-dim);
   background: var(--tm-bg-base);
@@ -242,15 +240,15 @@
 
 /* Group Changes */
 .thread-group-changes {
-  margin-top: var(--tm-space-md);
-  padding-top: var(--tm-space-md);
+  margin-top: var(--tm-space-sm);
+  padding-top: var(--tm-space-sm);
   border-top: 1px solid var(--tm-glass-border);
 }
 
 .change-entry {
-  padding: var(--tm-space-md);
+  padding: var(--tm-space-sm);
   background: var(--tm-bg-base);
-  border-radius: var(--tm-radius-sm);
+  border-radius: var(--tm-radius-xs);
   border-left: 2px solid var(--tm-bg-highlight);
 }
 

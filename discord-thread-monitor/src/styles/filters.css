@@ -1,20 +1,20 @@
 .filter-controls {
   display: flex;
   flex-direction: column;
-  gap: var(--tm-space-md);
-  padding: var(--tm-space-lg);
+  gap: var(--tm-space-sm);
+  padding: var(--tm-space-md);
   background: var(--tm-bg-surface);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   border: 1px solid var(--tm-glass-border);
-  margin-bottom: var(--tm-space-lg);
+  margin-bottom: var(--tm-space-md);
 }
 
 .filter-modes-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--tm-space-md);
-  min-height: 38px;
+  gap: var(--tm-space-sm);
+  min-height: 30px;
   flex-wrap: wrap;
 }
 
@@ -35,7 +35,7 @@
 .segment {
   position: relative;
   z-index: 1;
-  padding: var(--tm-space-sm) var(--tm-space-lg);
+  padding: var(--tm-space-xs) var(--tm-space-md);
   font-size: var(--tm-scale-sm);
   font-weight: 500;
   color: var(--tm-text-muted);
@@ -46,7 +46,7 @@
     transform var(--tm-transition-fast);
   white-space: nowrap;
   user-select: none;
-  min-width: 56px;
+  min-width: 48px;
   text-align: center;
 }
 
@@ -96,11 +96,11 @@
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: var(--tm-space-sm) var(--tm-space-lg);
+  gap: 4px;
+  padding: var(--tm-space-xs) var(--tm-space-md);
   font-size: var(--tm-scale-sm);
   font-weight: 600;
-  border-radius: var(--tm-radius-sm);
+  border-radius: var(--tm-radius-xs);
   transition:
     background var(--tm-transition-fast),
     transform var(--tm-transition-fast),
@@ -168,7 +168,7 @@
 }
 
 .time-chip {
-  padding: 6px var(--tm-space-lg);
+  padding: 4px var(--tm-space-md);
   font-family: var(--tm-font-mono);
   font-size: var(--tm-scale-xs);
   font-weight: 500;

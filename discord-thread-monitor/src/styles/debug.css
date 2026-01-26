@@ -1,7 +1,7 @@
 .debug-section {
   display: flex;
   flex-direction: column;
-  gap: var(--tm-space-xl);
+  gap: var(--tm-space-lg);
 }
 
 /* Settings Group */
@@ -27,11 +27,11 @@
 }
 
 .retention-input {
-  width: 80px;
-  height: 38px;
-  padding: 0 var(--tm-space-md);
+  width: 76px;
+  height: 34px;
+  padding: 0 var(--tm-space-sm);
   border: 1px solid var(--tm-glass-border);
-  border-radius: var(--tm-radius-sm);
+  border-radius: var(--tm-radius-xs);
   font-family: var(--tm-font-mono);
   font-size: var(--tm-scale-md);
   color: var(--tm-text-primary);
@@ -77,9 +77,9 @@
 }
 
 .storage-details {
-  padding: var(--tm-space-md);
+  padding: var(--tm-space-sm);
   background: var(--tm-bg-base);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   border: 1px solid var(--tm-glass-border);
 }
 
@@ -114,9 +114,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--tm-space-xs);
-  padding: var(--tm-space-md);
+  padding: var(--tm-space-sm);
   background: var(--tm-bg-base);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   border: 1px solid var(--tm-glass-border);
   text-align: center;
 }
@@ -138,9 +138,9 @@
 
 /* Debug Buttons */
 .debug-section > button {
-  height: 42px;
-  border-radius: var(--tm-radius-md);
-  font-size: var(--tm-scale-md);
+  height: 36px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-scale-sm);
   font-weight: 600;
   color: var(--tm-text-secondary);
   background: var(--tm-bg-surface);
@@ -180,12 +180,12 @@
 
 /* Warning Banner */
 .storage-warning-banner {
-  padding: var(--tm-space-md);
-  margin-bottom: var(--tm-space-lg);
+  padding: var(--tm-space-sm);
+  margin-bottom: var(--tm-space-md);
   font-size: var(--tm-scale-sm);
   line-height: 1.5;
   color: var(--tm-accent);
   background: var(--tm-accent-subtle);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   border-left: 3px solid var(--tm-accent);
 }

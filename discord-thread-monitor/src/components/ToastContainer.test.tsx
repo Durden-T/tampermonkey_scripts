@@ -58,7 +58,7 @@ describe('ToastContainer', () => {
   });
 
   describe('Toast lifecycle', () => {
-    it('should persist toast until manually dismissed', () => {
+    it('should auto-dismiss toast after 10 seconds', () => {
       const { container } = render(
         <ToastContainer
           changes={[mockChange]}
@@ -69,13 +69,20 @@ describe('ToastContainer', () => {
       );
 
       expect(container.querySelector('.toast')).toBeInTheDocument();
+      expect(mockOnDismiss).not.toHaveBeenCalled();
 
       act(() => {
-        vi.advanceTimersByTime(10000);
+        vi.advanceTimersByTime(9999);
       });
 
       expect(mockOnDismiss).not.toHaveBeenCalled();
       expect(container.querySelector('.toast')).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(1);
+      });
+
+      expect(mockOnDismiss).toHaveBeenCalledWith('thread-1');
     });
 
     it('should not add duplicate toasts for the same change', () => {

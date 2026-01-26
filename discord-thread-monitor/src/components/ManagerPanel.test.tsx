@@ -549,7 +549,7 @@ describe('ManagerPanel', () => {
         expect.objectContaining({
           storageKey: 'thread-monitor-panel-position',
           defaultPosition: expect.any(Object),
-          bounds: { width: 520, height: 200 },
+          bounds: { width: 440, height: 200 },
           excludeSelector: '.panel-actions, .panel-tabs, .panel-content',
         })
       );

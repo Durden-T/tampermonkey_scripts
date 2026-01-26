@@ -1,7 +1,7 @@
 .manager-panel {
   position: fixed;
   z-index: var(--tm-z-panel);
-  width: 480px;
+  width: 440px;
   max-width: calc(100vw - 32px);
   max-height: calc(100vh - 32px);
   display: flex;
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--tm-space-lg) var(--tm-space-xl);
+  padding: var(--tm-space-md) var(--tm-space-lg);
   background: linear-gradient(180deg, var(--tm-bg-elevated) 0%, transparent 100%);
   border-bottom: 1px solid var(--tm-glass-border);
   user-select: none;
@@ -81,10 +81,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 36px;
+  gap: 5px;
+  height: 32px;
   padding: 0 var(--tm-space-md);
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-radius-sm);
   font-size: var(--tm-scale-sm);
   font-weight: 600;
   color: var(--tm-text-secondary);
@@ -112,8 +112,8 @@
 }
 
 .panel-actions button svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
@@ -131,7 +131,7 @@
 .panel-actions .lang-button,
 .panel-actions .help-button,
 .panel-actions .close-button {
-  width: 36px;
+  width: 32px;
   padding: 0;
 }
 
@@ -150,8 +150,8 @@
 /* Tabs */
 .panel-tabs {
   display: flex;
-  gap: 3px;
-  padding: var(--tm-space-md) var(--tm-space-lg);
+  gap: 2px;
+  padding: var(--tm-space-sm) var(--tm-space-md);
   background: var(--tm-bg-deep);
   border-bottom: 1px solid var(--tm-glass-border);
 }
@@ -162,9 +162,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--tm-space-sm);
-  height: 40px;
-  border-radius: var(--tm-radius-md);
+  gap: var(--tm-space-xs);
+  height: 36px;
+  border-radius: var(--tm-radius-sm);
   font-size: var(--tm-scale-sm);
   font-weight: 500;
   color: var(--tm-text-muted);
@@ -212,11 +212,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: var(--tm-scale-xs);
+  font-size: 9px;
   font-weight: 700;
   color: var(--tm-bg-void);
   background: var(--tm-accent-gradient);
@@ -233,8 +233,8 @@
   position: relative;
   flex: 1;
   min-height: 0;
-  max-height: 450px;
-  padding: var(--tm-space-lg);
+  max-height: 420px;
+  padding: var(--tm-space-md);
   overflow-y: auto;
 }
 
@@ -242,7 +242,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 90px;
   font-size: var(--tm-scale-md);
   color: var(--tm-text-dim);
   font-style: italic;
