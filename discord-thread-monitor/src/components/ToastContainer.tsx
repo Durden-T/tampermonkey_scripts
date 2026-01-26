@@ -21,7 +21,10 @@ interface ToastItemProps {
 
 const ToastItem = React.memo<ToastItemProps>(({ toast, thread, t, onDismiss, onNavigate }) => {
   const handleClick = () => {
-    onNavigate(toast.threadId, thread?.url ?? '');
+    if (!thread?.url) {
+      return;
+    }
+    onNavigate(toast.threadId, thread.url);
   };
 
   const handleDismissClick = (e: React.MouseEvent) => {

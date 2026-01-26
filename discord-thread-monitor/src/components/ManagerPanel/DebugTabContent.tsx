@@ -13,6 +13,7 @@ interface DebugTabContentProps {
   onSimulateTitleChange: () => void;
   onClearChanges: () => void;
   onRetentionChange: (days: number) => void;
+  onForceStorageWarning: () => void;
   t: ReturnType<typeof getTexts>;
 }
 
@@ -24,6 +25,7 @@ export function DebugTabContent({
   onSimulateTitleChange,
   onClearChanges,
   onRetentionChange,
+  onForceStorageWarning,
   t,
 }: DebugTabContentProps) {
   return (
@@ -44,6 +46,7 @@ export function DebugTabContent({
         <DebugActions
           onSimulateTitleChange={onSimulateTitleChange}
           onClearChanges={onClearChanges}
+          onForceStorageWarning={onForceStorageWarning}
           t={t}
         />
 

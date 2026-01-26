@@ -1,8 +1,9 @@
 export class BlacklistManager {
   private blacklistSet: Set<string>;
 
-  constructor(initialBlacklist: string[]) {
-    this.blacklistSet = new Set(initialBlacklist);
+  constructor(initialBlacklist: string[] | Set<string>) {
+    this.blacklistSet =
+      initialBlacklist instanceof Set ? initialBlacklist : new Set(initialBlacklist);
   }
 
   add(threadId: string): boolean {
@@ -23,5 +24,13 @@ export class BlacklistManager {
 
   getAll(): string[] {
     return Array.from(this.blacklistSet);
+  }
+
+  getSet(): Set<string> {
+    return this.blacklistSet;
+  }
+
+  toJSON(): string[] {
+    return this.getAll();
   }
 }

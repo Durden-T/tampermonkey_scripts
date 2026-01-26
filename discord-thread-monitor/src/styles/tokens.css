@@ -1,7 +1,7 @@
 :host {
-  /* Typography */
-  --tm-font-display: 'gg sans', 'Noto Sans', 'Helvetica Neue', helvetica, arial, sans-serif;
-  --tm-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  /* Typography - Windows 11 system fonts, CJK-first for Chinese */
+  --tm-font-display: 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
+  --tm-font-mono: 'Cascadia Code', 'Cascadia Mono', consolas, monospace;
 
   /* Scale System */
   --tm-scale-base: 14px;

@@ -34,8 +34,6 @@ export function ManagerPanel(props: ManagerPanelProps) {
   const logic = useManagerPanelLogic({
     isOpen: props.isOpen,
     storageInfo: props.storageInfo,
-    _onScanNow: props.onScanNow,
-    _onClose: props.onClose,
   });
 
   const filteredChangeGroups = useMemo(
@@ -125,6 +123,7 @@ export function ManagerPanel(props: ManagerPanelProps) {
           onResume={props.onResume}
           onSimulateTitleChange={props.onSimulateTitleChange}
           onRetentionChange={props.onRetentionChange}
+          onForceStorageWarning={logic.toggleForceStorageWarning}
           t={logic.t}
         />
       </div>

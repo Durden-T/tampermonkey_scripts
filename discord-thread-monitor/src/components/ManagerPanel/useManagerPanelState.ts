@@ -21,3 +21,12 @@ export const useManagerPanelFilterState = () => {
     now,
   };
 };
+
+export const useManagerPanelDebugState = () => {
+  const [forceStorageWarning, setForceStorageWarning] = useState(false);
+
+  return {
+    forceStorageWarning,
+    toggleForceStorageWarning: () => setForceStorageWarning((prev) => !prev),
+  };
+};

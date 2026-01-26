@@ -1,14 +1,16 @@
 import { getTexts } from '../../i18n';
 import type { TimeFilter } from '../../utils/timeFilters';
 import { STORAGE_WARNING_BYTES, type StorageInfo } from '../../types';
-import { useManagerPanelTabState, useManagerPanelFilterState } from './useManagerPanelState';
+import {
+  useManagerPanelTabState,
+  useManagerPanelFilterState,
+  useManagerPanelDebugState,
+} from './useManagerPanelState';
 import { useManagerPanelUI } from './useManagerPanelUI';
 
 interface UseManagerPanelLogicProps {
   isOpen: boolean;
   storageInfo: StorageInfo;
-  _onScanNow: () => void;
-  _onClose: () => void;
 }
 
 export const useManagerPanelLogic = ({ isOpen, storageInfo }: UseManagerPanelLogicProps) => {
@@ -24,13 +26,14 @@ export const useManagerPanelLogic = ({ isOpen, storageInfo }: UseManagerPanelLog
     showHelp,
     setShowHelp,
   } = useManagerPanelUI(isOpen);
+  const { forceStorageWarning, toggleForceStorageWarning } = useManagerPanelDebugState();
 
   const t = getTexts();
   const timeFilter: TimeFilter =
     filterMode === 'all' || filterMode === 'allUnread'
       ? filterMode
       : `${selectedPeriod}_${filterMode}`;
-  const showStorageWarning = storageInfo.rawSize > STORAGE_WARNING_BYTES;
+  const showStorageWarning = storageInfo.rawSize > STORAGE_WARNING_BYTES || forceStorageWarning;
 
   return {
     activeTab,
@@ -50,5 +53,6 @@ export const useManagerPanelLogic = ({ isOpen, storageInfo }: UseManagerPanelLog
     timeFilter,
     now,
     showStorageWarning,
+    toggleForceStorageWarning,
   };
 };

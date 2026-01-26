@@ -50,6 +50,7 @@ export const zh = {
     title: '调试',
     simulateChange: '模拟变更',
     clearAll: '清空记录',
+    forceStorageWarning: '强制存储警告',
     stats: {
       threads: '帖子',
       changes: '变更',
@@ -127,6 +128,7 @@ Unwanted threads can be blocked`,
     title: 'Debug',
     simulateChange: 'Simulate',
     clearAll: 'Clear All',
+    forceStorageWarning: 'Force Storage Warning',
     stats: {
       threads: 'Threads',
       changes: 'Changes',

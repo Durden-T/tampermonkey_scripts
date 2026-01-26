@@ -26,6 +26,7 @@ interface PanelContentProps {
   onResume: (threadId: string) => void;
   onSimulateTitleChange: () => void;
   onRetentionChange: (days: number) => void;
+  onForceStorageWarning: () => void;
   t: ReturnType<typeof getTexts>;
 }
 
@@ -82,6 +83,7 @@ export const PanelContent: React.FC<PanelContentProps> = (props) => {
             onSimulateTitleChange={props.onSimulateTitleChange}
             onClearChanges={props.onClearChanges}
             onRetentionChange={props.onRetentionChange}
+            onForceStorageWarning={props.onForceStorageWarning}
             t={props.t}
           />
         );

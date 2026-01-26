@@ -176,11 +176,17 @@ export class StorageEngine {
   }
 
   private migrateData(parsed: StoredData & { retentionMonths?: number }): StoredData {
-    if (parsed.retentionMonths !== undefined && parsed.retentionDays === undefined) {
-      parsed.retentionDays = parsed.retentionMonths * TIME_UNITS.DAYS_PER_MONTH;
-      delete parsed.retentionMonths;
-    }
-    parsed.retentionDays ??= DEFAULT_RETENTION_DAYS;
-    return parsed;
+    const retentionDays =
+      parsed.retentionDays ??
+      (parsed.retentionMonths
+        ? parsed.retentionMonths * TIME_UNITS.DAYS_PER_MONTH
+        : DEFAULT_RETENTION_DAYS);
+
+    return {
+      threads: parsed.threads ?? {},
+      changes: parsed.changes ?? [],
+      blacklist: parsed.blacklist ?? [],
+      retentionDays,
+    };
   }
 }

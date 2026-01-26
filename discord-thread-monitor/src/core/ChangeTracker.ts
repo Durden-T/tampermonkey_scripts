@@ -1,7 +1,6 @@
 import type { TitleChange, ThreadChangeGroup, MonitoredThread } from '../types';
 import { ChangeGroupBuilder } from './ChangeGroupBuilder';
 import { TIME_MS } from '../constants';
-
 export class ChangeTracker {
   private changes: TitleChange[];
   private unseenCount: number;
@@ -71,6 +70,7 @@ export class ChangeTracker {
     const retentionMs = retentionDays * TIME_MS.DAY;
     const cutoffTime = Date.now() - retentionMs;
     const originalLength = this.changes.length;
+
     const remainingUnseenThreads = new Set<string>();
 
     let writeIndex = 0;
