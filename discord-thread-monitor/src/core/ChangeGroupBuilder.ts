@@ -10,20 +10,21 @@ export class ChangeGroupBuilder {
     >();
 
     for (const change of changes) {
-      const existing = groupMap.get(change.threadId);
+      const { threadId, seen, changedAt } = change;
+      const existing = groupMap.get(threadId);
       if (existing) {
         existing.changes.push(change);
-        if (!change.seen) {
+        if (!seen) {
           existing.hasUnseen = true;
         }
-        if (change.changedAt > existing.latestChangeAt) {
-          existing.latestChangeAt = change.changedAt;
+        if (changedAt > existing.latestChangeAt) {
+          existing.latestChangeAt = changedAt;
         }
       } else {
-        groupMap.set(change.threadId, {
+        groupMap.set(threadId, {
           changes: [change],
-          hasUnseen: !change.seen,
-          latestChangeAt: change.changedAt,
+          hasUnseen: !seen,
+          latestChangeAt: changedAt,
         });
       }
     }

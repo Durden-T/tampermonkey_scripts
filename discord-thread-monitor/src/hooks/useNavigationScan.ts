@@ -4,13 +4,6 @@ import { TIMING } from '../constants';
 export const useNavigationScan = (performScan: () => void, refreshData: () => void) => {
   const lastScanTimeRef = useRef(0);
   const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const performScanRef = useRef(performScan);
-  const refreshDataRef = useRef(refreshData);
-
-  useEffect(() => {
-    performScanRef.current = performScan;
-    refreshDataRef.current = refreshData;
-  });
 
   const triggerDelayedScan = useCallback(() => {
     const now = Date.now();
@@ -24,11 +17,11 @@ export const useNavigationScan = (performScan: () => void, refreshData: () => vo
 
     pendingTimeoutRef.current = setTimeout(() => {
       lastScanTimeRef.current = Date.now();
-      performScanRef.current();
-      refreshDataRef.current();
+      performScan();
+      refreshData();
       pendingTimeoutRef.current = null;
     }, TIMING.NAV_SCAN_DELAY_MS);
-  }, []);
+  }, [performScan, refreshData]);
 
   useEffect(() => {
     let lastPathname = location.pathname;

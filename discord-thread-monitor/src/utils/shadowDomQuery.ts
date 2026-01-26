@@ -35,6 +35,7 @@ export function querySelectorAllDeep(
 ): Element[] {
   const results: Element[] = [];
   const queue: Element[] = [];
+  let queueIndex = 0;
 
   if (root instanceof Document) {
     addMatchesToResults(results, root.querySelectorAll(selector));
@@ -51,11 +52,9 @@ export function querySelectorAllDeep(
     }
   }
 
-  while (queue.length > 0) {
-    const node = queue.shift();
-    if (node) {
-      processElement(node, selector, results, queue);
-    }
+  while (queueIndex < queue.length) {
+    const node = queue[queueIndex++];
+    processElement(node, selector, results, queue);
   }
 
   return results;

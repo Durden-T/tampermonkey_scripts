@@ -5,21 +5,19 @@ import { TIME_MS } from '../constants';
 export class ChangeTracker {
   private changes: TitleChange[];
   private unseenCount: number;
+  private unseenThreads: Set<string>;
 
   constructor(changesRef: TitleChange[]) {
     this.changes = changesRef;
-    this.unseenCount = this.calculateInitialUnseenCount();
+    this.unseenThreads = this.buildUnseenThreadsSet();
+    this.unseenCount = this.unseenThreads.size;
   }
 
   recordChange(change: TitleChange): void {
-    if (!change.seen) {
-      const hadUnseenBefore = this.threadHasUnseen(change.threadId);
-      this.changes.push(change);
-      if (!hadUnseenBefore) {
-        this.unseenCount++;
-      }
-    } else {
-      this.changes.push(change);
+    this.changes.push(change);
+    if (!change.seen && !this.unseenThreads.has(change.threadId)) {
+      this.unseenThreads.add(change.threadId);
+      this.unseenCount++;
     }
   }
 
@@ -32,17 +30,19 @@ export class ChangeTracker {
   }
 
   markSeen(threadId: string): boolean {
-    let changed = false;
+    if (!this.unseenThreads.has(threadId)) {
+      return false;
+    }
+
     for (const change of this.changes) {
       if (change.threadId === threadId && !change.seen) {
         change.seen = true;
-        changed = true;
       }
     }
-    if (changed) {
-      this.unseenCount--;
-    }
-    return changed;
+
+    this.unseenThreads.delete(threadId);
+    this.unseenCount--;
+    return true;
   }
 
   markAllSeen(): boolean {
@@ -52,12 +52,14 @@ export class ChangeTracker {
     for (const change of this.changes) {
       change.seen = true;
     }
+    this.unseenThreads.clear();
     this.unseenCount = 0;
     return true;
   }
 
   clear(): void {
     this.changes.length = 0;
+    this.unseenThreads.clear();
     this.unseenCount = 0;
   }
 
@@ -69,7 +71,7 @@ export class ChangeTracker {
     const retentionMs = retentionDays * TIME_MS.DAY;
     const cutoffTime = Date.now() - retentionMs;
     const originalLength = this.changes.length;
-    const threadsToRecount = new Set<string>();
+    const threadsToCheck = new Set<string>();
 
     let writeIndex = 0;
     for (let readIndex = 0; readIndex < this.changes.length; readIndex++) {
@@ -80,16 +82,15 @@ export class ChangeTracker {
         }
         writeIndex++;
       } else if (!change.seen) {
-        threadsToRecount.add(change.threadId);
+        threadsToCheck.add(change.threadId);
       }
     }
     this.changes.length = writeIndex;
 
-    if (threadsToRecount.size > 0) {
-      for (const threadId of threadsToRecount) {
-        if (!this.threadHasUnseen(threadId)) {
-          this.unseenCount--;
-        }
+    for (const threadId of threadsToCheck) {
+      if (!this.threadHasUnseen(threadId)) {
+        this.unseenThreads.delete(threadId);
+        this.unseenCount--;
       }
     }
 
@@ -112,16 +113,21 @@ export class ChangeTracker {
   }
 
   private threadHasUnseen(threadId: string): boolean {
-    return this.changes.some((c) => c.threadId === threadId && !c.seen);
+    for (const change of this.changes) {
+      if (change.threadId === threadId && !change.seen) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  private calculateInitialUnseenCount(): number {
+  private buildUnseenThreadsSet(): Set<string> {
     const unseenThreads = new Set<string>();
     for (const change of this.changes) {
       if (!change.seen) {
         unseenThreads.add(change.threadId);
       }
     }
-    return unseenThreads.size;
+    return unseenThreads;
   }
 }

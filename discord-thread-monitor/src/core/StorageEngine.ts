@@ -41,11 +41,15 @@ export class StorageEngine {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const stored = GM_getValue(STORAGE.KEY, null);
-      if (stored === null || stored === undefined || stored === 'undefined') {
+      if (stored === null || stored === undefined || stored === 'undefined' || stored === '') {
         return this.getEmptyData();
       }
 
       const { jsonStr, isCompressed } = this.parseStoredData(stored);
+      if (!jsonStr) {
+        return this.getEmptyData();
+      }
+
       this.isCompressed = isCompressed;
       this.lastRawSize = getStringSize(jsonStr);
       return this.migrateData(JSON.parse(jsonStr) as StoredData & { retentionMonths?: number });
@@ -120,7 +124,11 @@ export class StorageEngine {
 
   private compress(jsonStr: string): string {
     const uint8 = pako.deflate(jsonStr);
-    return btoa(String.fromCharCode(...uint8));
+    let binary = '';
+    for (let i = 0; i < uint8.length; i++) {
+      binary += String.fromCharCode(uint8[i]);
+    }
+    return btoa(binary);
   }
 
   private decompress(base64: string): string {

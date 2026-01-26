@@ -6,6 +6,7 @@ import {
   type StorageInfo,
   DEFAULT_RETENTION_DAYS,
 } from '../types';
+import { RETENTION } from '../constants';
 import { StorageEngine } from './StorageEngine';
 import { ChangeTracker } from './ChangeTracker';
 import { BlacklistManager } from './BlacklistManager';
@@ -153,14 +154,24 @@ export class ThreadStore implements IThreadRepository {
   addToBlacklist(threadId: string): void {
     if (this.blacklistManager.add(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
-      this.persistMutation({ invalidateAllCaches: true });
+      this.cachedThreads = null;
+      const hasChanges = this.changeTracker.getChanges().some((c) => c.threadId === threadId);
+      if (hasChanges) {
+        this.invalidateDashboardCache();
+      }
+      this.scheduleSave();
     }
   }
 
   removeFromBlacklist(threadId: string): void {
     if (this.blacklistManager.remove(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
-      this.persistMutation({ invalidateAllCaches: true });
+      this.cachedThreads = null;
+      const hasChanges = this.changeTracker.getChanges().some((c) => c.threadId === threadId);
+      if (hasChanges) {
+        this.invalidateDashboardCache();
+      }
+      this.scheduleSave();
     }
   }
 
@@ -188,12 +199,17 @@ export class ThreadStore implements IThreadRepository {
   }
 
   setRetentionDays(days: number): void {
-    const newDays = days === 0 ? 0 : Math.max(1, days);
-    const currentDays = this.getRetentionDays();
-    const needsCleanup = newDays < currentDays || (newDays > 0 && currentDays === 0);
-    this.data.retentionDays = newDays;
+    if (!Number.isFinite(days) || days < 0) {
+      throw new Error('Retention days must be a finite non-negative number');
+    }
 
-    if (needsCleanup && this.changeTracker.cleanupOldChanges(newDays)) {
+    const clampedDays =
+      days === 0 ? 0 : Math.min(Math.max(1, Math.floor(days)), RETENTION.MAX_DAYS);
+    const currentDays = this.getRetentionDays();
+    const needsCleanup = clampedDays < currentDays || (clampedDays > 0 && currentDays === 0);
+    this.data.retentionDays = clampedDays;
+
+    if (needsCleanup && this.changeTracker.cleanupOldChanges(clampedDays)) {
       this.invalidateDashboardCache();
     }
     this.scheduleSave(true);

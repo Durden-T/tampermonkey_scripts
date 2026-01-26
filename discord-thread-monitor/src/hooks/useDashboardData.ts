@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import type { ThreadStore } from '../core/ThreadStore';
 import type { ThreadChangeGroup, StorageInfo } from '../types';
 
@@ -9,25 +9,12 @@ export const useDashboardData = (store: ThreadStore) => {
   const [changeGroups, setChangeGroups] = useState<ThreadChangeGroup[]>(initialData.changeGroups);
   const [storageInfo, setStorageInfo] = useState<StorageInfo>(initialData.storageInfo);
 
-  const refreshDataRef = useRef(() => {
+  const refreshData = useCallback(() => {
     const dashboardData = store.getDashboardData();
     setUnseenCount(dashboardData.unseenCount);
     setChangeGroups(dashboardData.changeGroups);
     setStorageInfo(dashboardData.storageInfo);
-  });
-
-  useEffect(() => {
-    refreshDataRef.current = () => {
-      const dashboardData = store.getDashboardData();
-      setUnseenCount(dashboardData.unseenCount);
-      setChangeGroups(dashboardData.changeGroups);
-      setStorageInfo(dashboardData.storageInfo);
-    };
-  });
-
-  const refreshData = useCallback(() => {
-    refreshDataRef.current();
-  }, []);
+  }, [store]);
 
   return {
     unseenCount,

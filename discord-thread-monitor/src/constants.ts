@@ -65,3 +65,7 @@ export const TIMING = {
   MIN_SCAN_GAP_MS: 3000,
   INITIAL_SCAN_MAX_RETRIES: 5,
 } as const;
+
+export const RETENTION = {
+  MAX_DAYS: 365,
+} as const;

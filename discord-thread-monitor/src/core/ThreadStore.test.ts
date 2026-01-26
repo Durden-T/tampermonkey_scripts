@@ -620,10 +620,17 @@ describe('ThreadStore', () => {
 
     it('should clamp retention days to valid range', () => {
       store.setRetentionDays(500);
-      expect(store.getRetentionDays()).toBe(500);
+      expect(store.getRetentionDays()).toBe(365);
 
-      store.setRetentionDays(-10);
-      expect(store.getRetentionDays()).toBe(1);
+      expect(() => store.setRetentionDays(-10)).toThrow(
+        'Retention days must be a finite non-negative number'
+      );
+      expect(() => store.setRetentionDays(NaN)).toThrow(
+        'Retention days must be a finite non-negative number'
+      );
+      expect(() => store.setRetentionDays(Infinity)).toThrow(
+        'Retention days must be a finite non-negative number'
+      );
     });
 
     it('should clean up old changes when retention is reduced', () => {
