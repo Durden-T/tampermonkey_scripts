@@ -1,40 +1,60 @@
+const addMatchesToResults = (results: Element[], matches: NodeListOf<Element>): void => {
+  for (let i = 0; i < matches.length; i++) {
+    results.push(matches[i]);
+  }
+};
+
+const enqueueChildren = (queue: Element[], children: HTMLCollection): void => {
+  for (let i = 0; i < children.length; i++) {
+    queue.push(children[i]);
+  }
+};
+
+const processElement = (
+  element: Element,
+  selector: string,
+  results: Element[],
+  queue: Element[]
+): void => {
+  if (element.shadowRoot) {
+    addMatchesToResults(results, element.shadowRoot.querySelectorAll(selector));
+    enqueueChildren(queue, element.shadowRoot.children);
+  }
+
+  enqueueChildren(queue, element.children);
+};
+
 /**
- * Recursively queries elements across shadow DOM boundaries.
+ * Iteratively queries elements across shadow DOM boundaries.
  * Standard querySelector* methods cannot pierce shadow roots.
+ * Uses iterative traversal with a queue for better performance.
  */
 export function querySelectorAllDeep(
   selector: string,
   root: Document | Element | ShadowRoot = document
 ): Element[] {
   const results: Element[] = [];
-
-  const traverseForShadowRoots = (node: Element) => {
-    if (node.shadowRoot) {
-      const shadowMatches = querySelectorAllDeep(selector, node.shadowRoot);
-      results.push(...shadowMatches);
-    }
-    for (const child of node.children) {
-      traverseForShadowRoots(child);
-    }
-  };
+  const queue: Element[] = [];
 
   if (root instanceof Document) {
-    const lightDomMatches = Array.from(root.querySelectorAll(selector));
-    results.push(...lightDomMatches);
-
+    addMatchesToResults(results, root.querySelectorAll(selector));
     if (root.documentElement) {
-      traverseForShadowRoots(root.documentElement);
+      queue.push(root.documentElement);
     }
   } else {
-    const lightDomMatches = Array.from(root.querySelectorAll(selector));
-    results.push(...lightDomMatches);
+    addMatchesToResults(results, root.querySelectorAll(selector));
 
-    const startElement = root instanceof ShadowRoot ? root.host : root;
     if (root instanceof ShadowRoot) {
-      const children = Array.from(root.children);
-      children.forEach(traverseForShadowRoots);
+      enqueueChildren(queue, root.children);
     } else {
-      traverseForShadowRoots(startElement);
+      queue.push(root);
+    }
+  }
+
+  while (queue.length > 0) {
+    const node = queue.shift();
+    if (node) {
+      processElement(node, selector, results, queue);
     }
   }
 

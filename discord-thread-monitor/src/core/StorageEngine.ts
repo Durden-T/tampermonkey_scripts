@@ -35,6 +35,7 @@ export class StorageEngine {
   private lastCompressedSize: number = 0;
   private isCompressed: boolean = false;
   private saveDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pendingData: StoredData | null = null;
 
   loadData(): StoredData {
     try {
@@ -85,14 +86,26 @@ export class StorageEngine {
     }
 
     if (immediate) {
+      this.pendingData = null;
       this.saveData(data);
       return;
     }
 
+    this.pendingData = data;
     this.saveDebounceTimeout = setTimeout(() => {
       this.saveData(data);
       this.saveDebounceTimeout = null;
+      this.pendingData = null;
     }, STORAGE.SAVE_DEBOUNCE_MS);
+  }
+
+  flushPendingSave(): void {
+    if (this.saveDebounceTimeout && this.pendingData) {
+      clearTimeout(this.saveDebounceTimeout);
+      this.saveDebounceTimeout = null;
+      this.saveData(this.pendingData);
+      this.pendingData = null;
+    }
   }
 
   getStorageInfo(changeCount: number, threadCount: number): StorageInfo {

@@ -5,6 +5,7 @@ import type { TitleChange, MonitoredThread } from '../types';
 import { useDashboardData } from './useDashboardData';
 import { useNotificationListener } from './useNotificationListener';
 import { useScanInterval } from './useScanInterval';
+import { useNavigationScan } from './useNavigationScan';
 
 interface UseAppDataProps {
   store: ThreadStore;
@@ -29,6 +30,7 @@ export const useAppData = ({ store, notifier, performScan }: UseAppDataProps) =>
 
   useNotificationListener(notifier, handleNotification, refreshData);
   useScanInterval(performScan, refreshData);
+  useNavigationScan(performScan, refreshData);
 
   return {
     isPanelOpen,

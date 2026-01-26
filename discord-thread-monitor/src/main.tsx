@@ -6,6 +6,7 @@ import { ThreadStore } from './core/ThreadStore';
 import { ThreadScanner } from './core/ThreadScanner';
 import { ChangeDetector } from './core/ChangeDetector';
 import { Notifier } from './core/Notifier';
+import { scanStatus } from './core/ScanStatus';
 import { TIMING } from './constants';
 import styles from './styles/index.css?inline';
 
@@ -26,9 +27,10 @@ const setupCoreServices = () => {
       if (changes.length > 0) {
         notifier.notifyAll(changes);
       }
+      scanStatus.recordSuccess();
       return { currentThreads, changes };
     } catch (err) {
-      console.error('[Discord Thread Monitor] Scan error:', err);
+      scanStatus.recordError(err);
       return { currentThreads: [], changes: [] };
     }
   };
@@ -82,9 +84,18 @@ function initializeMonitor() {
     );
     console.log('[Discord Thread Monitor] React app rendered');
 
-    setTimeout(() => {
-      performScan();
-    }, TIMING.INITIAL_SCAN_DELAY_MS);
+    const scheduleInitialScan = (attempt: number = 0) => {
+      const delay = TIMING.INITIAL_SCAN_DELAY_MS * (attempt + 1);
+      setTimeout(() => {
+        const { currentThreads } = performScan();
+        if (currentThreads.length === 0 && attempt < TIMING.INITIAL_SCAN_MAX_RETRIES) {
+          scheduleInitialScan(attempt + 1);
+        }
+      }, delay);
+    };
+    scheduleInitialScan();
+
+    window.addEventListener('beforeunload', () => store.flush());
 
     initialized = true;
     console.log('[Discord Thread Monitor] Initialization complete');

@@ -72,6 +72,7 @@ export const zh = {
   toast: {
     titleUpdated: '标题已更新',
   },
+  scanError: '扫描持续失败，监控可能未生效',
 };
 
 export const en = {
@@ -148,6 +149,7 @@ Unwanted threads can be blocked`,
   toast: {
     titleUpdated: 'Title changed',
   },
+  scanError: 'Scans failing repeatedly, monitoring may not be working',
 };
 
 import { STORAGE, TIME_MS, TIME_UNITS } from './constants';

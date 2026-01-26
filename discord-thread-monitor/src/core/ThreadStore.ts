@@ -31,10 +31,6 @@ export class ThreadStore implements IThreadRepository {
     this.cleanupOldChanges();
   }
 
-  private invalidateThreadsCache(): void {
-    this.cachedThreads = null;
-  }
-
   private invalidateDashboardCache(): void {
     this.cachedDashboardData = null;
   }
@@ -46,6 +42,20 @@ export class ThreadStore implements IThreadRepository {
 
   private scheduleSave(immediate: boolean = false): void {
     this.storageEngine.scheduleSave(this.data, immediate);
+  }
+
+  private persistMutation(
+    options: { invalidateAllCaches?: boolean; immediate?: boolean } = {}
+  ): void {
+    const { invalidateAllCaches = false, immediate = false } = options;
+
+    if (invalidateAllCaches) {
+      this.invalidateAllCaches();
+    } else {
+      this.invalidateDashboardCache();
+    }
+
+    this.scheduleSave(immediate);
   }
 
   getStorageInfo(): StorageInfo {
@@ -79,17 +89,7 @@ export class ThreadStore implements IThreadRepository {
   addThread(thread: MonitoredThread): void {
     if (!this.blacklistManager.has(thread.id)) {
       this.data.threads[thread.id] = thread;
-      this.invalidateThreadsCache();
-      this.scheduleSave();
-    }
-  }
-
-  updateTitle(threadId: string, newTitle: string): void {
-    const thread = this.data.threads[threadId];
-    if (thread && thread.currentTitle !== newTitle) {
-      thread.currentTitle = newTitle;
-      this.invalidateThreadsCache();
-      this.scheduleSave();
+      this.persistMutation({ invalidateAllCaches: true });
     }
   }
 
@@ -117,9 +117,8 @@ export class ThreadStore implements IThreadRepository {
     const thread = this.data.threads[change.threadId];
     if (thread) {
       thread.currentTitle = newTitle;
-      this.invalidateDashboardCache();
     }
-    this.scheduleSave();
+    this.persistMutation({ invalidateAllCaches: true });
   }
 
   getChanges(): TitleChange[] {
@@ -127,8 +126,7 @@ export class ThreadStore implements IThreadRepository {
   }
 
   getChangesGroupedByThread(): ThreadChangeGroup[] {
-    const { groupMap } = this.changeTracker.processChangesIntoGroups();
-    return this.changeTracker.buildChangeGroups(groupMap, this.data.threads);
+    return this.getDashboardData().changeGroups;
   }
 
   getUnseenChangesCount(): number {
@@ -137,37 +135,32 @@ export class ThreadStore implements IThreadRepository {
 
   markChangeSeen(threadId: string): void {
     if (this.changeTracker.markSeen(threadId)) {
-      this.invalidateDashboardCache();
-      this.scheduleSave();
+      this.persistMutation();
     }
   }
 
   markAllChangesSeen(): void {
     if (this.changeTracker.markAllSeen()) {
-      this.invalidateDashboardCache();
-      this.scheduleSave();
+      this.persistMutation();
     }
   }
 
   clearChanges(): void {
     this.changeTracker.clear();
-    this.invalidateDashboardCache();
-    this.scheduleSave(true);
+    this.persistMutation({ immediate: true });
   }
 
   addToBlacklist(threadId: string): void {
     if (this.blacklistManager.add(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
-      this.invalidateAllCaches();
-      this.scheduleSave();
+      this.persistMutation({ invalidateAllCaches: true });
     }
   }
 
   removeFromBlacklist(threadId: string): void {
     if (this.blacklistManager.remove(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
-      this.invalidateAllCaches();
-      this.scheduleSave();
+      this.persistMutation({ invalidateAllCaches: true });
     }
   }
 
@@ -200,21 +193,20 @@ export class ThreadStore implements IThreadRepository {
     const needsCleanup = newDays < currentDays || (newDays > 0 && currentDays === 0);
     this.data.retentionDays = newDays;
 
-    if (needsCleanup) {
-      const cleanupPerformed = this.changeTracker.cleanupOldChanges(newDays);
-      if (cleanupPerformed) {
-        this.invalidateDashboardCache();
-      }
+    if (needsCleanup && this.changeTracker.cleanupOldChanges(newDays)) {
+      this.invalidateDashboardCache();
     }
     this.scheduleSave(true);
   }
 
+  flush(): void {
+    this.storageEngine.flushPendingSave();
+  }
+
   private cleanupOldChanges(): void {
     const retentionDays = this.getRetentionDays();
-    const cleanupPerformed = this.changeTracker.cleanupOldChanges(retentionDays);
-    if (cleanupPerformed) {
-      this.invalidateDashboardCache();
-      this.scheduleSave(true);
+    if (this.changeTracker.cleanupOldChanges(retentionDays)) {
+      this.persistMutation({ immediate: true });
     }
   }
 }
