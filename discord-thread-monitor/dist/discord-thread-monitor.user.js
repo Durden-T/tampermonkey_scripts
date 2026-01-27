@@ -1,13 +1,11 @@
 // ==UserScript==
 // @name         Discord Thread Monitor
-// @namespace    https://github.com/Durden-T/tampermonkey_scripts
+// @namespace    discord-thread-monitor
 // @version      1.0.4
-// @author       Tyler
+// @author       RageNight
 // @description  Monitor Discord forum thread title changes
 // @license      MIT
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=discord.com
-// @downloadURL  https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js
-// @updateURL    https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js
 // @match        https://discord.com/*
 // @require      https://cdn.jsdelivr.net/npm/idb@8.0.3/build/umd.js
 // @grant        none

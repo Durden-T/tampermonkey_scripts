@@ -13,18 +13,14 @@ export default defineConfig(({ mode }) => ({
       entry: 'src/main.tsx',
       userscript: {
         name: 'Discord Thread Monitor',
-        namespace: 'https://github.com/Durden-T/tampermonkey_scripts',
+        namespace: 'discord-thread-monitor',
         version: pkg.version,
         description: 'Monitor Discord forum thread title changes',
-        author: 'Tyler',
+        author: 'RageNight',
         match: ['https://discord.com/*'],
         icon: 'https://www.google.com/s2/favicons?sz=64&domain=discord.com',
         grant: 'none',
         'run-at': 'document-end',
-        updateURL:
-          'https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js',
-        downloadURL:
-          'https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js',
       },
       build: {
         externalGlobals: {

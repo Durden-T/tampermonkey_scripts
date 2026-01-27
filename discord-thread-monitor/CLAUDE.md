@@ -39,30 +39,21 @@ The commit will be blocked if any lint error cannot be auto-fixed. This ensures 
 
 ## Release & Deployment
 
-### Automated Release Pipeline
-
-GitHub Actions workflow (`.github/workflows/release.yml`) triggers on version tags (`v*.*.*`) and automatically:
-
-1. Runs quality checks (formatting, ESLint, stylelint, tests)
-2. Builds production userscript
-3. Creates GitHub release with installation instructions and uploads built script
-4. Deploys to jsDelivr CDN for instant distribution
-
 ### Release Process
 
 ```bash
 # Step 1: Run pre-release checks
 npm run release:check
 
-# Step 2: Bump version (auto-creates commit and tag)
+# Step 2: Bump version (manual edit or npm version)
 npm version patch   # Bug fixes: 1.0.0 → 1.0.1
 npm version minor   # New features: 1.0.0 → 1.1.0
 npm version major   # Breaking changes: 1.0.0 → 2.0.0
 
-# Step 3: Push tags to trigger GitHub Actions
-git push --follow-tags
+# Step 3: Build production userscript
+npm run build
 
-# Step 4: GitHub Actions handles the rest automatically
+# Step 4: Distribute dist/discord-thread-monitor.user.js
 ```
 
 ### Version Management
@@ -72,38 +63,9 @@ git push --follow-tags
 - **Userscript header**: Auto-populated from `package.json` during build
 - **Never hardcode version** in multiple files
 
-### Auto-Update Configuration
+### Installation
 
-Userscript includes auto-update URLs pointing to jsDelivr CDN:
-
-- `@updateURL`: Tampermonkey checks this URL for new versions
-- `@downloadURL`: Where to download updated script
-- **CDN URL pattern**: `https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@{tag}/discord-thread-monitor/dist/discord-thread-monitor.user.js`
-- **Latest version**: Use `@latest` tag for always-current URL
-- **Specific version**: Use `@v1.0.1` for pinned version
-
-Users with auto-update enabled in Tampermonkey will automatically receive new versions.
-
-### Distribution URLs
-
-**Installation (latest version):**
-
-```
-https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js
-```
-
-**Specific version (stable):**
-
-```
-https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@v1.0.0/discord-thread-monitor/dist/discord-thread-monitor.user.js
-```
-
-### jsDelivr CDN Notes
-
-- **Cache purge**: GitHub releases trigger automatic CDN cache updates
-- **CDN propagation**: Typically instant, may take up to 5 minutes globally
-- **Reliability**: 99.9% uptime SLA, multi-CDN architecture
-- **Bandwidth**: Unlimited, free for open source projects
+Users can install the userscript by opening `dist/discord-thread-monitor.user.js` in their browser with Tampermonkey installed.
 
 ## Architecture
 
@@ -189,9 +151,9 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 - **Grants**: `none` (uses IndexedDB for storage)
 - **Run-at**: `document-end`
 - **Match**: `https://discord.com/*`
-- **Auto-update**: `@updateURL` and `@downloadURL` point to jsDelivr CDN (`@latest` tag)
 - **Version**: Dynamically read from `package.json` via `vite.config.ts` (never hardcoded)
-- **Namespace**: `https://github.com/Durden-T/tampermonkey_scripts`
+- **Namespace**: `discord-thread-monitor`
+- **Author**: RageNight
 
 ### Debug
 
