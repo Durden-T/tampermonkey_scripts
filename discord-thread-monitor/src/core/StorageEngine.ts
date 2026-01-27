@@ -2,33 +2,21 @@ import pako from 'pako';
 import {
   type StoredData,
   type StorageInfo,
+  type MonitoredThread,
+  type TitleChange,
   DEFAULT_RETENTION_DAYS,
-  COMPRESSION_THRESHOLD_BYTES,
 } from '../types';
-import { STORAGE, UTF8_CODE_POINTS, UTF8_BYTE_SIZES, TIME_UNITS } from '../constants';
+import { STORAGE, DISCORD_URL_PREFIX, BYTES } from '../constants';
 
 interface StorageWrapper {
   compressed: boolean;
   data: string;
 }
 
-const getStringSize = (str: string): number => {
-  let size = 0;
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (code < UTF8_CODE_POINTS.SINGLE_BYTE_MAX) {
-      size += 1;
-    } else if (code < UTF8_CODE_POINTS.DOUBLE_BYTE_MAX) {
-      size += 2;
-    } else if (code < UTF8_CODE_POINTS.SURROGATE_MIN || code >= UTF8_CODE_POINTS.SURROGATE_MAX) {
-      size += UTF8_BYTE_SIZES.TRIPLE;
-    } else {
-      size += UTF8_BYTE_SIZES.QUAD;
-      i++;
-    }
-  }
-  return size;
-};
+const MAX_COMPRESSION_SIZE_MB = 5;
+const STORAGE_VERSION = 1;
+
+const getStringSize = (str: string): number => new TextEncoder().encode(str).length;
 
 export class StorageEngine {
   private lastRawSize: number = 0;
@@ -51,8 +39,8 @@ export class StorageEngine {
       }
 
       this.isCompressed = isCompressed;
-      this.lastRawSize = getStringSize(jsonStr);
-      return this.migrateData(JSON.parse(jsonStr) as StoredData & { retentionMonths?: number });
+      const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+      return this.expand(parsed);
     } catch (error) {
       console.error('Failed to load data from storage:', error);
       return this.getEmptyData();
@@ -61,20 +49,14 @@ export class StorageEngine {
 
   saveData(data: StoredData): void {
     try {
-      const jsonStr = JSON.stringify(data);
+      const compactData = this.compact(data);
+      const jsonStr = JSON.stringify(compactData);
       this.lastRawSize = getStringSize(jsonStr);
 
-      let wrapper: StorageWrapper;
-      if (this.lastRawSize > COMPRESSION_THRESHOLD_BYTES) {
-        const compressed = this.compress(jsonStr);
-        this.lastCompressedSize = getStringSize(compressed);
-        this.isCompressed = true;
-        wrapper = { compressed: true, data: compressed };
-      } else {
-        this.lastCompressedSize = this.lastRawSize;
-        this.isCompressed = false;
-        wrapper = { compressed: false, data: jsonStr };
-      }
+      const compressed = this.compress(jsonStr);
+      this.lastCompressedSize = getStringSize(compressed);
+      this.isCompressed = true;
+      const wrapper: StorageWrapper = { compressed: true, data: compressed };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       GM_setValue(STORAGE.KEY, JSON.stringify(wrapper));
@@ -124,11 +106,26 @@ export class StorageEngine {
 
   private compress(jsonStr: string): string {
     const uint8 = pako.deflate(jsonStr);
-    let binary = '';
-    for (let i = 0; i < uint8.length; i++) {
-      binary += String.fromCharCode(uint8[i]);
+
+    if (uint8.length > MAX_COMPRESSION_SIZE_MB * BYTES.MB) {
+      console.warn(
+        `Compression input exceeds ${MAX_COMPRESSION_SIZE_MB}MB, performance may degrade`
+      );
     }
-    return btoa(binary);
+
+    const chunks: string[] = [];
+    const chunkSize = 8192;
+
+    for (let i = 0; i < uint8.length; i += chunkSize) {
+      const end = Math.min(i + chunkSize, uint8.length);
+      let chunk = '';
+      for (let j = i; j < end; j++) {
+        chunk += String.fromCharCode(uint8[j]);
+      }
+      chunks.push(chunk);
+    }
+
+    return btoa(chunks.join(''));
   }
 
   private decompress(base64: string): string {
@@ -166,27 +163,140 @@ export class StorageEngine {
     }
   }
 
+  private buildThreadIdDict(data: StoredData): { dict: string[]; indexMap: Map<string, number> } {
+    const threadIdSet = new Set<string>();
+    for (const id of Object.keys(data.threads)) {
+      threadIdSet.add(id);
+    }
+    for (const change of data.changes) {
+      threadIdSet.add(change.threadId);
+    }
+    for (const id of data.blacklist) {
+      threadIdSet.add(id);
+    }
+
+    const dict = Array.from(threadIdSet);
+    const indexMap = new Map(dict.map((id, idx) => [id, idx]));
+    return { dict, indexMap };
+  }
+
+  private compactThreads(
+    threads: Record<string, MonitoredThread>,
+    indexMap: Map<string, number>
+  ): Record<string, unknown> {
+    const compactThreads: Record<string, unknown> = {};
+    for (const [id, thread] of Object.entries(threads)) {
+      const idx = indexMap.get(id);
+      if (idx === undefined) {
+        continue;
+      }
+      compactThreads[idx] = {
+        currentTitle: thread.currentTitle,
+        url: thread.url.startsWith(DISCORD_URL_PREFIX)
+          ? thread.url.slice(DISCORD_URL_PREFIX.length)
+          : thread.url,
+        parentChannel: thread.parentChannel,
+        firstSeenAt: thread.firstSeenAt,
+      };
+    }
+    return compactThreads;
+  }
+
+  private compactChanges(indexMap: Map<string, number>, changes: TitleChange[]): unknown[] {
+    return changes.map((change) => {
+      const idx = indexMap.get(change.threadId);
+      if (idx === undefined) {
+        throw new Error(`Thread ID ${change.threadId} not found in dictionary`);
+      }
+      const compactChange: Record<string, unknown> = {
+        t: idx,
+        o: change.oldTitle,
+        n: change.newTitle,
+        c: change.changedAt,
+      };
+      if (change.seen) {
+        compactChange.s = true;
+      }
+      return compactChange;
+    });
+  }
+
+  private compactBlacklist(blacklist: string[], indexMap: Map<string, number>): number[] {
+    return blacklist.map((id) => {
+      const idx = indexMap.get(id);
+      if (idx === undefined) {
+        throw new Error(`Thread ID ${id} not found in dictionary`);
+      }
+      return idx;
+    });
+  }
+
+  private compact(data: StoredData): Record<string, unknown> {
+    const { dict, indexMap } = this.buildThreadIdDict(data);
+
+    const result: Record<string, unknown> = {
+      _v: STORAGE_VERSION,
+      dict,
+      threads: this.compactThreads(data.threads, indexMap),
+      changes: this.compactChanges(indexMap, data.changes),
+      blacklist: this.compactBlacklist(data.blacklist, indexMap),
+    };
+
+    if (data.retentionDays && data.retentionDays !== 0) {
+      result.retentionDays = data.retentionDays;
+    }
+
+    return result;
+  }
+
+  private expand(parsed: Record<string, unknown>): StoredData {
+    if (parsed._v !== STORAGE_VERSION) {
+      throw new Error('Incompatible storage version');
+    }
+
+    const dict = parsed.dict as string[];
+
+    const expandedThreads: Record<string, MonitoredThread> = {};
+    const threadsData = parsed.threads as Record<string, Record<string, unknown>>;
+    for (const [idx, thread] of Object.entries(threadsData)) {
+      const id = dict[Number(idx)];
+      expandedThreads[id] = {
+        id,
+        currentTitle: thread.currentTitle as string,
+        url: (thread.url as string).startsWith(DISCORD_URL_PREFIX)
+          ? (thread.url as string)
+          : DISCORD_URL_PREFIX + (thread.url as string),
+        parentChannel: thread.parentChannel as string,
+        firstSeenAt: thread.firstSeenAt as number,
+      };
+    }
+
+    const changesData = parsed.changes as Array<Record<string, unknown>>;
+    const expandedChanges = changesData.map((change) => ({
+      threadId: dict[change.t as number],
+      oldTitle: change.o as string,
+      newTitle: change.n as string,
+      changedAt: change.c as number,
+      seen: (change.s as boolean | undefined) ?? false,
+    }));
+
+    const blacklistData = parsed.blacklist as number[];
+    const expandedBlacklist = blacklistData.map((idx) => dict[idx]);
+
+    return {
+      threads: expandedThreads,
+      changes: expandedChanges,
+      blacklist: expandedBlacklist,
+      retentionDays: (parsed.retentionDays as number | undefined) ?? DEFAULT_RETENTION_DAYS,
+    };
+  }
+
   private getEmptyData(): StoredData {
     return {
       threads: {},
       changes: [],
       blacklist: [],
       retentionDays: DEFAULT_RETENTION_DAYS,
-    };
-  }
-
-  private migrateData(parsed: StoredData & { retentionMonths?: number }): StoredData {
-    const retentionDays =
-      parsed.retentionDays ??
-      (parsed.retentionMonths
-        ? parsed.retentionMonths * TIME_UNITS.DAYS_PER_MONTH
-        : DEFAULT_RETENTION_DAYS);
-
-    return {
-      threads: parsed.threads ?? {},
-      changes: parsed.changes ?? [],
-      blacklist: parsed.blacklist ?? [],
-      retentionDays,
     };
   }
 }

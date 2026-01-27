@@ -23,6 +23,8 @@ export class ThreadStore implements IThreadRepository {
     changeGroups: ThreadChangeGroup[];
     storageInfo: StorageInfo;
   } | null = null;
+  private cachedChanges: TitleChange[] | null = null;
+  private cachedBlacklistedThreads: MonitoredThread[] | null = null;
 
   constructor() {
     this.storageEngine = new StorageEngine();
@@ -34,11 +36,14 @@ export class ThreadStore implements IThreadRepository {
 
   private invalidateDashboardCache(): void {
     this.cachedDashboardData = null;
+    this.cachedChanges = null;
   }
 
   private invalidateAllCaches(): void {
     this.cachedThreads = null;
     this.cachedDashboardData = null;
+    this.cachedChanges = null;
+    this.cachedBlacklistedThreads = null;
   }
 
   private scheduleSave(immediate: boolean = false): void {
@@ -94,6 +99,24 @@ export class ThreadStore implements IThreadRepository {
     }
   }
 
+  addThreads(threads: MonitoredThread[]): void {
+    if (threads.length === 0) {
+      return;
+    }
+
+    let hasChanges = false;
+    for (const thread of threads) {
+      if (!this.blacklistManager.has(thread.id)) {
+        this.data.threads[thread.id] = thread;
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      this.persistMutation({ invalidateAllCaches: true });
+    }
+  }
+
   getThreads(): Record<string, MonitoredThread> {
     if (this.cachedThreads !== null) {
       return this.cachedThreads;
@@ -122,8 +145,31 @@ export class ThreadStore implements IThreadRepository {
     this.persistMutation({ invalidateAllCaches: true });
   }
 
+  recordTitleChanges(changes: Array<{ change: TitleChange; newTitle: string }>): void {
+    if (changes.length === 0) {
+      return;
+    }
+
+    for (const { change, newTitle } of changes) {
+      const thread = this.data.threads[change.threadId];
+      if (!thread) {
+        throw new Error(`Cannot record title change for non-existent thread: ${change.threadId}`);
+      }
+
+      this.changeTracker.recordChange(change);
+      thread.currentTitle = newTitle;
+    }
+
+    this.persistMutation({ invalidateAllCaches: true });
+  }
+
   getChanges(): TitleChange[] {
-    return [...this.changeTracker.getChanges()];
+    if (this.cachedChanges !== null) {
+      return this.cachedChanges;
+    }
+
+    this.cachedChanges = [...this.changeTracker.getChanges()];
+    return this.cachedChanges;
   }
 
   getChangesGroupedByThread(): ThreadChangeGroup[] {
@@ -154,11 +200,7 @@ export class ThreadStore implements IThreadRepository {
   addToBlacklist(threadId: string): void {
     if (this.blacklistManager.add(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
-      this.cachedThreads = null;
-      const hasChanges = this.changeTracker.getChanges().some((c) => c.threadId === threadId);
-      if (hasChanges) {
-        this.invalidateDashboardCache();
-      }
+      this.invalidateAllCaches();
       this.scheduleSave();
     }
   }
@@ -167,6 +209,7 @@ export class ThreadStore implements IThreadRepository {
     if (this.blacklistManager.remove(threadId)) {
       this.data.blacklist = this.blacklistManager.getAll();
       this.cachedThreads = null;
+      this.cachedBlacklistedThreads = null;
       const hasChanges = this.changeTracker.getChanges().some((c) => c.threadId === threadId);
       if (hasChanges) {
         this.invalidateDashboardCache();
@@ -184,6 +227,10 @@ export class ThreadStore implements IThreadRepository {
   }
 
   getBlacklistedThreads(): MonitoredThread[] {
+    if (this.cachedBlacklistedThreads !== null) {
+      return this.cachedBlacklistedThreads;
+    }
+
     const result: MonitoredThread[] = [];
     for (const id of this.blacklistManager.getAll()) {
       const thread = this.data.threads[id];
@@ -191,6 +238,7 @@ export class ThreadStore implements IThreadRepository {
         result.push(thread);
       }
     }
+    this.cachedBlacklistedThreads = result;
     return result;
   }
 

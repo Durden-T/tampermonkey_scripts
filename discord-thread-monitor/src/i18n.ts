@@ -21,6 +21,8 @@ export const zh = {
     noThreads: '暂无监控帖子',
     noBlacklist: '暂无屏蔽帖子',
     newThreadsFound: '发现 {count} 个新帖子',
+    searchPlaceholder: '搜索标题或频道...',
+    searchResults: '{count} 个结果',
   },
   filters: {
     allUnread: '未读',
@@ -99,6 +101,8 @@ export const en = {
     noThreads: 'No threads monitored',
     noBlacklist: 'No blocked threads',
     newThreadsFound: '{count} new threads found',
+    searchPlaceholder: 'Search title or channel...',
+    searchResults: '{count} results',
   },
   filters: {
     allUnread: 'Unread',

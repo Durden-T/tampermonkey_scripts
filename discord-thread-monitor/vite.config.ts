@@ -39,5 +39,10 @@ export default defineConfig(({ mode }) => ({
         comments: false,
       },
     },
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
   },
 }));

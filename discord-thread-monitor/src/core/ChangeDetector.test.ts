@@ -21,6 +21,8 @@ describe('ChangeDetector', () => {
       getThreads: vi.fn(),
       addThread: vi.fn(),
       recordTitleChange: vi.fn(),
+      addThreads: vi.fn(),
+      recordTitleChanges: vi.fn(),
     };
 
     // Create ChangeDetector with mocked store
@@ -70,14 +72,17 @@ describe('ChangeDetector', () => {
         seen: false,
       });
 
-      expect(mockStore.recordTitleChange).toHaveBeenCalledWith(
-        expect.objectContaining({
-          threadId: '123',
-          oldTitle: 'Old Title',
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledWith([
+        {
+          change: expect.objectContaining({
+            threadId: '123',
+            oldTitle: 'Old Title',
+            newTitle: 'New Title',
+          }),
           newTitle: 'New Title',
-        }),
-        'New Title'
-      );
+        },
+      ]);
+      expect(mockStore.addThreads).toHaveBeenCalledWith([]);
     });
 
     it('should add new threads that are not in storage', () => {
@@ -96,8 +101,8 @@ describe('ChangeDetector', () => {
       const changes = changeDetector.detectAndPersistChanges(currentThreads);
 
       expect(changes).toHaveLength(0);
-      expect(mockStore.addThread).toHaveBeenCalledWith(currentThreads[0]);
-      expect(mockStore.recordTitleChange).not.toHaveBeenCalled();
+      expect(mockStore.addThreads).toHaveBeenCalledWith(currentThreads);
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledWith([]);
     });
 
     it('should not detect changes when titles are the same', () => {
@@ -126,7 +131,8 @@ describe('ChangeDetector', () => {
       const changes = changeDetector.detectAndPersistChanges(currentThreads);
 
       expect(changes).toHaveLength(0);
-      expect(mockStore.recordTitleChange).not.toHaveBeenCalled();
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledWith([]);
+      expect(mockStore.addThreads).toHaveBeenCalledWith([]);
     });
 
     it('should handle multiple threads with mixed changes', () => {
@@ -180,8 +186,18 @@ describe('ChangeDetector', () => {
       expect(changes[0].oldTitle).toBe('Thread 1 Old');
       expect(changes[0].newTitle).toBe('Thread 1 New');
 
-      expect(mockStore.addThread).toHaveBeenCalledWith(expect.objectContaining({ id: '789' }));
-      expect(mockStore.recordTitleChange).toHaveBeenCalledTimes(1);
+      expect(mockStore.addThreads).toHaveBeenCalledWith([expect.objectContaining({ id: '789' })]);
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledTimes(1);
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledWith([
+        {
+          change: expect.objectContaining({
+            threadId: '123',
+            oldTitle: 'Thread 1 Old',
+            newTitle: 'Thread 1 New',
+          }),
+          newTitle: 'Thread 1 New',
+        },
+      ]);
     });
 
     it('should detect changes when thread URL has changed', () => {
@@ -236,8 +252,8 @@ describe('ChangeDetector', () => {
       const changes = changeDetector.detectAndPersistChanges(currentThreads);
 
       expect(changes).toHaveLength(0);
-      expect(mockStore.addThread).toHaveBeenCalledTimes(2);
-      expect(mockStore.recordTitleChange).not.toHaveBeenCalled();
+      expect(mockStore.addThreads).toHaveBeenCalledWith(currentThreads);
+      expect(mockStore.recordTitleChanges).toHaveBeenCalledWith([]);
     });
 
     it('should detect changes with special characters in titles', () => {

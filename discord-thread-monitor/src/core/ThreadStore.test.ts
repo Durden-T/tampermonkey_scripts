@@ -74,24 +74,31 @@ describe('ThreadStore', () => {
     });
 
     it('should load existing data from storage', () => {
-      const testData: StoredData = {
+      const compactData = {
+        _v: 1,
+        dict: ['123', '789'],
         threads: {
-          '123': {
-            id: '123',
+          0: {
             currentTitle: 'Test Thread',
-            url: 'https://discord.com/channels/123/456',
+            url: '123/456',
             parentChannel: 'General',
             firstSeenAt: 1000,
           },
         },
         changes: [],
-        blacklist: ['789'],
+        blacklist: [1],
         retentionDays: 7,
       };
 
-      mockGetValue.mockReturnValue(
-        JSON.stringify({ compressed: false, data: JSON.stringify(testData) })
-      );
+      const jsonStr = JSON.stringify(compactData);
+      const uint8 = new TextEncoder().encode(jsonStr);
+      let binary = '';
+      for (let i = 0; i < uint8.length; i++) {
+        binary += String.fromCharCode(uint8[i]);
+      }
+      const base64 = btoa(binary);
+
+      mockGetValue.mockReturnValue(JSON.stringify({ compressed: true, data: base64 }));
 
       const store = new ThreadStore();
       const threads = store.getThreads();
@@ -127,22 +134,6 @@ describe('ThreadStore', () => {
       const store = new ThreadStore();
       expect(store.getThreads()).toEqual({});
       expect(store.getChanges()).toEqual([]);
-    });
-
-    it('should migrate old retentionMonths to retentionDays', () => {
-      const oldData = {
-        threads: {},
-        changes: [],
-        blacklist: [],
-        retentionMonths: 2,
-      };
-
-      mockGetValue.mockReturnValue(
-        JSON.stringify({ compressed: false, data: JSON.stringify(oldData) })
-      );
-
-      const store = new ThreadStore();
-      expect(store.getRetentionDays()).toBe(60);
     });
   });
 
@@ -812,52 +803,6 @@ describe('ThreadStore', () => {
 
       // Restore console.error
       consoleSpy.mockRestore();
-    });
-
-    it('should handle migration from retentionMonths to retentionDays', () => {
-      // Set up old format data with retentionMonths
-      const oldFormatData: StoredData & { retentionMonths?: number } = {
-        threads: {},
-        changes: [],
-        blacklist: [],
-        retentionMonths: 6, // 6 months
-      };
-
-      storage['discord-thread-monitor-data'] = JSON.stringify(oldFormatData);
-
-      const store = new ThreadStore();
-
-      // Should migrate to retentionDays (6 * 30 = 180)
-      expect(store.getRetentionDays()).toBe(180);
-    });
-
-    it('should handle string storage format correctly', () => {
-      // Test when storage returns a plain string (old format)
-      storage['discord-thread-monitor-data'] = JSON.stringify({
-        threads: {},
-        changes: [],
-        blacklist: [],
-        retentionDays: 45,
-      });
-
-      const store = new ThreadStore();
-      expect(store.getRetentionDays()).toBe(45);
-    });
-
-    it('should handle wrapper format correctly', () => {
-      // Test when storage returns wrapper format (not compressed)
-      storage['discord-thread-monitor-data'] = JSON.stringify({
-        compressed: false,
-        data: JSON.stringify({
-          threads: {},
-          changes: [],
-          blacklist: [],
-          retentionDays: 60,
-        }),
-      });
-
-      const store = new ThreadStore();
-      expect(store.getRetentionDays()).toBe(60);
     });
   });
 

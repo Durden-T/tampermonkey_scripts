@@ -9,11 +9,11 @@ export const BYTES = {
   MB: 1_048_576,
 } as const;
 
-const COMPRESSION_THRESHOLD_KB = 50;
 const WARNING_THRESHOLD_KB = 200;
 
+export const DISCORD_URL_PREFIX = 'https://discord.com/channels/';
+
 export const STORAGE = {
-  COMPRESSION_THRESHOLD: COMPRESSION_THRESHOLD_KB * BYTES.KB,
   WARNING_THRESHOLD: WARNING_THRESHOLD_KB * BYTES.KB,
   SAVE_DEBOUNCE_MS: 300,
   KEY: 'discord-thread-monitor-data',
@@ -21,18 +21,6 @@ export const STORAGE = {
   HELP_SEEN_KEY: 'thread-monitor-help-seen',
   PANEL_POSITION_KEY: 'thread-monitor-panel-position',
   TOGGLE_POSITION_KEY: 'thread-monitor-toggle-position',
-} as const;
-
-export const UTF8_CODE_POINTS = {
-  SINGLE_BYTE_MAX: 0x80,
-  DOUBLE_BYTE_MAX: 0x800,
-  SURROGATE_MIN: 0xd800,
-  SURROGATE_MAX: 0xe000,
-} as const;
-
-export const UTF8_BYTE_SIZES = {
-  TRIPLE: 3,
-  QUAD: 4,
 } as const;
 
 export const TIME_UNITS = {

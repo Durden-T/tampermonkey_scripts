@@ -6,6 +6,8 @@ export class ChangeDetector {
 
   detectAndPersistChanges(currentThreads: MonitoredThread[]): TitleChange[] {
     const changes: TitleChange[] = [];
+    const titleChanges: Array<{ change: TitleChange; newTitle: string }> = [];
+    const newThreads: MonitoredThread[] = [];
     const storedThreads = this.store.getThreads();
 
     for (const currentThread of currentThreads) {
@@ -21,12 +23,15 @@ export class ChangeDetector {
             seen: false,
           };
           changes.push(change);
-          this.store.recordTitleChange(change, currentThread.currentTitle);
+          titleChanges.push({ change, newTitle: currentThread.currentTitle });
         }
       } else {
-        this.store.addThread(currentThread);
+        newThreads.push(currentThread);
       }
     }
+
+    this.store.addThreads(newThreads);
+    this.store.recordTitleChanges(titleChanges);
 
     return changes;
   }

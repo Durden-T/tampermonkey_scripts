@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadStore } from './ThreadStore';
-import type { MonitoredThread, StoredData } from '../types';
+import type { MonitoredThread, TitleChange } from '../types';
 
 let storage: Record<string, any> = {};
 
@@ -49,13 +49,6 @@ describe('ThreadStore Compression', () => {
   });
 
   it('should decompress compressed data from storage', () => {
-    const _testData: StoredData = {
-      threads: {},
-      changes: [],
-      blacklist: [],
-      retentionDays: 0,
-    };
-
     mockGetValue.mockReturnValue(JSON.stringify({ compressed: true, data: 'compresseddata' }));
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -80,7 +73,7 @@ describe('ThreadStore Compression', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should compress large data exceeding threshold', () => {
+  it('should compress all data', () => {
     const store = new ThreadStore();
 
     const largeTitle = 'A'.repeat(2000);
@@ -101,27 +94,7 @@ describe('ThreadStore Compression', () => {
     const parsed = JSON.parse(savedData);
     expect(parsed).toHaveProperty('compressed');
     expect(parsed).toHaveProperty('data');
-  });
-
-  it('should not compress small data', () => {
-    const store = new ThreadStore();
-
-    const smallThread: MonitoredThread = {
-      id: 'small',
-      currentTitle: 'Small title',
-      url: 'https://discord.com/123/small',
-      parentChannel: 'Test',
-      firstSeenAt: Date.now(),
-    };
-
-    store.addThread(smallThread);
-    vi.advanceTimersByTime(500);
-
-    expect(mockSetValue).toHaveBeenCalled();
-
-    const savedData = mockSetValue.mock.calls[0][1];
-    const parsed = JSON.parse(savedData);
-    expect(parsed.compressed).toBe(false);
+    expect(parsed.compressed).toBe(true);
   });
 
   it('should handle compression failure gracefully', async () => {
@@ -147,11 +120,7 @@ describe('ThreadStore Compression', () => {
     store.addThread(largeThread);
     vi.advanceTimersByTime(500);
 
-    expect(mockSetValue).toHaveBeenCalled();
-
-    const savedData = mockSetValue.mock.calls[0][1];
-    const parsed = JSON.parse(savedData);
-    expect(parsed.compressed).toBe(false);
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to save data to storage:', expect.any(Error));
 
     consoleSpy.mockRestore();
 
@@ -176,51 +145,6 @@ describe('ThreadStore Compression', () => {
     consoleSpy.mockRestore();
 
     (pako as any).default.inflate = originalInflate;
-  });
-
-  it('should handle old string format without wrapper', () => {
-    const testData: StoredData = {
-      threads: {},
-      changes: [],
-      blacklist: [],
-      retentionDays: 0,
-    };
-
-    const oldFormatString = JSON.stringify(testData);
-    mockGetValue.mockReturnValue(oldFormatString);
-
-    const store = new ThreadStore();
-    expect(store.getThreads()).toEqual({});
-    expect(store.getRetentionDays()).toBe(0);
-  });
-
-  it('should handle compressed data successfully with large data', () => {
-    // Test that data exceeding compression threshold gets compressed
-    // COMPRESSION_THRESHOLD_BYTES is 50KB = 51200 bytes
-    // Create data that should definitely exceed this threshold
-
-    const store = new ThreadStore();
-
-    // Create multiple threads with large titles to exceed 50KB threshold
-    for (let i = 0; i < 10; i++) {
-      const largeThread: MonitoredThread = {
-        id: `test-thread-${i}`,
-        currentTitle: 'A'.repeat(10000), // Each title ~10KB
-        url: `https://discord.com/channels/123/test-thread-${i}`,
-        parentChannel: 'Test Channel ' + i,
-        firstSeenAt: Date.now() - i * 1000,
-      };
-      store.addThread(largeThread);
-    }
-
-    // Wait for debounced save
-    vi.advanceTimersByTime(500);
-
-    // Verify compression was used
-    expect(mockSetValue).toHaveBeenCalled();
-    const savedData = mockSetValue.mock.calls[mockSetValue.mock.calls.length - 1][1];
-    const parsed = JSON.parse(savedData);
-    expect(parsed.compressed).toBe(true);
   });
 
   it('should handle getDashboardData with empty changes array', () => {
@@ -252,8 +176,7 @@ describe('ThreadStore Compression', () => {
       threadId: 'test-thread',
       oldTitle: 'Old Title',
       newTitle: 'New Title',
-      timestamp: Date.now(),
-      url: 'https://discord.com/channels/123/test-thread',
+      changedAt: Date.now(),
       seen: false,
     };
 
@@ -266,17 +189,133 @@ describe('ThreadStore Compression', () => {
   });
 
   it('should handle corrupted data that throws in parseStoredData catch block', () => {
-    // Mock GM_getValue to return a non-string, non-object value that causes JSON.parse to throw
     mockGetValue.mockReturnValue(Symbol('corrupted'));
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const store = new ThreadStore();
 
-    // Should handle gracefully and return empty data
     expect(store.getThreads()).toEqual({});
     expect(store.getChanges()).toEqual([]);
 
     consoleSpy.mockRestore();
+  });
+
+  it('should use threadId dictionary encoding in v3 format', () => {
+    const store = new ThreadStore();
+
+    const thread1: MonitoredThread = {
+      id: 'thread-1',
+      currentTitle: 'Thread 1',
+      url: 'https://discord.com/channels/123/thread-1',
+      parentChannel: 'Channel',
+      firstSeenAt: 1700000000000,
+    };
+
+    const thread2: MonitoredThread = {
+      id: 'thread-2',
+      currentTitle: 'Thread 2',
+      url: 'https://discord.com/channels/123/thread-2',
+      parentChannel: 'Channel',
+      firstSeenAt: 1700005000000,
+    };
+
+    store.addThreads([thread1, thread2]);
+    store.addToBlacklist('thread-2');
+    store.recordTitleChange(
+      {
+        threadId: 'thread-1',
+        oldTitle: 'Thread 1',
+        newTitle: 'Updated Thread 1',
+        changedAt: 1700010000000,
+        seen: false,
+      },
+      'Updated Thread 1'
+    );
+
+    vi.advanceTimersByTime(500);
+
+    expect(mockSetValue).toHaveBeenCalled();
+    const savedData = mockSetValue.mock.calls[mockSetValue.mock.calls.length - 1][1];
+    const wrapper = JSON.parse(savedData);
+    expect(wrapper.compressed).toBe(true);
+
+    const decompressed = atob(wrapper.data);
+    const uint8 = new Uint8Array(decompressed.length);
+    for (let i = 0; i < decompressed.length; i++) {
+      uint8[i] = decompressed.charCodeAt(i);
+    }
+    const inflated = new TextDecoder().decode(uint8);
+    const compactData = JSON.parse(inflated);
+
+    expect(compactData._v).toBe(1);
+    expect(compactData.dict).toEqual(['thread-1', 'thread-2']);
+    expect(compactData.threads['0']).toBeDefined();
+    expect(compactData.threads['1']).toBeDefined();
+    expect(compactData.changes[0].t).toBe(0);
+    expect(compactData.changes[0].o).toBe('Thread 1');
+    expect(compactData.changes[0].n).toBe('Updated Thread 1');
+    expect(compactData.blacklist).toEqual([1]);
+  });
+
+  it('should restore v3 threadId dictionary correctly', () => {
+    const compactData = {
+      _v: 1,
+      dict: ['thread-1', 'thread-2'],
+      threads: {
+        0: {
+          currentTitle: 'Thread 1',
+          url: '123/thread-1',
+          parentChannel: 'Channel',
+          firstSeenAt: 1700000000000,
+        },
+        1: {
+          currentTitle: 'Thread 2',
+          url: '123/thread-2',
+          parentChannel: 'Channel',
+          firstSeenAt: 1700005000000,
+        },
+      },
+      changes: [
+        {
+          t: 0,
+          o: 'Thread 1',
+          n: 'Updated',
+          c: 1700010000000,
+        },
+      ],
+      blacklist: [1],
+      retentionDays: 0,
+    };
+
+    const jsonStr = JSON.stringify(compactData);
+    const uint8 = new TextEncoder().encode(jsonStr);
+    let binary = '';
+    for (let i = 0; i < uint8.length; i++) {
+      binary += String.fromCharCode(uint8[i]);
+    }
+    const base64 = btoa(binary);
+
+    const wrapper = {
+      compressed: true,
+      data: base64,
+    };
+
+    mockGetValue.mockReturnValue(JSON.stringify(wrapper));
+
+    const store = new ThreadStore();
+    const threads = store.getThreads();
+
+    expect(threads['thread-1']).toBeDefined();
+    expect(threads['thread-1'].currentTitle).toBe('Thread 1');
+    expect(threads['thread-1'].firstSeenAt).toBe(1700000000000);
+    expect(threads['thread-2']).toBeUndefined();
+
+    const changes = store.getChanges();
+    expect(changes[0].threadId).toBe('thread-1');
+    expect(changes[0].changedAt).toBe(1700010000000);
+
+    const blacklist = store.getBlacklist();
+    expect(blacklist).toEqual(['thread-2']);
   });
 });

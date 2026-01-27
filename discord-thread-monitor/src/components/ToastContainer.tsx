@@ -56,14 +56,21 @@ export function ToastContainer({ changes, threads, onDismiss, onNavigate }: Toas
   const t = getTexts();
   const { toasts, handleDismiss, removeToast } = useToastManager(changes, onDismiss);
 
-  const handleToastNavigate = (threadId: string, url: string) => {
-    // Find and remove the toast for this thread
-    const toastToRemove = toasts.find((t) => t.threadId === threadId);
-    if (toastToRemove) {
-      removeToast(toastToRemove.toastId);
-    }
-    onNavigate(url, threadId);
-  };
+  const toastsRef = React.useRef(toasts);
+  React.useEffect(() => {
+    toastsRef.current = toasts;
+  }, [toasts]);
+
+  const handleToastNavigate = React.useCallback(
+    (threadId: string, url: string) => {
+      const toastToRemove = toastsRef.current.find((t) => t.threadId === threadId);
+      if (toastToRemove) {
+        removeToast(toastToRemove.toastId);
+      }
+      onNavigate(url, threadId);
+    },
+    [removeToast, onNavigate]
+  );
 
   return (
     <div className="toast-container">
