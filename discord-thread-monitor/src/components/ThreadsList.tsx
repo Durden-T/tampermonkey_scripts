@@ -43,10 +43,6 @@ const ClearIcon = () => (
   </svg>
 );
 
-function stopPropagation(e: React.MouseEvent | React.KeyboardEvent) {
-  e.stopPropagation();
-}
-
 function buildChangesMap(changes: TitleChange[]): Map<string, TitleChange> {
   const map = new Map<string, TitleChange>();
   for (const change of changes) {
@@ -57,6 +53,17 @@ function buildChangesMap(changes: TitleChange[]): Map<string, TitleChange> {
   return map;
 }
 
+const SearchResultCount = React.memo(function SearchResultCount({ count }: { count: number }) {
+  const texts = getTexts();
+  return (
+    <div className="thread-search-results">
+      <span className="thread-search-results-count">
+        {texts.labels.searchResults.replace('{count}', String(count))}
+      </span>
+    </div>
+  );
+});
+
 const SearchInput = React.memo(function SearchInput({
   value,
   onChange,
@@ -64,9 +71,17 @@ const SearchInput = React.memo(function SearchInput({
   resultCount,
   totalCount,
 }: SearchInputProps) {
-  const texts = getTexts();
   const hasValue = value.length > 0;
   const isFiltering = hasValue && resultCount < totalCount;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    onChange(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+  };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,36 +90,26 @@ const SearchInput = React.memo(function SearchInput({
 
   return (
     <>
-      <div className="thread-search-wrapper" onMouseDown={stopPropagation}>
+      <div className="thread-search-wrapper">
         <input
           type="text"
           className={`thread-search ${hasValue ? 'has-value' : ''}`}
           placeholder={placeholder}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onMouseDown={stopPropagation}
-          onClick={stopPropagation}
-          onKeyDown={stopPropagation}
-          onKeyUp={stopPropagation}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
         />
         <SearchIcon />
         <button
           type="button"
           className={`thread-search-clear ${hasValue ? 'visible' : ''}`}
           onClick={handleClear}
-          onMouseDown={stopPropagation}
           aria-label="Clear search"
         >
           <ClearIcon />
         </button>
       </div>
-      {isFiltering && (
-        <div className="thread-search-results">
-          <span className="thread-search-results-count">
-            {texts.labels.searchResults.replace('{count}', String(resultCount))}
-          </span>
-        </div>
-      )}
+      {isFiltering && <SearchResultCount count={resultCount} />}
     </>
   );
 });

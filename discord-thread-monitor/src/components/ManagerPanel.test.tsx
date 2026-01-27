@@ -90,7 +90,9 @@ vi.mock('../i18n', () => ({
       compression: 'Compression',
       enabled: 'Enabled',
       disabled: 'Disabled',
-      storageTooLarge: 'Storage too large',
+      storageTooLarge: 'Storage is large, adjust retention days to clean up old data',
+      retentionHint:
+        'Changing this will delete data older than the retention period, 0 = forever, -1 = clear all',
     },
     debug: {
       simulateChange: 'Simulate Change',
@@ -532,8 +534,8 @@ describe('ManagerPanel', () => {
     it('should display warning banner when storage exceeds threshold', async () => {
       const user = userEvent.setup();
       const storageInfo: StorageInfo = {
-        rawSize: 250000,
-        compressedSize: 125000,
+        rawSize: 2_000_000_000,
+        compressedSize: 1_000_000_000,
         isCompressed: true,
         changeCount: 100,
         threadCount: 50,
@@ -544,7 +546,9 @@ describe('ManagerPanel', () => {
       const debugTab = screen.getByRole('button', { name: /Debug/i });
       await user.click(debugTab);
 
-      expect(screen.getByText('Storage too large')).toBeInTheDocument();
+      expect(
+        screen.getByText('Storage is large, adjust retention days to clean up old data')
+      ).toBeInTheDocument();
     });
 
     it('should not display warning banner when storage is below threshold', () => {

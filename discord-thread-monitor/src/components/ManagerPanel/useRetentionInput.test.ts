@@ -83,13 +83,28 @@ describe('useRetentionInput', () => {
       expect(mockOnRetentionChange).toHaveBeenCalledWith(1000);
     });
 
-    it('should reject invalid retention days (negative)', () => {
+    it('should accept -1 as valid retention days (clear all)', () => {
+      const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
+
+      act(() => {
+        result.current.setRetentionInput('-1');
+      });
+
+      act(() => {
+        result.current.handleRetentionBlur();
+      });
+
+      expect(mockOnRetentionChange).toHaveBeenCalledWith(-1);
+      expect(result.current.inputDisplayValue).toBe('30');
+    });
+
+    it('should reject invalid retention days (less than -1)', () => {
       const { result } = renderHook(() => useRetentionInput(30, mockOnRetentionChange));
 
       const initialDisplayValue = result.current.inputDisplayValue;
 
       act(() => {
-        result.current.setRetentionInput('-1');
+        result.current.setRetentionInput('-2');
       });
 
       act(() => {
@@ -173,12 +188,14 @@ describe('useRetentionInput', () => {
 
       const mockEvent = {
         key: 'Enter',
-      } as React.KeyboardEvent<HTMLInputElement>;
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent<HTMLInputElement>;
 
       act(() => {
         result.current.handleRetentionKeyDown(mockEvent);
       });
 
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockOnRetentionChange).toHaveBeenCalledWith(60);
     });
 
@@ -191,12 +208,14 @@ describe('useRetentionInput', () => {
 
       const mockEvent = {
         key: 'Tab',
-      } as React.KeyboardEvent<HTMLInputElement>;
+        stopPropagation: vi.fn(),
+      } as unknown as React.KeyboardEvent<HTMLInputElement>;
 
       act(() => {
         result.current.handleRetentionKeyDown(mockEvent);
       });
 
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockOnRetentionChange).not.toHaveBeenCalled();
     });
   });

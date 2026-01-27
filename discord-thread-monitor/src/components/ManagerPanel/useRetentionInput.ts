@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const MIN_RETENTION_DAYS = 0;
+const MIN_RETENTION_DAYS = -1;
 
 const isValidRetention = (days: number) => !isNaN(days) && days >= MIN_RETENTION_DAYS;
 
@@ -10,6 +10,8 @@ interface ParseRetentionInputParams {
   onRetentionChange: (days: number) => void;
   setRetentionInput: (value: string) => void;
 }
+
+const CLEAR_ALL_VALUE = -1;
 
 const parseRetentionInput = ({
   input,
@@ -23,6 +25,11 @@ const parseRetentionInput = ({
   }
 
   const days = parseInt(input, 10);
+  if (days === CLEAR_ALL_VALUE) {
+    onRetentionChange(days);
+    setRetentionInput('');
+    return;
+  }
   if (isValidRetention(days)) {
     onRetentionChange(days);
     setRetentionInput(String(days));
@@ -46,8 +53,14 @@ export const useRetentionInput = (
     });
   }, [retentionInput, retentionDays, onRetentionChange]);
 
+  const handleRetentionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setRetentionInput(e.target.value);
+  }, []);
+
   const handleRetentionKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      e.stopPropagation();
       if (e.key === 'Enter') {
         handleRetentionBlur();
       }
@@ -58,10 +71,10 @@ export const useRetentionInput = (
   const inputDisplayValue = retentionInput || String(retentionDays);
 
   return {
-    retentionInput,
-    setRetentionInput,
     handleRetentionBlur,
+    handleRetentionChange,
     handleRetentionKeyDown,
     inputDisplayValue,
+    setRetentionInput,
   };
 };

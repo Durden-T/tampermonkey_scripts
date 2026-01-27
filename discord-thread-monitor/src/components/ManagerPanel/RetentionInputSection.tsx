@@ -12,7 +12,7 @@ export function RetentionInputSection({
   onRetentionChange,
   t,
 }: RetentionInputSectionProps) {
-  const { handleRetentionBlur, handleRetentionKeyDown, inputDisplayValue, setRetentionInput } =
+  const { handleRetentionBlur, handleRetentionChange, handleRetentionKeyDown, inputDisplayValue } =
     useRetentionInput(retentionDays, onRetentionChange);
 
   return (
@@ -22,7 +22,7 @@ export function RetentionInputSection({
         <input
           type="text"
           value={inputDisplayValue}
-          onChange={(e) => setRetentionInput(e.target.value)}
+          onChange={handleRetentionChange}
           onBlur={handleRetentionBlur}
           onKeyDown={handleRetentionKeyDown}
           className="retention-input"

@@ -7,9 +7,10 @@ export const TIME_MS = {
 export const BYTES = {
   KB: 1024,
   MB: 1_048_576,
+  GB: 1_073_741_824,
 } as const;
 
-const WARNING_THRESHOLD_KB = 200;
+const WARNING_THRESHOLD_KB = BYTES.KB * BYTES.KB; // 1MB in bytes (= 1024 KB)
 
 export const DISCORD_URL_PREFIX = 'https://discord.com/channels/';
 

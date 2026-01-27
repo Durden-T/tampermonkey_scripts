@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Tampermonkey userscript that monitors Discord forum thread titles for changes. Built with React 19 and Vite, using `vite-plugin-monkey` to output a Tampermonkey-compatible userscript.
+A Tampermonkey userscript that monitors Discord forum thread titles for changes. Built with React 19 and Vite, using `vite-plugin-monkey` to output a Tampermonkey-compatible userscript. The UI renders inside a Shadow DOM to isolate styles from Discord's page.
 
 ## Commands
 
@@ -25,36 +25,45 @@ npm run format:check  # Check formatting without fixing
 npm run release:check # Run all quality checks (format, lint, stylelint, test, build) before releasing
 ```
 
-## Automatic Linting & Formatting
+## Code Quality Enforcement
 
-Code quality is enforced automatically on every commit via Husky pre-commit hooks:
+### Pre-commit Hooks (Husky + lint-staged)
 
-1. **ESLint** runs with `--fix` to auto-correct TypeScript/TSX issues
-2. **stylelint** runs with `--fix` to auto-correct CSS issues
-3. **Prettier** runs with `--write` to format all staged files
+Every commit automatically runs on staged files:
 
-The commit will be blocked if any lint error cannot be auto-fixed. This ensures all committed code adheres to CLAUDE.md standards without manual intervention.
+- `*.{ts,tsx}`: ESLint `--fix` then Prettier `--write`
+- `*.css`: stylelint `--fix` then Prettier `--write`
 
-**To bypass** (not recommended): `git commit --no-verify`
+Commits are blocked if any lint error cannot be auto-fixed.
+
+### ESLint Hard Limits
+
+These numeric thresholds are enforced as errors in `eslint.config.js`:
+
+| Metric                | Limit                                 |
+| --------------------- | ------------------------------------- |
+| Cyclomatic complexity | 15                                    |
+| Max parameters        | 4                                     |
+| Max file lines        | 400 (excluding blanks/comments)       |
+| Max function lines    | 50 (excluding blanks/comments)        |
+| Max nesting depth     | 3                                     |
+| Max line length       | 120 (URLs, strings, templates exempt) |
+
+Magic numbers other than `0, 1, -1, 2` are errors. Extract to `constants.ts`.
+
+Key TypeScript rules: `no-explicit-any` (error), `no-non-null-assertion` (error), `no-floating-promises` (error), `prefer-nullish-coalescing` (error), `prefer-optional-chain` (error), `consistent-type-imports` with inline style (error).
+
+Style rules: `curly: all` (always use braces), `no-else-return` (use guard clauses), `eqeqeq: always`.
+
+### Prettier Config
+
+Prettier's `printWidth` is **100** (stricter than ESLint's 120). Single quotes, semicolons, trailing commas (ES5), LF line endings, always parenthesize arrow params.
+
+### TypeScript
+
+Target ES2020, strict mode with `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`. Uses `react-jsx` transform (no manual React imports for JSX).
 
 ## Release & Deployment
-
-### Release Process
-
-```bash
-# Step 1: Run pre-release checks
-npm run release:check
-
-# Step 2: Bump version (manual edit or npm version)
-npm version patch   # Bug fixes: 1.0.0 → 1.0.1
-npm version minor   # New features: 1.0.0 → 1.1.0
-npm version major   # Breaking changes: 1.0.0 → 2.0.0
-
-# Step 3: Build production userscript
-npm run build
-
-# Step 4: Distribute dist/discord-thread-monitor.user.js
-```
 
 ### Version Management
 
@@ -62,10 +71,6 @@ npm run build
 - **Vite config**: Reads version dynamically via `readFileSync` in `vite.config.ts`
 - **Userscript header**: Auto-populated from `package.json` during build
 - **Never hardcode version** in multiple files
-
-### Installation
-
-Users can install the userscript by opening `dist/discord-thread-monitor.user.js` in their browser with Tampermonkey installed.
 
 ## Architecture
 
@@ -113,11 +118,18 @@ Follows single-responsibility pattern:
 
 ### Entry Point
 
-`src/main.tsx` initializes core classes, performs initial scan after 2s delay (required for Discord DOM readiness), mounts React to injected container (`thread-monitor-root`). Scan interval is 60s.
+`src/main.tsx` initializes core classes, creates a Shadow DOM host element, injects CSS via `?inline` import, and mounts React inside the shadow root. Initial scan retries with a fixed 2s delay until threads are found or max retries reached (Discord DOM takes time to render).
+
+### Build & Bundling
+
+- `idb` library is externalized to CDN (jsdelivr UMD) via `vite-plugin-monkey`, not bundled
+- Production builds use Terser (mangle enabled, comments stripped, console preserved)
+- Development builds (`build:dev`) skip minification
+- All dynamic imports are inlined (`inlineDynamicImports: true`)
 
 ## Testing
 
-Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock` since GM APIs are unavailable in tests. Coverage excludes test files and `main.tsx`.
+Vitest with jsdom environment. Setup file (`src/test/setup.ts`) imports `@testing-library/jest-dom/vitest` for DOM matchers and `fake-indexeddb/auto` to polyfill IndexedDB. Coverage uses v8 provider, excludes test files and `src/main.tsx`.
 
 ## Key Implementation Details
 
@@ -133,13 +145,22 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 
 ### Storage
 
-- Storage backend: IndexedDB via `idb` library
+- Storage backend: IndexedDB via `idb` library (CDN-loaded, not bundled)
 - Database name: `discord-thread-monitor`
 - Object stores: `data` (main data), `prefs` (user preferences)
 - Compression wrapper format: `{ compressed: boolean, data: string | base64 }`
 - Backward-compatible deserialization handles old raw JSON format
 - ThreadStore maintains three concerns: thread metadata, change history, blacklist (Set for O(1) lookup + array for persistence)
 - PrefsStore provides singleton access to preferences (language, etc.)
+
+### CSS Architecture
+
+Plain CSS (no modules, no CSS-in-JS). All files in `src/styles/`, imported via `index.css`. Uses `:host` selector for Shadow DOM scoping.
+
+- `tokens.css` -- Design tokens as CSS custom properties (`--tm-*` prefix): colors, typography, spacing, z-index, shadows, transitions
+- Component-specific files: `panel.css`, `toggle-button.css`, `filters.css`, `thread-list.css`, `toast.css`, `debug.css`, `modal.css`
+
+All new CSS must use existing `--tm-*` tokens from `tokens.css`.
 
 ### Internationalization
 
