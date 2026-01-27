@@ -1,8 +1,8 @@
 .thread-monitor-toggle {
   position: fixed;
   z-index: var(--tm-z-toggle);
-  width: 48px;
-  height: 48px;
+  width: 51px;
+  height: 51px;
   border-radius: var(--tm-radius-md);
   background: var(--tm-glass);
   backdrop-filter: blur(var(--tm-blur-md)) saturate(1.3);
@@ -58,8 +58,8 @@
 }
 
 .toggle-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
 }
 
 .thread-monitor-toggle:hover .toggle-icon {
@@ -70,13 +70,13 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  min-width: 20px;
-  height: 20px;
+  min-width: 21px;
+  height: 21px;
   padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 20px;
+  line-height: 21px;
   text-align: center;
   color: var(--tm-bg-void);
   background: var(--tm-accent-gradient);

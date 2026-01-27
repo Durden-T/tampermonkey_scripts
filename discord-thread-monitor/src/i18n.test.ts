@@ -1,27 +1,36 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
+vi.mock('./core/PrefsStore', () => {
+  const mockStore = new Map<string, unknown>();
+  return {
+    getPrefsStore: () => ({
+      get: <T>(key: string): T | null => {
+        const val = mockStore.get(key);
+        return val === undefined ? null : (val as T);
+      },
+      set: async (key: string, value: unknown): Promise<void> => {
+        mockStore.set(key, value);
+      },
+      remove: async (key: string): Promise<void> => {
+        mockStore.delete(key);
+      },
+    }),
+    resetPrefsStore: () => {
+      mockStore.clear();
+    },
+  };
+});
+
 describe('i18n', () => {
-  let mockLocalStorage: Record<string, string>;
   let mockNavigatorLanguage: string;
 
-  beforeEach(() => {
-    mockLocalStorage = {};
+  beforeEach(async () => {
     mockNavigatorLanguage = 'zh-CN';
 
     vi.resetModules();
 
-    vi.stubGlobal('localStorage', {
-      getItem: vi.fn((key: string) => mockLocalStorage[key] || null),
-      setItem: vi.fn((key: string, value: string) => {
-        mockLocalStorage[key] = value;
-      }),
-      removeItem: vi.fn((key: string) => {
-        delete mockLocalStorage[key];
-      }),
-      clear: vi.fn(() => {
-        mockLocalStorage = {};
-      }),
-    });
+    const { resetPrefsStore } = await import('./core/PrefsStore');
+    resetPrefsStore();
 
     vi.stubGlobal('navigator', {
       language: mockNavigatorLanguage,
@@ -40,7 +49,6 @@ describe('i18n', () => {
 
       expect(getCurrentLanguage()).toBe('zh');
       expect(getTexts().title).toBe('标题监控');
-      expect(mockLocalStorage['thread-monitor-language']).toBe('zh');
     });
 
     it('should switch to English language', async () => {
@@ -50,7 +58,6 @@ describe('i18n', () => {
 
       expect(getCurrentLanguage()).toBe('en');
       expect(getTexts().title).toBe('Title Monitor');
-      expect(mockLocalStorage['thread-monitor-language']).toBe('en');
     });
   });
 

@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadStore } from './ThreadStore';
 import type { MonitoredThread, TitleChange } from '../types';
+import { openAppDB } from './db';
+import { IDB } from '../constants';
+import { resetPrefsStore } from './PrefsStore';
 
-let storage: Record<string, any> = {};
+async function clearStores(): Promise<void> {
+  const db = await openAppDB();
+  const tx = db.transaction([IDB.DATA_STORE, IDB.PREFS_STORE], 'readwrite');
+  await tx.objectStore(IDB.DATA_STORE).clear();
+  await tx.objectStore(IDB.PREFS_STORE).clear();
+  await tx.done;
+  db.close();
+}
 
 vi.mock('pako', () => ({
   default: {
@@ -18,53 +28,62 @@ vi.mock('pako', () => ({
   },
 }));
 
-let mockGetValue: any;
-let mockSetValue: any;
-
-function setupMocks() {
-  storage = {};
-
-  mockGetValue = vi.fn((key: string, defaultValue?: any) => {
-    return storage[key] !== undefined ? storage[key] : defaultValue;
-  });
-
-  mockSetValue = vi.fn((key: string, value: any) => {
-    storage[key] = value;
-  });
-
-  vi.stubGlobal('GM_getValue', mockGetValue);
-  vi.stubGlobal('GM_setValue', mockSetValue);
-}
+vi.mock('./PrefsStore', () => {
+  const mockStore = new Map<string, unknown>();
+  return {
+    getPrefsStore: () => ({
+      get: <T>(key: string): T | null => {
+        const val = mockStore.get(key);
+        return val === undefined ? null : (val as T);
+      },
+      set: (key: string, value: unknown): void => {
+        mockStore.set(key, value);
+      },
+      remove: (key: string): void => {
+        mockStore.delete(key);
+      },
+    }),
+    initPrefsStore: async () => {
+      // No-op for tests
+    },
+    resetPrefsStore: () => {
+      mockStore.clear();
+    },
+  };
+});
 
 describe('ThreadStore Compression', () => {
-  beforeEach(() => {
-    setupMocks();
-    vi.useFakeTimers();
+  beforeEach(async () => {
+    await clearStores();
+    resetPrefsStore();
   });
 
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
-    storage = {};
   });
 
-  it('should decompress compressed data from storage', () => {
-    mockGetValue.mockReturnValue(JSON.stringify({ compressed: true, data: 'compresseddata' }));
+  it('should decompress compressed data from storage', async () => {
+    const db = await openAppDB();
+    await db.put(IDB.DATA_STORE, { compressed: true, data: 'compresseddata' }, IDB.DATA_KEY);
+    await db.close();
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
     expect(store.getThreads()).toEqual({});
 
     consoleSpy.mockRestore();
   });
 
-  it('should handle decompression errors gracefully', () => {
-    mockGetValue.mockReturnValue('{"compressed":true,"data":"invalid"}');
+  it('should handle decompression errors gracefully', async () => {
+    const db = await openAppDB();
+    await db.put(IDB.DATA_STORE, { compressed: true, data: 'invalid' }, IDB.DATA_KEY);
+    await db.close();
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
 
     expect(store.getThreads()).toEqual({});
     expect(store.getChanges()).toEqual([]);
@@ -73,8 +92,8 @@ describe('ThreadStore Compression', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should compress all data', () => {
-    const store = new ThreadStore();
+  it('should compress all data', async () => {
+    const store = await ThreadStore.create();
 
     const largeTitle = 'A'.repeat(2000);
     const largeThread: MonitoredThread = {
@@ -86,15 +105,15 @@ describe('ThreadStore Compression', () => {
     };
 
     store.addThread(largeThread);
-    vi.advanceTimersByTime(500);
+    await store.flush();
 
-    expect(mockSetValue).toHaveBeenCalled();
+    const db = await openAppDB();
+    const saved = await db.get(IDB.DATA_STORE, IDB.DATA_KEY);
+    await db.close();
 
-    const savedData = mockSetValue.mock.calls[0][1];
-    const parsed = JSON.parse(savedData);
-    expect(parsed).toHaveProperty('compressed');
-    expect(parsed).toHaveProperty('data');
-    expect(parsed.compressed).toBe(true);
+    expect(saved).toHaveProperty('compressed');
+    expect(saved).toHaveProperty('data');
+    expect(saved.compressed).toBe(true);
   });
 
   it('should handle compression failure gracefully', async () => {
@@ -104,7 +123,8 @@ describe('ThreadStore Compression', () => {
       throw new Error('Compression failed');
     });
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
+    vi.useFakeTimers();
 
     const largeTitle = 'A'.repeat(2000);
     const largeThread: MonitoredThread = {
@@ -134,11 +154,13 @@ describe('ThreadStore Compression', () => {
       return 'invalid json data {';
     });
 
-    mockGetValue.mockReturnValue(JSON.stringify({ compressed: true, data: 'somecompresseddata' }));
+    const db = await openAppDB();
+    await db.put(IDB.DATA_STORE, { compressed: true, data: 'somecompresseddata' }, IDB.DATA_KEY);
+    await db.close();
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
     expect(store.getThreads()).toEqual({});
     expect(store.getChanges()).toEqual([]);
 
@@ -147,8 +169,8 @@ describe('ThreadStore Compression', () => {
     (pako as any).default.inflate = originalInflate;
   });
 
-  it('should handle getDashboardData with empty changes array', () => {
-    const store = new ThreadStore();
+  it('should handle getDashboardData with empty changes array', async () => {
+    const store = await ThreadStore.create();
 
     const dashboardData = store.getDashboardData();
 
@@ -159,8 +181,8 @@ describe('ThreadStore Compression', () => {
     expect(dashboardData.changeGroups).toEqual([]);
   });
 
-  it('should handle getDashboardData with unseen changes', () => {
-    const store = new ThreadStore();
+  it('should handle getDashboardData with unseen changes', async () => {
+    const store = await ThreadStore.create();
 
     const thread: MonitoredThread = {
       id: 'test-thread',
@@ -188,12 +210,15 @@ describe('ThreadStore Compression', () => {
     expect(dashboardData.changeGroups.length).toBeGreaterThan(0);
   });
 
-  it('should handle corrupted data that throws in parseStoredData catch block', () => {
-    mockGetValue.mockReturnValue(Symbol('corrupted'));
+  it('should handle corrupted data that throws in parseStoredData catch block', async () => {
+    // Store an object with incompatible version to trigger expand() error
+    const db = await openAppDB();
+    await db.put(IDB.DATA_STORE, { _v: 999 }, IDB.DATA_KEY);
+    await db.close();
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
 
     expect(store.getThreads()).toEqual({});
     expect(store.getChanges()).toEqual([]);
@@ -201,8 +226,8 @@ describe('ThreadStore Compression', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should use threadId dictionary encoding in v3 format', () => {
-    const store = new ThreadStore();
+  it('should use threadId dictionary encoding in v3 format', async () => {
+    const store = await ThreadStore.create();
 
     const thread1: MonitoredThread = {
       id: 'thread-1',
@@ -233,11 +258,12 @@ describe('ThreadStore Compression', () => {
       'Updated Thread 1'
     );
 
-    vi.advanceTimersByTime(500);
+    await store.flush();
 
-    expect(mockSetValue).toHaveBeenCalled();
-    const savedData = mockSetValue.mock.calls[mockSetValue.mock.calls.length - 1][1];
-    const wrapper = JSON.parse(savedData);
+    const db = await openAppDB();
+    const wrapper = await db.get(IDB.DATA_STORE, IDB.DATA_KEY);
+    await db.close();
+
     expect(wrapper.compressed).toBe(true);
 
     const decompressed = atob(wrapper.data);
@@ -258,7 +284,7 @@ describe('ThreadStore Compression', () => {
     expect(compactData.blacklist).toEqual([1]);
   });
 
-  it('should restore v3 threadId dictionary correctly', () => {
+  it('should restore v3 threadId dictionary correctly', async () => {
     const compactData = {
       _v: 1,
       dict: ['thread-1', 'thread-2'],
@@ -301,9 +327,11 @@ describe('ThreadStore Compression', () => {
       data: base64,
     };
 
-    mockGetValue.mockReturnValue(JSON.stringify(wrapper));
+    const db = await openAppDB();
+    await db.put(IDB.DATA_STORE, wrapper, IDB.DATA_KEY);
+    await db.close();
 
-    const store = new ThreadStore();
+    const store = await ThreadStore.create();
     const threads = store.getThreads();
 
     expect(threads['thread-1']).toBeDefined();

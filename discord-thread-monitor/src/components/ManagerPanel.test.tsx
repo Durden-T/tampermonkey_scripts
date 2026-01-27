@@ -5,6 +5,27 @@ import { ManagerPanel } from './ManagerPanel';
 import { useDraggable } from '../hooks/useDraggable';
 import type { MonitoredThread, TitleChange, ThreadChangeGroup, StorageInfo } from '../types';
 
+vi.mock('../core/PrefsStore', () => {
+  const mockStore = new Map<string, unknown>();
+  return {
+    getPrefsStore: () => ({
+      get: <T,>(key: string): T | null => {
+        const val = mockStore.get(key);
+        return val === undefined ? null : (val as T);
+      },
+      set: async (key: string, value: unknown): Promise<void> => {
+        mockStore.set(key, value);
+      },
+      remove: async (key: string): Promise<void> => {
+        mockStore.delete(key);
+      },
+    }),
+    resetPrefsStore: () => {
+      mockStore.clear();
+    },
+  };
+});
+
 vi.mock('../hooks/useDraggable');
 vi.mock('./Icons', () => ({
   ScanIcon: () => <div data-testid="scan-icon">ScanIcon</div>,
@@ -42,7 +63,6 @@ vi.mock('../i18n', () => ({
     },
     actions: {
       markAllRead: 'Mark All Read',
-      clearChanges: 'Clear Changes',
     },
     filters: {
       allUnread: 'All Unread',
@@ -109,14 +129,16 @@ describe('ManagerPanel', () => {
     onOpen: vi.fn(),
     onBlock: vi.fn(),
     onResume: vi.fn(),
-    onClearChanges: vi.fn(),
     onMarkAllRead: vi.fn(),
     onSimulateTitleChange: vi.fn(),
     onRetentionChange: vi.fn(),
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { resetPrefsStore } = await import('../core/PrefsStore');
+    resetPrefsStore();
 
     mockUseDraggable.mockReturnValue({
       position: { x: 100, y: 100 },
@@ -129,12 +151,11 @@ describe('ManagerPanel', () => {
       configurable: true,
       value: 1024,
     });
-
-    localStorage.clear();
   });
 
-  afterEach(() => {
-    localStorage.clear();
+  afterEach(async () => {
+    const { resetPrefsStore } = await import('../core/PrefsStore');
+    resetPrefsStore();
   });
 
   describe('Rendering', () => {
@@ -430,7 +451,7 @@ describe('ManagerPanel', () => {
       await user.click(debugTab);
 
       expect(screen.getByText('Storage Usage:')).toBeInTheDocument();
-      expect(screen.getByText('Raw Size:')).toBeInTheDocument();
+      expect(screen.getByText('1.0 KB')).toBeInTheDocument();
     });
 
     it('should display debug stats', async () => {
@@ -503,7 +524,7 @@ describe('ManagerPanel', () => {
       const debugTab = screen.getByRole('button', { name: /Debug/i });
       await user.click(debugTab);
 
-      expect(screen.getByText('Compressed Size:')).toBeInTheDocument();
+      expect(screen.getByText('48.8 KB')).toBeInTheDocument();
     });
   });
 
@@ -549,7 +570,7 @@ describe('ManagerPanel', () => {
         expect.objectContaining({
           storageKey: 'thread-monitor-panel-position',
           defaultPosition: expect.any(Object),
-          bounds: { width: 440, height: 200 },
+          bounds: { width: 466, height: 212 },
           excludeSelector: '.panel-actions, .panel-tabs, .panel-content',
         })
       );
@@ -592,7 +613,8 @@ describe('ManagerPanel', () => {
     });
 
     it('should not show help tooltip on subsequent opens', async () => {
-      localStorage.setItem('thread-monitor-help-seen', 'true');
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('thread-monitor-help-seen', true);
 
       render(<ManagerPanel {...defaultProps} />);
 

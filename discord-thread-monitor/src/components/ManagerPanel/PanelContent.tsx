@@ -20,7 +20,6 @@ interface PanelContentProps {
   onFilterModeChange: (mode: TimeFilterMode | 'all' | 'allUnread') => void;
   onPeriodChange: (period: TimePeriod) => void;
   onMarkAllRead: () => void;
-  onClearChanges: () => void;
   onOpen: (url: string, threadId: string) => void;
   onBlock: (threadId: string) => void;
   onResume: (threadId: string) => void;
@@ -81,7 +80,6 @@ export const PanelContent: React.FC<PanelContentProps> = (props) => {
             retentionDays={props.retentionDays}
             unseenCount={props.unseenCount}
             onSimulateTitleChange={props.onSimulateTitleChange}
-            onClearChanges={props.onClearChanges}
             onRetentionChange={props.onRetentionChange}
             onForceStorageWarning={props.onForceStorageWarning}
             t={props.t}

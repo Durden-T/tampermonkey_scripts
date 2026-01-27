@@ -1,23 +1,27 @@
 /* eslint-disable max-lines */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ThreadStore } from './ThreadStore';
-import type { MonitoredThread, TitleChange, StoredData } from '../types';
+import type { MonitoredThread, TitleChange } from '../types';
+import { openAppDB } from './db';
+import { IDB } from '../constants';
+import { resetPrefsStore } from './PrefsStore';
 
-// Create an in-memory storage to simulate GM storage behavior
-let storage: Record<string, any> = {};
+async function clearStores(): Promise<void> {
+  const db = await openAppDB();
+  const tx = db.transaction([IDB.DATA_STORE, IDB.PREFS_STORE], 'readwrite');
+  await tx.objectStore(IDB.DATA_STORE).clear();
+  await tx.objectStore(IDB.PREFS_STORE).clear();
+  await tx.done;
+  db.close();
+}
 
 // Mock pako that actually compresses/decompresses in a way that's compatible with base64 encoding
 vi.mock('pako', () => ({
   default: {
     deflate: vi.fn((input: string) => {
-      // For mock purposes, just encode the string as UTF-8 bytes
-      // In reality, pako would compress this, but for testing we just need
-      // something that can round-trip through base64
       return new TextEncoder().encode(input);
     }),
     inflate: vi.fn((input: Uint8Array, options: { to: string }) => {
-      // For mock purposes, just decode the UTF-8 bytes back to string
-      // In reality, pako would decompress this
       if (options?.to === 'string') {
         return new TextDecoder().decode(input);
       }
@@ -26,54 +30,51 @@ vi.mock('pako', () => ({
   },
 }));
 
-// Use a more controlled mock that doesn't share state unexpectedly
-let mockGetValue: any;
-let mockSetValue: any;
-
-function setupMocks() {
-  storage = {};
-
-  mockGetValue = vi.fn((key: string, defaultValue?: any) => {
-    return storage[key] !== undefined ? storage[key] : defaultValue;
-  });
-
-  mockSetValue = vi.fn((key: string, value: any) => {
-    storage[key] = value;
-  });
-
-  vi.stubGlobal('GM_getValue', mockGetValue);
-  vi.stubGlobal('GM_setValue', mockSetValue);
-}
+vi.mock('./PrefsStore', () => {
+  const mockStore = new Map<string, unknown>();
+  return {
+    getPrefsStore: () => ({
+      get: <T>(key: string): T | null => {
+        const val = mockStore.get(key);
+        return val === undefined ? null : (val as T);
+      },
+      set: (key: string, value: unknown): void => {
+        mockStore.set(key, value);
+      },
+      remove: (key: string): void => {
+        mockStore.delete(key);
+      },
+    }),
+    initPrefsStore: async () => {
+      // No-op for tests
+    },
+    resetPrefsStore: () => {
+      mockStore.clear();
+    },
+  };
+});
 
 describe('ThreadStore', () => {
-  beforeEach(() => {
-    // Set up fresh mocks for each test
-    setupMocks();
-
-    vi.useFakeTimers();
+  beforeEach(async () => {
+    await clearStores();
+    resetPrefsStore();
   });
 
   afterEach(() => {
-    // Clear all timers first to prevent any pending saves
     vi.clearAllTimers();
-
-    // Restore real timers
     vi.useRealTimers();
-
-    // Clear storage completely after each test
-    storage = {};
   });
 
   describe('Initialization', () => {
-    it('should initialize with empty data when no storage exists', () => {
-      const store = new ThreadStore();
+    it('should initialize with empty data when no storage exists', async () => {
+      const store = await ThreadStore.create();
       expect(store.getThreads()).toEqual({});
       expect(store.getChanges()).toEqual([]);
       expect(store.getBlacklist()).toEqual([]);
       expect(store.getRetentionDays()).toBe(0);
     });
 
-    it('should load existing data from storage', () => {
+    it('should load existing data from storage', async () => {
       const compactData = {
         _v: 1,
         dict: ['123', '789'],
@@ -98,50 +99,42 @@ describe('ThreadStore', () => {
       }
       const base64 = btoa(binary);
 
-      mockGetValue.mockReturnValue(JSON.stringify({ compressed: true, data: base64 }));
+      const db = await openAppDB();
+      await db.put(IDB.DATA_STORE, { compressed: true, data: base64 }, IDB.DATA_KEY);
+      await db.close();
 
-      const store = new ThreadStore();
+      const store = await ThreadStore.create();
       const threads = store.getThreads();
       expect(threads['123'].currentTitle).toBe('Test Thread');
       expect(store.getBlacklist()).toContain('789');
       expect(store.getRetentionDays()).toBe(7);
     });
 
-    it('should handle malformed storage data gracefully', () => {
-      mockGetValue.mockReturnValue('invalid json');
+    it('should handle malformed storage data gracefully', async () => {
+      const db = await openAppDB();
+      await db.put(IDB.DATA_STORE, 'invalid json', IDB.DATA_KEY);
+      await db.close();
 
-      // Suppress the expected console.error for this test
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      const store = new ThreadStore();
+      const store = await ThreadStore.create();
       expect(store.getThreads()).toEqual({});
       expect(store.getChanges()).toEqual([]);
 
       consoleSpy.mockRestore();
     });
 
-    it('should handle null/undefined storage values', () => {
-      mockGetValue.mockReturnValue(null);
-
-      const store = new ThreadStore();
+    it('should handle null/undefined storage values', async () => {
+      const store = await ThreadStore.create();
       expect(store.getThreads()).toEqual({});
-    });
-
-    it('should handle stored value === "undefined" string', () => {
-      // This tests line 92: stored === 'undefined'
-      mockGetValue.mockReturnValue('undefined');
-
-      const store = new ThreadStore();
-      expect(store.getThreads()).toEqual({});
-      expect(store.getChanges()).toEqual([]);
     });
   });
 
   describe('Thread Management', () => {
     let store: ThreadStore;
 
-    beforeEach(() => {
-      store = new ThreadStore();
+    beforeEach(async () => {
+      store = await ThreadStore.create();
     });
 
     it('should add a new thread', () => {
@@ -189,7 +182,7 @@ describe('ThreadStore', () => {
       const firstCall = store.getThreads();
       const secondCall = store.getThreads();
 
-      expect(firstCall).toBe(secondCall); // Should return cached reference
+      expect(firstCall).toBe(secondCall);
     });
 
     it('should invalidate cache when thread title is changed', () => {
@@ -223,11 +216,8 @@ describe('ThreadStore', () => {
   describe('Change Management', () => {
     let store: ThreadStore;
 
-    beforeEach(() => {
-      // Set up fresh mocks for this test
-      setupMocks();
-      // Create new store instance
-      store = new ThreadStore();
+    beforeEach(async () => {
+      store = await ThreadStore.create();
     });
 
     it('should record title changes', () => {
@@ -271,9 +261,8 @@ describe('ThreadStore', () => {
       expect(updatedThread?.currentTitle).toBe('New Title');
     });
 
-    it('should group changes by thread', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should group changes by thread', async () => {
+      const freshStore = await ThreadStore.create();
 
       // Add threads first so they exist when grouping
       const thread123: MonitoredThread = {
@@ -335,9 +324,8 @@ describe('ThreadStore', () => {
       expect(thread456Group?.changes).toHaveLength(1);
     });
 
-    it('should count unseen changes', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should count unseen changes', async () => {
+      const freshStore = await ThreadStore.create();
 
       // Add threads first
       const thread1: MonitoredThread = {
@@ -381,9 +369,8 @@ describe('ThreadStore', () => {
       expect(freshStore.getUnseenChangesCount()).toBe(1);
     });
 
-    it('should mark changes as seen by thread', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should mark changes as seen by thread', async () => {
+      const freshStore = await ThreadStore.create();
 
       // Add threads first
       const thread1: MonitoredThread = {
@@ -477,9 +464,8 @@ describe('ThreadStore', () => {
       expect(changes.every((c) => c.seen)).toBe(true);
     });
 
-    it('should clear all changes', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should clear all changes', async () => {
+      const freshStore = await ThreadStore.create();
 
       // Add thread first
       const thread: MonitoredThread = {
@@ -511,9 +497,8 @@ describe('ThreadStore', () => {
   describe('Blacklist Management', () => {
     let store: ThreadStore;
 
-    beforeEach(() => {
-      setupMocks();
-      store = new ThreadStore();
+    beforeEach(async () => {
+      store = await ThreadStore.create();
     });
 
     it('should add thread to blacklist', () => {
@@ -523,9 +508,8 @@ describe('ThreadStore', () => {
       expect(store.isBlacklisted('123')).toBe(true);
     });
 
-    it('should not add duplicate to blacklist', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should not add duplicate to blacklist', async () => {
+      const freshStore = await ThreadStore.create();
 
       freshStore.addToBlacklist('123');
       freshStore.addToBlacklist('123');
@@ -593,9 +577,8 @@ describe('ThreadStore', () => {
   describe('Retention Policy', () => {
     let store: ThreadStore;
 
-    beforeEach(() => {
-      setupMocks();
-      store = new ThreadStore();
+    beforeEach(async () => {
+      store = await ThreadStore.create();
     });
 
     it('should set retention days within valid range', () => {
@@ -624,11 +607,10 @@ describe('ThreadStore', () => {
       );
     });
 
-    it('should clean up old changes when retention is reduced', () => {
+    it('should clean up old changes when retention is reduced', async () => {
       vi.setSystemTime(1000000);
 
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+      const freshStore = await ThreadStore.create();
 
       // Add threads first
       const thread1: MonitoredThread = {
@@ -678,9 +660,8 @@ describe('ThreadStore', () => {
       expect(remainingChanges[0].threadId).toBe('456');
     });
 
-    it('should not clean changes when retention is 0 (unlimited)', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should not clean changes when retention is 0 (unlimited)', async () => {
+      const freshStore = await ThreadStore.create();
 
       // Add thread first
       const thread: MonitoredThread = {
@@ -709,9 +690,9 @@ describe('ThreadStore', () => {
   });
 
   describe('Storage Info', () => {
-    it('should return storage information', () => {
-      // Create fresh store instance for this test
-      const freshStore = new ThreadStore();
+    it('should return storage information', async () => {
+      const freshStore = await ThreadStore.create();
+      vi.useFakeTimers();
 
       const thread: MonitoredThread = {
         id: '123',
@@ -738,8 +719,8 @@ describe('ThreadStore', () => {
   });
 
   describe('Debounced Save', () => {
-    it('should debounce multiple save operations', () => {
-      const store = new ThreadStore();
+    it('should debounce multiple save operations', async () => {
+      const store = await ThreadStore.create();
 
       const thread: MonitoredThread = {
         id: '123',
@@ -749,24 +730,27 @@ describe('ThreadStore', () => {
         firstSeenAt: 1000,
       };
 
-      // Add multiple threads quickly
       for (let i = 0; i < 5; i++) {
         thread.id = `thread${i}`;
         store.addThread(thread);
       }
 
-      // Should not have saved yet due to debouncing
-      expect(mockSetValue).not.toHaveBeenCalled();
+      // Debounce delay (300ms) has not elapsed yet, so IDB should be empty
+      const db = await openAppDB();
+      const savedBefore = await db.get(IDB.DATA_STORE, IDB.DATA_KEY);
+      db.close();
+      expect(savedBefore).toBeUndefined();
 
-      // Advance time past debounce threshold
-      vi.advanceTimersByTime(500);
-
-      // Should have saved once
-      expect(mockSetValue).toHaveBeenCalledTimes(1);
+      // flush() cancels pending debounce and saves immediately
+      await store.flush();
+      const db2 = await openAppDB();
+      const savedAfter = await db2.get(IDB.DATA_STORE, IDB.DATA_KEY);
+      db2.close();
+      expect(savedAfter).toBeDefined();
     });
 
-    it('should save immediately when requested', () => {
-      const store = new ThreadStore();
+    it('should save immediately when requested', async () => {
+      const store = await ThreadStore.create();
 
       const thread: MonitoredThread = {
         id: '123',
@@ -777,38 +761,39 @@ describe('ThreadStore', () => {
       };
 
       store.addThread(thread);
-      store.clearChanges(); // This triggers immediate save
+      store.clearChanges();
 
-      expect(mockSetValue).toHaveBeenCalled();
+      await store.flush();
+      const db = await openAppDB();
+      const saved = await db.get(IDB.DATA_STORE, IDB.DATA_KEY);
+      db.close();
+      expect(saved).toBeDefined();
     });
   });
 
   describe('Edge Cases and Error Handling', () => {
-    it('should handle corrupted saved data gracefully', () => {
-      // Suppress expected console.error from corrupted data loading
+    it('should handle corrupted saved data gracefully', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-      // Set up corrupted data in storage
-      storage['discord-thread-monitor-data'] = 'corrupted json';
+      const db = await openAppDB();
+      await db.put(IDB.DATA_STORE, 'corrupted json', IDB.DATA_KEY);
+      await db.close();
 
-      // Should not throw, but should fall back to empty data
-      const store = new ThreadStore();
+      const store = await ThreadStore.create();
       expect(store.getThreads()).toEqual({});
 
-      // Verify error was logged (expected behavior)
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to load data from storage:',
         expect.any(SyntaxError)
       );
 
-      // Restore console.error
       consoleSpy.mockRestore();
     });
   });
 
   describe('getDashboardData', () => {
-    it('should return combined data in single pass', () => {
-      const store = new ThreadStore();
+    it('should return combined data in single pass', async () => {
+      const store = await ThreadStore.create();
 
       const thread1: MonitoredThread = {
         id: '123',
@@ -857,8 +842,8 @@ describe('ThreadStore', () => {
       expect(dashboardData.storageInfo.changeCount).toBe(2);
     });
 
-    it('should handle empty dashboard data', () => {
-      const store = new ThreadStore();
+    it('should handle empty dashboard data', async () => {
+      const store = await ThreadStore.create();
 
       const dashboardData = store.getDashboardData();
 

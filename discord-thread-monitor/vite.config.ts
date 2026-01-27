@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
-import monkey from 'vite-plugin-monkey';
+import monkey, { cdn } from 'vite-plugin-monkey';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -19,12 +19,17 @@ export default defineConfig(({ mode }) => ({
         author: 'Tyler',
         match: ['https://discord.com/*'],
         icon: 'https://www.google.com/s2/favicons?sz=64&domain=discord.com',
-        grant: ['GM_getValue', 'GM_setValue'],
+        grant: 'none',
         'run-at': 'document-end',
         updateURL:
           'https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js',
         downloadURL:
           'https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@latest/discord-thread-monitor/dist/discord-thread-monitor.user.js',
+      },
+      build: {
+        externalGlobals: {
+          idb: cdn.jsdelivr('idb', 'build/umd.js'),
+        },
       },
     }),
   ],

@@ -6,7 +6,8 @@ import {
   type TitleChange,
   DEFAULT_RETENTION_DAYS,
 } from '../types';
-import { STORAGE, DISCORD_URL_PREFIX, BYTES } from '../constants';
+import { STORAGE, DISCORD_URL_PREFIX, BYTES, IDB } from '../constants';
+import type { AppDB } from './db';
 
 interface StorageWrapper {
   compressed: boolean;
@@ -19,17 +20,26 @@ const STORAGE_VERSION = 1;
 const getStringSize = (str: string): number => new TextEncoder().encode(str).length;
 
 export class StorageEngine {
+  private db: AppDB;
   private lastRawSize: number = 0;
   private lastCompressedSize: number = 0;
   private isCompressed: boolean = false;
   private saveDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private pendingData: StoredData | null = null;
+  private pendingSavePromise: Promise<void> | null = null;
 
-  loadData(): StoredData {
+  private constructor(db: AppDB) {
+    this.db = db;
+  }
+
+  static fromDB(db: AppDB): StorageEngine {
+    return new StorageEngine(db);
+  }
+
+  async loadData(): Promise<StoredData> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const stored = GM_getValue(STORAGE.KEY, null);
-      if (stored === null || stored === undefined || stored === 'undefined' || stored === '') {
+      const stored: unknown = await this.db.get(IDB.DATA_STORE, IDB.DATA_KEY);
+      if (stored === null || stored === undefined) {
         return this.getEmptyData();
       }
 
@@ -47,19 +57,21 @@ export class StorageEngine {
     }
   }
 
-  saveData(data: StoredData): void {
+  async saveData(data: StoredData): Promise<void> {
     try {
       const compactData = this.compact(data);
       const jsonStr = JSON.stringify(compactData);
-      this.lastRawSize = getStringSize(jsonStr);
+      const rawSize = getStringSize(jsonStr);
 
       const compressed = this.compress(jsonStr);
-      this.lastCompressedSize = getStringSize(compressed);
-      this.isCompressed = true;
+      const compressedSize = getStringSize(compressed);
       const wrapper: StorageWrapper = { compressed: true, data: compressed };
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      GM_setValue(STORAGE.KEY, JSON.stringify(wrapper));
+      await this.db.put(IDB.DATA_STORE, wrapper, IDB.DATA_KEY);
+
+      this.lastRawSize = rawSize;
+      this.lastCompressedSize = compressedSize;
+      this.isCompressed = true;
     } catch (error) {
       console.error('Failed to save data to storage:', error);
     }
@@ -73,24 +85,40 @@ export class StorageEngine {
 
     if (immediate) {
       this.pendingData = null;
-      this.saveData(data);
+      const currentSave = this.pendingSavePromise;
+      this.pendingSavePromise = currentSave
+        ? currentSave.then(() => this.saveData(data))
+        : this.saveData(data);
       return;
     }
 
     this.pendingData = data;
     this.saveDebounceTimeout = setTimeout(() => {
-      this.saveData(data);
+      this.pendingSavePromise = this.saveData(data);
       this.saveDebounceTimeout = null;
       this.pendingData = null;
     }, STORAGE.SAVE_DEBOUNCE_MS);
   }
 
-  flushPendingSave(): void {
-    if (this.saveDebounceTimeout && this.pendingData) {
-      clearTimeout(this.saveDebounceTimeout);
-      this.saveDebounceTimeout = null;
-      this.saveData(this.pendingData);
-      this.pendingData = null;
+  async flushPendingSave(): Promise<void> {
+    const timeoutToCancel = this.saveDebounceTimeout;
+    const dataToSave = this.pendingData;
+    const saveToAwait = this.pendingSavePromise;
+
+    this.saveDebounceTimeout = null;
+    this.pendingData = null;
+    this.pendingSavePromise = null;
+
+    if (timeoutToCancel) {
+      clearTimeout(timeoutToCancel);
+    }
+
+    if (saveToAwait) {
+      await saveToAwait;
+    }
+
+    if (dataToSave) {
+      await this.saveData(dataToSave);
     }
   }
 
@@ -113,16 +141,11 @@ export class StorageEngine {
       );
     }
 
-    const chunks: string[] = [];
     const chunkSize = 8192;
-
+    const chunks: string[] = [];
     for (let i = 0; i < uint8.length; i += chunkSize) {
-      const end = Math.min(i + chunkSize, uint8.length);
-      let chunk = '';
-      for (let j = i; j < end; j++) {
-        chunk += String.fromCharCode(uint8[j]);
-      }
-      chunks.push(chunk);
+      const chunk = uint8.subarray(i, Math.min(i + chunkSize, uint8.length));
+      chunks.push(String.fromCharCode(...chunk));
     }
 
     return btoa(chunks.join(''));
@@ -138,29 +161,35 @@ export class StorageEngine {
   }
 
   private parseStoredData(stored: unknown): { jsonStr: string; isCompressed: boolean } {
-    if (typeof stored !== 'string') {
+    if (typeof stored === 'object' && stored !== null) {
+      const wrapper = stored as Partial<StorageWrapper>;
+      if (wrapper.compressed === true && typeof wrapper.data === 'string') {
+        try {
+          const decompressed = this.decompress(wrapper.data);
+          return { jsonStr: decompressed, isCompressed: true };
+        } catch (error) {
+          console.error('Failed to decompress stored data:', error);
+          console.error('Storage data may be corrupted. Resetting to empty state.');
+          throw new Error('Failed to decompress stored data');
+        }
+      }
       return { jsonStr: JSON.stringify(stored), isCompressed: false };
     }
 
-    let wrapper: StorageWrapper;
-    try {
-      wrapper = JSON.parse(stored) as StorageWrapper;
-    } catch {
-      return { jsonStr: stored, isCompressed: false };
+    if (typeof stored === 'string') {
+      try {
+        const wrapper = JSON.parse(stored) as StorageWrapper;
+        if (wrapper?.compressed === true) {
+          const decompressed = this.decompress(wrapper.data);
+          return { jsonStr: decompressed, isCompressed: true };
+        }
+        return { jsonStr: wrapper?.data ?? stored, isCompressed: false };
+      } catch {
+        return { jsonStr: stored, isCompressed: false };
+      }
     }
 
-    if (wrapper?.compressed !== true) {
-      return { jsonStr: wrapper?.data ?? stored, isCompressed: false };
-    }
-
-    try {
-      const decompressed = this.decompress(wrapper.data);
-      return { jsonStr: decompressed, isCompressed: true };
-    } catch (error) {
-      console.error('Failed to decompress stored data:', error);
-      console.error('Storage data may be corrupted. Resetting to empty state.');
-      throw new Error('Failed to decompress stored data');
-    }
+    return { jsonStr: '', isCompressed: false };
   }
 
   private buildThreadIdDict(data: StoredData): { dict: string[]; indexMap: Map<string, number> } {

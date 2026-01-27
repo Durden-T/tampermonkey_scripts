@@ -5,8 +5,8 @@
 
 .thread-search {
   width: 100%;
-  height: 36px;
-  padding: 0 var(--tm-space-md) 0 36px;
+  height: 38px;
+  padding: 0 var(--tm-space-md) 0 38px;
   font-size: var(--tm-scale-sm);
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -48,11 +48,11 @@
 
 .thread-search-icon {
   position: absolute;
-  left: 11px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   color: var(--tm-text-dim);
   pointer-events: none;
   transition: color var(--tm-transition-fast);
@@ -71,8 +71,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 25px;
+  height: 25px;
   border-radius: var(--tm-radius-xs);
   color: var(--tm-text-dim);
   background: transparent;
@@ -100,8 +100,8 @@
 }
 
 .thread-search-clear svg {
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
 }
 
 .thread-search-results {
@@ -205,10 +205,10 @@
 
 .change-label {
   flex-shrink: 0;
-  width: 32px;
+  width: 34px;
   padding-top: 2px;
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -274,7 +274,7 @@
 }
 
 .thread-actions button {
-  height: 26px;
+  height: 28px;
   padding: 0 var(--tm-space-sm);
   border-radius: var(--tm-radius-xs);
   font-size: var(--tm-scale-xs);
@@ -338,8 +338,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
   border-radius: var(--tm-radius-xs);
   color: var(--tm-text-dim);
   background: var(--tm-bg-base);
@@ -354,8 +354,8 @@
 }
 
 .expand-toggle svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 }
 
 .change-count {
@@ -363,11 +363,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: 19px;
+  height: 19px;
   padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--tm-text-dim);
   background: var(--tm-bg-base);

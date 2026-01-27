@@ -124,11 +124,11 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: 19px;
+  height: 19px;
   padding: 0 5px;
   font-family: var(--tm-font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   border-radius: var(--tm-radius-full);
 }

@@ -13,10 +13,17 @@ const WARNING_THRESHOLD_KB = 200;
 
 export const DISCORD_URL_PREFIX = 'https://discord.com/channels/';
 
+export const IDB = {
+  DB_NAME: 'discord-thread-monitor',
+  DB_VERSION: 1,
+  DATA_STORE: 'data',
+  PREFS_STORE: 'prefs',
+  DATA_KEY: 'main',
+} as const;
+
 export const STORAGE = {
   WARNING_THRESHOLD: WARNING_THRESHOLD_KB * BYTES.KB,
   SAVE_DEBOUNCE_MS: 300,
-  KEY: 'discord-thread-monitor-data',
   LANGUAGE_KEY: 'thread-monitor-language',
   HELP_SEEN_KEY: 'thread-monitor-help-seen',
   PANEL_POSITION_KEY: 'thread-monitor-panel-position',
@@ -32,13 +39,13 @@ export const TIME_UNITS = {
 } as const;
 
 export const UI = {
-  TOGGLE_BUTTON_SIZE: 48,
+  TOGGLE_BUTTON_SIZE: 51,
   TOGGLE_BUTTON_OFFSET: 16,
   TOGGLE_BUTTON_DEFAULT_OPACITY: 0.8,
   TOGGLE_BADGE_MAX_DISPLAY: 99,
   DRAG_THRESHOLD_PX: 3,
-  PANEL_WIDTH: 440,
-  PANEL_MIN_HEIGHT: 200,
+  PANEL_WIDTH: 466,
+  PANEL_MIN_HEIGHT: 212,
   PANEL_DEFAULT_X_OFFSET: 16,
   PANEL_DEFAULT_Y_POSITION: 80,
   SEGMENTED_CONTROL_PADDING: 3,

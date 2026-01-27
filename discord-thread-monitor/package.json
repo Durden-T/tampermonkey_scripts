@@ -24,6 +24,7 @@
     "release:check": "npm run format:check && npm run lint && npm run stylelint && npm run test:run && npm run build && echo '\n Release checks passed! Run: npm version patch/minor/major && git push --follow-tags'"
   },
   "dependencies": {
+    "idb": "^8.0.3",
     "pako": "^2.1.0",
     "pinyin-pro": "^3.28.0",
     "react": "^19.1.1",
@@ -46,6 +47,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
+    "fake-indexeddb": "^6.2.5",
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "lint-staged": "^16.2.7",

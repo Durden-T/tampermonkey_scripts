@@ -2,38 +2,36 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDraggable } from './useDraggable';
 
+vi.mock('../core/PrefsStore', () => {
+  const mockStore = new Map<string, unknown>();
+  return {
+    getPrefsStore: () => ({
+      get: <T>(key: string): T | null => {
+        const val = mockStore.get(key);
+        return val === undefined ? null : (val as T);
+      },
+      set: async (key: string, value: unknown): Promise<void> => {
+        mockStore.set(key, value);
+      },
+      remove: async (key: string): Promise<void> => {
+        mockStore.delete(key);
+      },
+    }),
+    resetPrefsStore: () => {
+      mockStore.clear();
+    },
+  };
+});
+
 describe('useDraggable', () => {
-  let mockLocalStorage: Map<string, string>;
   let originalInnerWidth: number;
   let originalInnerHeight: number;
 
-  beforeEach(() => {
-    mockLocalStorage = new Map();
+  beforeEach(async () => {
+    const { resetPrefsStore } = await import('../core/PrefsStore');
+    resetPrefsStore();
     originalInnerWidth = window.innerWidth;
     originalInnerHeight = window.innerHeight;
-
-    // Mock localStorage
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
-      this: Storage,
-      key: string
-    ) {
-      return mockLocalStorage.get(key) || null;
-    });
-
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
-      this: Storage,
-      key: string,
-      value: string
-    ) {
-      mockLocalStorage.set(key, value);
-    });
-
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (
-      this: Storage,
-      key: string
-    ) {
-      mockLocalStorage.delete(key);
-    });
 
     // Mock window dimensions
     Object.defineProperty(window, 'innerWidth', {
@@ -75,11 +73,12 @@ describe('useDraggable', () => {
       expect(result.current.position).toEqual(defaultPosition);
     });
 
-    it('should load saved position from localStorage', () => {
+    it('should load saved position from prefs store', async () => {
       const savedPosition = { x: 150, y: 250 };
-      mockLocalStorage.set('test-storage', JSON.stringify(savedPosition));
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('test-storage', savedPosition);
 
-      renderHook(() =>
+      const { result } = renderHook(() =>
         useDraggable({
           storageKey: 'test-storage',
           defaultPosition: { x: 100, y: 200 },
@@ -87,12 +86,13 @@ describe('useDraggable', () => {
         })
       );
 
-      // Position should be loaded from storage (may be clamped to bounds)
-      expect(mockLocalStorage.get('test-storage')).toBeDefined();
+      expect(result.current.position.x).toBe(150);
+      expect(result.current.position.y).toBe(250);
     });
 
-    it('should use default position when localStorage contains invalid data', () => {
-      mockLocalStorage.set('test-storage', 'invalid json');
+    it('should use default position when saved position has missing coordinates', async () => {
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('test-storage', { x: 150 });
 
       const defaultPosition = { x: 100, y: 200 };
       const { result } = renderHook(() =>
@@ -106,25 +106,10 @@ describe('useDraggable', () => {
       expect(result.current.position).toEqual(defaultPosition);
     });
 
-    it('should use default position when saved position has missing coordinates', () => {
-      mockLocalStorage.set('test-storage', JSON.stringify({ x: 150 })); // missing y
-
-      const defaultPosition = { x: 100, y: 200 };
-      const { result } = renderHook(() =>
-        useDraggable({
-          storageKey: 'test-storage',
-          defaultPosition,
-          bounds: { width: 50, height: 50 },
-        })
-      );
-
-      expect(result.current.position).toEqual(defaultPosition);
-    });
-
-    it('should clamp saved position to bounds', () => {
-      // Position outside bounds (x > window.innerWidth - bounds.width)
+    it('should clamp saved position to bounds', async () => {
       const savedPosition = { x: 1000, y: 500 };
-      mockLocalStorage.set('test-storage', JSON.stringify(savedPosition));
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('test-storage', savedPosition);
 
       const { result } = renderHook(() =>
         useDraggable({
@@ -399,12 +384,10 @@ describe('useDraggable', () => {
       expect(result.current.position.y).toBeLessThanOrEqual(250);
     });
 
-    it('should handle extreme negative positions when loading from localStorage', () => {
-      // Test edge case where position saved in localStorage is negative
-      // Since the hook clamps during load, we'll verify it works by checking
-      // that the saved negative values get clamped when loaded
+    it('should handle extreme negative positions when loading from prefs store', async () => {
       const savedPosition = { x: -50, y: -75 };
-      mockLocalStorage.set('test-storage-negative', JSON.stringify(savedPosition));
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('test-storage-negative', savedPosition);
 
       const { result } = renderHook(() =>
         useDraggable({
@@ -420,17 +403,16 @@ describe('useDraggable', () => {
       // by checking that positions stay within valid bounds
       expect(result.current.position.x).toBeGreaterThanOrEqual(0);
       expect(result.current.position.y).toBeGreaterThanOrEqual(0);
-      expect(result.current.position.x).toBeLessThanOrEqual(750); // 800 - 50
-      expect(result.current.position.y).toBeLessThanOrEqual(550); // 600 - 50
+      expect(result.current.position.x).toBeLessThanOrEqual(750);
+      expect(result.current.position.y).toBeLessThanOrEqual(550);
     });
 
-    it('should handle extreme positive positions beyond window bounds when loading from localStorage', () => {
-      // Mock window dimensions
+    it('should handle extreme positive positions beyond window bounds when loading from prefs store', async () => {
       Object.defineProperty(window, 'innerWidth', { value: 800, configurable: true });
       Object.defineProperty(window, 'innerHeight', { value: 600, configurable: true });
 
-      // Test position saved in localStorage that exceeds window bounds
-      mockLocalStorage.set('test-storage-positive', JSON.stringify({ x: 10000, y: 10000 }));
+      const { getPrefsStore } = await import('../core/PrefsStore');
+      getPrefsStore().set('test-storage-positive', { x: 10000, y: 10000 });
 
       const { result } = renderHook(() =>
         useDraggable({
@@ -440,9 +422,8 @@ describe('useDraggable', () => {
         })
       );
 
-      // Should be clamped to maximum valid position when loaded from storage
-      expect(result.current.position.x).toBeLessThanOrEqual(750); // 800 - 50
-      expect(result.current.position.y).toBeLessThanOrEqual(550); // 600 - 50
+      expect(result.current.position.x).toBeLessThanOrEqual(750);
+      expect(result.current.position.y).toBeLessThanOrEqual(550);
     });
 
     it('should handle exact boundary values in clampPosition', () => {

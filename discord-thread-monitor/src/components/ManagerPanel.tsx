@@ -22,7 +22,6 @@ interface ManagerPanelProps {
   onOpen: (url: string, threadId: string) => void;
   onBlock: (threadId: string) => void;
   onResume: (threadId: string) => void;
-  onClearChanges: () => void;
   onMarkAllRead: () => void;
   onSimulateTitleChange: () => void;
   onRetentionChange: (days: number) => void;
@@ -117,7 +116,6 @@ export function ManagerPanel(props: ManagerPanelProps) {
           onFilterModeChange={logic.setFilterMode}
           onPeriodChange={logic.setSelectedPeriod}
           onMarkAllRead={props.onMarkAllRead}
-          onClearChanges={props.onClearChanges}
           onOpen={props.onOpen}
           onBlock={props.onBlock}
           onResume={props.onResume}

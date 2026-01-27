@@ -110,7 +110,7 @@ https://cdn.jsdelivr.net/gh/Durden-T/tampermonkey_scripts@v1.0.0/discord-thread-
 ### Core Layer (`src/core/`)
 
 - **ThreadStore** - Facade implementing `IThreadRepository`, orchestrates `StorageEngine`, `ChangeTracker`, `BlacklistManager`. Maintains caches (`cachedThreads`, `cachedDashboardData`) invalidated on mutations.
-- **StorageEngine** - Persistence via `GM_getValue`/`GM_setValue` with pako gzip compression at 50KB threshold. Debounced saves (300ms). Falls back to localStorage when GM APIs unavailable (testing).
+- **StorageEngine** - Persistence via IndexedDB with pako gzip compression. Debounced saves (300ms).
 - **ChangeTracker** - Manages change history with unseenCount tracking, cleanup by retention days, grouping logic via `ChangeGroupBuilder`
 - **BlacklistManager** - Set-based O(1) lookup for blocked thread IDs
 - **ThreadScanner** - DOM scraper parsing Discord's `aria-label` and `data-list-item-id` attributes
@@ -171,11 +171,13 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 
 ### Storage
 
-- Storage key: `discord-thread-monitor-data` (changing this breaks existing user data)
+- Storage backend: IndexedDB via `idb` library
+- Database name: `discord-thread-monitor`
+- Object stores: `data` (main data), `prefs` (user preferences)
 - Compression wrapper format: `{ compressed: boolean, data: string | base64 }`
 - Backward-compatible deserialization handles old raw JSON format
-- Migration system in `ThreadStore.migrateData()` (e.g., `retentionMonths` -> `retentionDays`)
 - ThreadStore maintains three concerns: thread metadata, change history, blacklist (Set for O(1) lookup + array for persistence)
+- PrefsStore provides singleton access to preferences (language, etc.)
 
 ### Internationalization
 
@@ -184,7 +186,7 @@ Vitest with jsdom. Setup file (`src/test/setup.ts`) provides a `LocalStorageMock
 
 ### Userscript Metadata (vite-plugin-monkey)
 
-- **Grants**: `GM_getValue`, `GM_setValue` only
+- **Grants**: `none` (uses IndexedDB for storage)
 - **Run-at**: `document-end`
 - **Match**: `https://discord.com/*`
 - **Auto-update**: `@updateURL` and `@downloadURL` point to jsDelivr CDN (`@latest` tag)

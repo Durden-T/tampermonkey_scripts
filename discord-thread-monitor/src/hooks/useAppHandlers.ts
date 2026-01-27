@@ -24,7 +24,7 @@ export const useAppHandlers = ({
   setRetentionDays,
   performScan,
 }: UseAppHandlersProps) => {
-  const { handleScanNow, handleClearChanges, handleMarkAllRead } = useStoreActions({
+  const { handleScanNow, handleMarkAllRead } = useStoreActions({
     store,
     refreshData,
     performScan,
@@ -44,7 +44,6 @@ export const useAppHandlers = ({
     handleOpen,
     handleBlock,
     handleResume,
-    handleClearChanges,
     handleMarkAllRead,
     handleRetentionChange,
     handleToastDismiss,

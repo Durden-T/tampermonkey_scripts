@@ -38,13 +38,18 @@ export const useToastManager = (changes: TitleChange[], onDismiss: (threadId: st
     [removeToast]
   );
 
+  const handleDismissRef = useRef(handleDismiss);
+  useEffect(() => {
+    handleDismissRef.current = handleDismiss;
+  }, [handleDismiss]);
+
   useEffect(() => {
     const timeoutIds = timeoutIdsRef.current;
 
     toasts.forEach((toast) => {
       if (!timeoutIds.has(toast.toastId)) {
         const timeoutId = setTimeout(() => {
-          handleDismiss(toast.toastId, toast.threadId);
+          handleDismissRef.current(toast.toastId, toast.threadId);
         }, TIMING.TOAST_AUTO_DISMISS_MS);
         timeoutIds.set(toast.toastId, timeoutId);
       }
@@ -54,7 +59,7 @@ export const useToastManager = (changes: TitleChange[], onDismiss: (threadId: st
       timeoutIds.forEach((timeoutId) => clearTimeout(timeoutId));
       timeoutIds.clear();
     };
-  }, [toasts, handleDismiss]);
+  }, [toasts]);
 
   return { toasts, handleDismiss, removeToast };
 };

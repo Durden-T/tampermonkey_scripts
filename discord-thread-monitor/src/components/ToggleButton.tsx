@@ -61,6 +61,7 @@ export function ToggleButton({ unseenCount, onClick }: ToggleButtonProps) {
   return (
     <button
       className="thread-monitor-toggle"
+      aria-label="Thread Monitor"
       style={{
         opacity: unseenCount > 0 || isHovered ? 1 : UI.TOGGLE_BUTTON_DEFAULT_OPACITY,
         left: `${position.x}px`,

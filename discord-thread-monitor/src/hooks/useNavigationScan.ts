@@ -18,6 +18,24 @@ const createHistoryWrapper = (
   };
 };
 
+const restoreHistoryMethods = (
+  wrappedPushState: typeof history.pushState,
+  originalPushState: typeof history.pushState,
+  wrappedReplaceState: typeof history.replaceState,
+  originalReplaceState: typeof history.replaceState
+) => {
+  try {
+    if (history.pushState === wrappedPushState) {
+      history.pushState = originalPushState;
+    }
+    if (history.replaceState === wrappedReplaceState) {
+      history.replaceState = originalReplaceState;
+    }
+  } catch (err) {
+    console.warn('[NavigationScan] Failed to restore history methods:', err);
+  }
+};
+
 export const useNavigationScan = (
   scheduler: ScanScheduler,
   performScan: () => void,
@@ -61,15 +79,14 @@ export const useNavigationScan = (
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      // Only restore if our wrappers are still active to avoid breaking other scripts
-      if (history.pushState === wrappedPushState) {
-        history.pushState = originalPushState;
-      }
-      if (history.replaceState === wrappedReplaceState) {
-        history.replaceState = originalReplaceState;
-      }
+      restoreHistoryMethods(
+        wrappedPushState,
+        originalPushState,
+        wrappedReplaceState,
+        originalReplaceState
+      );
       window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [triggerDelayedScan, scheduler]);
+  }, [triggerDelayedScan]);
 };

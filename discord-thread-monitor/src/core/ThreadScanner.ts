@@ -23,10 +23,13 @@ export class ThreadScanner {
     }
 
     const appMount = document.querySelector('#app-mount');
-    if (appMount && (!this.cachedRoot || this.cachedRoot !== appMount)) {
+    if (
+      appMount &&
+      (!this.cachedRoot || !this.cachedRoot.isConnected || this.cachedRoot !== appMount)
+    ) {
       this.cachedRoot = appMount;
     }
-    const discordRoot = this.cachedRoot ?? document.body;
+    const discordRoot = (this.cachedRoot?.isConnected ? this.cachedRoot : null) ?? document.body;
     const threadElements = discordRoot.querySelectorAll(THREAD_ELEMENT_SELECTOR);
 
     threadElements.forEach((element) => {

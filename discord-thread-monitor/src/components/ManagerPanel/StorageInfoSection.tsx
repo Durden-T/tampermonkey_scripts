@@ -8,23 +8,14 @@ interface StorageInfoSectionProps {
 }
 
 export function StorageInfoSection({ storageInfo, t }: StorageInfoSectionProps) {
+  const actualSize = storageInfo.isCompressed ? storageInfo.compressedSize : storageInfo.rawSize;
+
   return (
     <div className="storage-info">
       <label>{t.settings.storageUsage}:</label>
       <div className="storage-details">
         <div className="storage-row">
-          <span>{t.settings.rawSize}:</span>
-          <span>{formatBytes(storageInfo.rawSize)}</span>
-        </div>
-        {storageInfo.isCompressed && (
-          <div className="storage-row">
-            <span>{t.settings.compressedSize}:</span>
-            <span>{formatBytes(storageInfo.compressedSize)}</span>
-          </div>
-        )}
-        <div className="storage-row">
-          <span>{t.settings.compression}:</span>
-          <span>{storageInfo.isCompressed ? t.settings.enabled : t.settings.disabled}</span>
+          <span className="storage-size">{formatBytes(actualSize)}</span>
         </div>
       </div>
     </div>

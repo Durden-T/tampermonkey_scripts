@@ -6,17 +6,21 @@ import {
   type StorageInfo,
   DEFAULT_RETENTION_DAYS,
 } from '../types';
-import { RETENTION } from '../constants';
+import { RETENTION, STORAGE } from '../constants';
 import { StorageEngine } from './StorageEngine';
 import { ChangeTracker } from './ChangeTracker';
 import { BlacklistManager } from './BlacklistManager';
 import type { IThreadRepository } from './IThreadRepository';
+import { openAppDB, type AppDB } from './db';
+import { initPrefsStore, getPrefsStore } from './PrefsStore';
+import { setLanguage } from '../i18n';
 
 export class ThreadStore implements IThreadRepository {
   private data: StoredData;
   private storageEngine: StorageEngine;
   private changeTracker: ChangeTracker;
   private blacklistManager: BlacklistManager;
+  private db: AppDB;
   private cachedThreads: Record<string, MonitoredThread> | null = null;
   private cachedDashboardData: {
     unseenCount: number;
@@ -26,12 +30,32 @@ export class ThreadStore implements IThreadRepository {
   private cachedChanges: TitleChange[] | null = null;
   private cachedBlacklistedThreads: MonitoredThread[] | null = null;
 
-  constructor() {
-    this.storageEngine = new StorageEngine();
-    this.data = this.storageEngine.loadData();
+  private constructor(storageEngine: StorageEngine, data: StoredData, db: AppDB) {
+    this.storageEngine = storageEngine;
+    this.data = data;
+    this.db = db;
     this.changeTracker = new ChangeTracker(this.data.changes);
     this.blacklistManager = new BlacklistManager(this.data.blacklist);
     this.cleanupOldChanges();
+  }
+
+  static async create(): Promise<ThreadStore> {
+    const db = await openAppDB();
+    try {
+      const engine = StorageEngine.fromDB(db);
+      const data = await engine.loadData();
+      await initPrefsStore(db);
+
+      const savedLang = getPrefsStore().get<'zh' | 'en'>(STORAGE.LANGUAGE_KEY);
+      if (savedLang) {
+        setLanguage(savedLang);
+      }
+
+      return new ThreadStore(engine, data, db);
+    } catch (error) {
+      db.close();
+      throw error;
+    }
   }
 
   private invalidateDashboardCache(): void {
@@ -150,17 +174,24 @@ export class ThreadStore implements IThreadRepository {
       return;
     }
 
+    let hasChanges = false;
     for (const { change, newTitle } of changes) {
       const thread = this.data.threads[change.threadId];
       if (!thread) {
-        throw new Error(`Cannot record title change for non-existent thread: ${change.threadId}`);
+        console.warn(
+          `[ThreadStore] Skipping title change for non-existent thread: ${change.threadId}`
+        );
+        continue;
       }
 
       this.changeTracker.recordChange(change);
       thread.currentTitle = newTitle;
+      hasChanges = true;
     }
 
-    this.persistMutation({ invalidateAllCaches: true });
+    if (hasChanges) {
+      this.persistMutation({ invalidateAllCaches: true });
+    }
   }
 
   getChanges(): TitleChange[] {
@@ -263,8 +294,12 @@ export class ThreadStore implements IThreadRepository {
     this.scheduleSave(true);
   }
 
-  flush(): void {
-    this.storageEngine.flushPendingSave();
+  async flush(): Promise<void> {
+    await this.storageEngine.flushPendingSave();
+  }
+
+  close(): void {
+    this.db.close();
   }
 
   private cleanupOldChanges(): void {

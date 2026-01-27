@@ -27,8 +27,8 @@
 }
 
 .retention-input {
-  width: 76px;
-  height: 34px;
+  width: 81px;
+  height: 36px;
   padding: 0 var(--tm-space-sm);
   border: 1px solid var(--tm-glass-border);
   border-radius: var(--tm-radius-xs);
@@ -77,7 +77,10 @@
 }
 
 .storage-details {
-  padding: var(--tm-space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tm-space-md);
   background: var(--tm-bg-base);
   border-radius: var(--tm-radius-sm);
   border: 1px solid var(--tm-glass-border);
@@ -85,22 +88,16 @@
 
 .storage-row {
   display: flex;
-  justify-content: space-between;
-  padding: 5px 0;
-  font-size: var(--tm-scale-sm);
+  align-items: center;
+  justify-content: center;
 }
 
-.storage-row span:first-child {
-  color: var(--tm-text-muted);
-}
-
-.storage-row span:last-child {
+.storage-size {
   font-family: var(--tm-font-mono);
-  color: var(--tm-text-secondary);
-}
-
-.storage-row + .storage-row {
-  border-top: 1px solid var(--tm-glass-border);
+  font-size: var(--tm-scale-2xl);
+  font-weight: 700;
+  color: var(--tm-text-primary);
+  letter-spacing: -0.02em;
 }
 
 /* Debug Info Grid */
@@ -122,7 +119,7 @@
 }
 
 .debug-info span:first-child {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -138,7 +135,7 @@
 
 /* Debug Buttons */
 .debug-section > button {
-  height: 36px;
+  height: 38px;
   border-radius: var(--tm-radius-sm);
   font-size: var(--tm-scale-sm);
   font-weight: 600;

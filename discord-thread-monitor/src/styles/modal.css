@@ -39,7 +39,7 @@
 }
 
 .help-tooltip {
-  width: 360px;
+  width: 382px;
   max-height: calc(100vh - 96px);
   display: flex;
   flex-direction: column;
@@ -47,7 +47,7 @@
 }
 
 .error-boundary-content {
-  width: 420px;
+  width: 445px;
   padding: var(--tm-space-2xl);
   border: 1px solid var(--tm-danger-border);
 }
@@ -87,8 +87,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--tm-radius-sm);
   color: var(--tm-text-muted);
   transition:
@@ -102,8 +102,8 @@
 }
 
 .help-header button svg {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
 }
 
 .help-header button:focus-visible {
@@ -159,7 +159,7 @@
 
 .error-reset-button {
   width: 100%;
-  height: 36px;
+  height: 38px;
   border-radius: var(--tm-radius-sm);
   font-size: var(--tm-scale-md);
   font-weight: 600;

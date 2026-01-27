@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getPrefsStore } from '../core/PrefsStore';
 
 export interface Position {
   x: number;
@@ -30,28 +31,50 @@ const clampPosition = (pos: Position, bounds: Bounds): Position => ({
 
 const POSITION_SAVE_DEBOUNCE_MS = 300;
 
-const usePersistentPosition = (storageKey: string, defaultPosition: Position, bounds: Bounds) => {
-  const [position, setPosition] = useState<Position>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved) as unknown;
-        if (
-          typeof parsed === 'object' &&
-          parsed !== null &&
-          'x' in parsed &&
-          'y' in parsed &&
-          typeof parsed.x === 'number' &&
-          typeof parsed.y === 'number'
-        ) {
-          return clampPosition(parsed as Position, bounds);
-        }
-      }
-    } catch {
-      localStorage.removeItem(storageKey);
+const loadInitialPosition = (
+  storageKey: string,
+  defaultPosition: Position,
+  bounds: Bounds
+): Position => {
+  try {
+    const saved = getPrefsStore().get<Position>(storageKey);
+    if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+      return clampPosition(saved, bounds);
     }
-    return defaultPosition;
-  });
+  } catch (error) {
+    if (error instanceof Error && !error.message.includes('not initialized')) {
+      try {
+        void getPrefsStore()
+          .remove(storageKey)
+          .catch((err) => {
+            console.error('Failed to remove corrupted position:', err);
+          });
+      } catch {
+        // PrefsStore not initialized yet
+      }
+    }
+  }
+  return defaultPosition;
+};
+
+const persistPosition = (storageKey: string, position: Position): void => {
+  try {
+    void getPrefsStore()
+      .set(storageKey, position)
+      .catch((error) => {
+        console.error('Failed to persist position:', error);
+      });
+  } catch (error) {
+    if (error instanceof Error && !error.message.includes('not initialized')) {
+      console.error('PrefsStore error:', error);
+    }
+  }
+};
+
+const usePersistentPosition = (storageKey: string, defaultPosition: Position, bounds: Bounds) => {
+  const [position, setPosition] = useState<Position>(() =>
+    loadInitialPosition(storageKey, defaultPosition, bounds)
+  );
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,14 +83,14 @@ const usePersistentPosition = (storageKey: string, defaultPosition: Position, bo
       clearTimeout(saveTimeoutRef.current);
     }
     saveTimeoutRef.current = setTimeout(() => {
-      localStorage.setItem(storageKey, JSON.stringify(position));
+      persistPosition(storageKey, position);
       saveTimeoutRef.current = null;
     }, POSITION_SAVE_DEBOUNCE_MS);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
-        localStorage.setItem(storageKey, JSON.stringify(position));
+        persistPosition(storageKey, position);
       }
     };
   }, [position, storageKey]);

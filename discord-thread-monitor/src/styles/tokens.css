@@ -4,21 +4,21 @@
   --tm-font-mono: 'Cascadia Code', 'Cascadia Mono', consolas, monospace;
 
   /* Scale System */
-  --tm-scale-base: 14px;
-  --tm-scale-xs: 10px;
-  --tm-scale-sm: 11px;
-  --tm-scale-md: 13px;
-  --tm-scale-lg: 15px;
-  --tm-scale-xl: 17px;
-  --tm-scale-2xl: 19px;
+  --tm-scale-base: 15px;
+  --tm-scale-xs: 11px;
+  --tm-scale-sm: 12px;
+  --tm-scale-md: 14px;
+  --tm-scale-lg: 16px;
+  --tm-scale-xl: 18px;
+  --tm-scale-2xl: 20px;
 
   /* Spacing Scale */
   --tm-space-xs: 4px;
   --tm-space-sm: 7px;
-  --tm-space-md: 11px;
-  --tm-space-lg: 14px;
-  --tm-space-xl: 18px;
-  --tm-space-2xl: 22px;
+  --tm-space-md: 12px;
+  --tm-space-lg: 15px;
+  --tm-space-xl: 19px;
+  --tm-space-2xl: 23px;
 
   /* Surface Colors */
   --tm-bg-void: #020204;
@@ -83,9 +83,9 @@
   /* Border Radius */
   --tm-radius-xs: 4px;
   --tm-radius-sm: 6px;
-  --tm-radius-md: 10px;
-  --tm-radius-lg: 14px;
-  --tm-radius-xl: 18px;
+  --tm-radius-md: 11px;
+  --tm-radius-lg: 15px;
+  --tm-radius-xl: 19px;
   --tm-radius-full: 9999px;
 
   /* Shadows */

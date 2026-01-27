@@ -15,8 +15,8 @@ console.log('[Discord Thread Monitor] Script loaded');
 
 let initialized = false;
 
-const setupCoreServices = () => {
-  const store = new ThreadStore();
+const setupCoreServices = async () => {
+  const store = await ThreadStore.create();
   const scanner = new ThreadScanner();
   const detector = new ChangeDetector(store);
   const notifier = new Notifier();
@@ -66,7 +66,7 @@ const setupShadowContainer = () => {
   return container;
 };
 
-function initializeMonitor() {
+async function initializeMonitor() {
   console.log('[Discord Thread Monitor] Initializing...');
   if (initialized) {
     console.log('[Discord Thread Monitor] Already initialized, skipping');
@@ -74,7 +74,7 @@ function initializeMonitor() {
   }
 
   try {
-    const { store, notifier, scheduler, performScan } = setupCoreServices();
+    const { store, notifier, scheduler, performScan } = await setupCoreServices();
     const container = setupShadowContainer();
 
     ReactDOM.createRoot(container).render(
@@ -98,7 +98,10 @@ function initializeMonitor() {
     };
     scheduleInitialScan();
 
-    window.addEventListener('beforeunload', () => store.flush());
+    window.addEventListener('beforeunload', () => {
+      void store.flush();
+      store.close();
+    });
 
     initialized = true;
     console.log('[Discord Thread Monitor] Initialization complete');
@@ -109,7 +112,7 @@ function initializeMonitor() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeMonitor);
+  document.addEventListener('DOMContentLoaded', () => void initializeMonitor());
 } else {
-  initializeMonitor();
+  void initializeMonitor();
 }

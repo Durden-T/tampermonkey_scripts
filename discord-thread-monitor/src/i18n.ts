@@ -11,7 +11,6 @@ export const zh = {
     open: '跳转',
     block: '屏蔽',
     resume: '恢复',
-    clearChanges: '清空',
     markAllRead: '全部已读',
   },
   labels: {
@@ -63,14 +62,14 @@ export const zh = {
     retentionPeriod: '保留天数',
     days: '天',
     permanent: '永久',
-    retentionHint: '0 = 永久',
+    retentionHint: '修改后会删除超过保留天数的数据，0 = 永久',
     storageUsage: '存储占用',
     rawSize: '原始',
     compressedSize: '压缩后',
     compression: '压缩',
     enabled: '已启用',
     disabled: '未启用',
-    storageTooLarge: '存储占用较大，建议减少保留天数',
+    storageTooLarge: '存储占用较大，可修改保留天数来清理超过天数的数据',
   },
   toast: {
     titleUpdated: '标题已更新',
@@ -91,7 +90,6 @@ export const en = {
     open: 'Go',
     block: 'Block',
     resume: 'Unblock',
-    clearChanges: 'Clear',
     markAllRead: 'Mark Read',
   },
   labels: {
@@ -143,14 +141,14 @@ Unwanted threads can be blocked`,
     retentionPeriod: 'Retention',
     days: 'days',
     permanent: 'Permanent',
-    retentionHint: '0 = forever',
+    retentionHint: 'Changing this will delete data older than the retention period, 0 = forever',
     storageUsage: 'Storage',
     rawSize: 'Raw',
     compressedSize: 'Compressed',
     compression: 'Compression',
     enabled: 'On',
     disabled: 'Off',
-    storageTooLarge: 'Storage is large, consider reducing retention days',
+    storageTooLarge: 'Storage is large, adjust retention days to clean up old data',
   },
   toast: {
     titleUpdated: 'Title changed',
@@ -159,6 +157,7 @@ Unwanted threads can be blocked`,
 };
 
 import { STORAGE, TIME_MS, TIME_UNITS } from './constants';
+import { getPrefsStore } from './core/PrefsStore';
 
 type I18nTexts = typeof zh;
 
@@ -166,11 +165,6 @@ const SUPPORTED_LANGUAGES = ['zh', 'en'] as const;
 type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 function detectLanguage(): SupportedLanguage {
-  const saved = localStorage.getItem(STORAGE.LANGUAGE_KEY);
-  if (saved && SUPPORTED_LANGUAGES.includes(saved as SupportedLanguage)) {
-    return saved as SupportedLanguage;
-  }
-
   const browserLang = navigator.language.toLowerCase();
   if (browserLang.startsWith('en')) {
     return 'en';
@@ -196,7 +190,18 @@ export function setLanguage(lang: SupportedLanguage): void {
   }
   currentLanguage = lang;
   currentTexts = lang === 'en' ? en : zh;
-  localStorage.setItem(STORAGE.LANGUAGE_KEY, lang);
+  try {
+    void getPrefsStore()
+      .set(STORAGE.LANGUAGE_KEY, lang)
+      .catch((error) => {
+        console.error('Failed to persist language preference:', error);
+      });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('not initialized')) {
+      return;
+    }
+    throw error;
+  }
 }
 
 export function formatTime(timestamp: number): string {

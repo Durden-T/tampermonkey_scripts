@@ -14,11 +14,6 @@ export const useStoreActions = ({ store, refreshData, performScan }: UseStoreAct
     refreshData();
   }, [performScan, refreshData]);
 
-  const handleClearChanges = useCallback(() => {
-    store.clearChanges();
-    refreshData();
-  }, [store, refreshData]);
-
   const handleMarkAllRead = useCallback(() => {
     store.markAllChangesSeen();
     refreshData();
@@ -26,7 +21,6 @@ export const useStoreActions = ({ store, refreshData, performScan }: UseStoreAct
 
   return {
     handleScanNow,
-    handleClearChanges,
     handleMarkAllRead,
   };
 };
