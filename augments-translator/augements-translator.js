@@ -13,6 +13,8 @@
 
     const ZH_DATA_URL = 'https://raw.communitydragon.org/latest/cdragon/arena/zh_cn.json';
     const EN_DATA_URL = 'https://raw.communitydragon.org/latest/cdragon/arena/en_us.json';
+    const ITEM_EN_URL = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/items.json';
+    const ITEM_ZH_URL = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/zh_cn/v1/items.json';
     const FILTER_GAMES_THRESHOLD = 100;
     const MUTATION_DEBOUNCE_MS = 50;
 
@@ -24,6 +26,7 @@
     const REGEX_ESCAPE_RE = /[.*+?^${}()|[\]\\]/g;
     const WS_RE = /\s+/g;
     const AUGMENT_ID_RE = /^augment-(\d+)$/;
+    const ITEM_ID_RE = /^item-(\d+)$/;
     const RUNTIME_TRACKER_RE = /(?:<br>\s*){1,2}[^<]*@f\d+@(?:\s*<br>\s*[^<]*@f\d+@)*\s*$/;
     const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
 
@@ -57,7 +60,7 @@
         return tpl.replace(RUNTIME_TRACKER_RE, '');
     }
 
-    function initializeMaps(zhData, enData) {
+    function initializeMaps(zhData, enData, enItems, zhItems) {
         for (const aug of zhData.augments) {
             translationMap.set(normalizeText(aug.apiName), aug.name);
         }
@@ -70,6 +73,24 @@
                 zhDesc: z.desc || '',
                 enTooltip: stripRuntimeTrackers(e.tooltip || ''),
                 zhTooltip: stripRuntimeTrackers(z.tooltip || ''),
+                descAnchor: undefined,
+                tooltipAnchor: undefined,
+            });
+        }
+
+        const zhItemById = new Map(zhItems.map(it => [it.id, it]));
+        for (const e of enItems) {
+            const z = zhItemById.get(e.id);
+            if (!z) continue;
+            if (z.name !== e.name) {
+                translationMap.set(normalizeText(e.name), z.name);
+            }
+            if (!e.description) continue;
+            descMap.set('item-' + e.id, {
+                enDesc: e.description,
+                zhDesc: z.description || '',
+                enTooltip: '',
+                zhTooltip: '',
                 descAnchor: undefined,
                 tooltipAnchor: undefined,
             });
@@ -182,6 +203,12 @@
         maybeTranslateDesc(el, id);
     }
 
+    function processItemElement(el) {
+        const m = ITEM_ID_RE.exec(el.id);
+        if (!m) return;
+        maybeTranslateDesc(el, 'item-' + m[1]);
+    }
+
     function processAugmentsIn(scope) {
         if (scope.nodeType === Node.ELEMENT_NODE && AUGMENT_ID_RE.test(scope.id)) {
             processAugmentElement(scope);
@@ -189,6 +216,16 @@
         const found = scope.querySelectorAll?.('[id^="augment-"]');
         if (found) {
             for (const el of found) processAugmentElement(el);
+        }
+    }
+
+    function processItemsIn(scope) {
+        if (scope.nodeType === Node.ELEMENT_NODE && ITEM_ID_RE.test(scope.id)) {
+            processItemElement(scope);
+        }
+        const found = scope.querySelectorAll?.('[id^="item-"]');
+        if (found) {
+            for (const el of found) processItemElement(el);
         }
     }
 
@@ -253,6 +290,7 @@
         try {
             const root = scope || document.body;
             processAugmentsIn(root);
+            processItemsIn(root);
             translateTextsIn(root);
             filterDropdownByChinese(root);
         } catch (error) {
@@ -366,10 +404,12 @@
     function fetchAugmentData() {
         Promise.all([
             fetch(ZH_DATA_URL).then(r => r.json()),
-            fetch(EN_DATA_URL).then(r => r.json())
+            fetch(EN_DATA_URL).then(r => r.json()),
+            fetch(ITEM_EN_URL).then(r => r.json()),
+            fetch(ITEM_ZH_URL).then(r => r.json()),
         ])
-            .then(([zhData, enData]) => {
-                initializeMaps(zhData, enData);
+            .then(([zhData, enData, enItems, zhItems]) => {
+                initializeMaps(zhData, enData, enItems, zhItems);
                 if (document.readyState === 'complete') {
                     runTranslation();
                 } else {
