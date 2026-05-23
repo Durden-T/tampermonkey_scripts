@@ -38,7 +38,7 @@
         '.tooltip, .tippy-content, .select2-results__option, .hyper-tooltip, .hyper-tooltip-content, .search-results, [data-search-results]';
 
     const CJK_RE = /[一-鿿]/;
-    const PINYIN_PRO_URL = 'https://cdn.jsdelivr.net/gh/zh-lx/pinyin-pro@3.26.0/dist/pinyin-pro.js';
+    const PINYIN_PRO_URL = 'https://cdn.jsdelivr.net/npm/pinyin-pro/dist/index.js';
     const PINYIN_RETRY_LIMIT = 20;
     const PINYIN_RETRY_MS = 500;
 
@@ -390,15 +390,12 @@
             patched++;
         }
         if (!patched) return;
-        const tbody = rows[0]?.parentNode;
-        if (!tbody) return;
-        // Transient row forces the Stimulus client-table-view controller to
-        // detect a row-count change in its #w() guard and rebuild searchText cache.
-        const dummy = document.createElement('tr');
-        dummy.setAttribute('data-client-table-target', 'row');
-        dummy.style.display = 'none';
-        tbody.appendChild(dummy);
-        setTimeout(() => dummy.remove(), 200);
+        const ctvEl = document.querySelector('[data-controller~="client-table-view"]');
+        const ctrl = ctvEl && window.Stimulus?.getControllerForElementAndIdentifier(ctvEl, 'client-table-view');
+        if (ctrl) {
+            ctrl.disconnect();
+            ctrl.connect();
+        }
     }
 
     function fetchAugmentData() {
